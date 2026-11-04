@@ -1,0 +1,641 @@
+{
+  "nota": "Datos ficticios para pruebas del portal. Ningun RUN, nombre ni direccion corresponde a una persona real. Los RUN son validos (digito verificador calculado) para poder probar validaciones mas adelante.",
+  "anioEscolar": 2027,
+  "generado": "2026-11-04",
+  "alumnos": [
+    {
+      "id": "ALU-001",
+      "caso": "completo-sin-cambios",
+      "descripcionCaso": "Ficha 2026 completa; en 2027 solo cambia el curso.",
+      "run": "20.114.567-8",
+      "nombres": "Martina Ignacia",
+      "apellidoPaterno": "Aravena",
+      "apellidoMaterno": "Cortes",
+      "fechaNacimiento": "2019-04-18",
+      "nacionalidad": "Chilena",
+      "domicilio": "Los Aromos 1234, Villa Los Aromos",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "1º básico", "letra": "A", "anio": 2026 },
+      "curso2027": { "nivel": "2º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Carolina Andrea Aravena Soto",
+        "run": "15.887.654-K",
+        "telefono": "+56 9 6123 4567",
+        "escolaridad": "Educación media",
+        "domicilio": "Los Aromos 1234, Villa Los Aromos",
+        "correo": "carolina.aravena@correo.cl"
+      },
+      "padre": {
+        "nombreApellido": "Rodrigo Esteban Cortes Mena",
+        "run": "16.754.321-9",
+        "telefono": "+56 9 6234 5678",
+        "escolaridad": "Educación media técnico-profesional",
+        "domicilio": "Los Aromos 1234, Villa Los Aromos",
+        "correo": "rodrigo.cortes@correo.cl"
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Carolina Andrea Aravena Soto",
+        "run": "15.887.654-K",
+        "telefono": "+56 9 6123 4567",
+        "vinculo": "madre",
+        "correo": "carolina.aravena@correo.cl"
+      },
+      "apoderadoSecundario": {
+        "nombreApellido": "Rodrigo Esteban Cortes Mena",
+        "run": "16.754.321-9",
+        "telefono": "+56 9 6234 5678",
+        "vinculo": "padre",
+        "correo": "rodrigo.cortes@correo.cl"
+      },
+      "contactosEmergencia": [
+        { "identificacion": "Marta Soto Vergara", "telefono": "+56 9 6345 6789", "vinculo": "abuela" },
+        { "identificacion": "Felipe Aravena Soto", "telefono": "+56 9 6456 7890", "vinculo": "tío" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [
+          { "run": "15.887.654-K", "vinculo": "madre" },
+          { "run": "16.754.321-9", "vinculo": "padre" },
+          { "run": "18.456.789-K", "vinculo": "tía" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "Si"
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": true, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 1º A → 2º A"],
+      "faltantes": []
+    },
+    {
+      "id": "ALU-002",
+      "caso": "completo-con-cambios",
+      "descripcionCaso": "Ficha completa, pero la familia se mudó y cambió el teléfono de la madre.",
+      "run": "21.456.789-K",
+      "nombres": "Benjamín Alonso",
+      "apellidoPaterno": "Fuentes",
+      "apellidoMaterno": "Riquelme",
+      "fechaNacimiento": "2018-09-02",
+      "nacionalidad": "Chilena",
+      "domicilio": "Pasaje El Roble 892, Población San José",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "2º básico", "letra": "B", "anio": 2026 },
+      "curso2027": { "nivel": "3º básico", "letra": "B", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Paola Ximena Riquelme Díaz",
+        "run": "17.234.567-0",
+        "telefono": "+56 9 6789 0123",
+        "escolaridad": "Educación universitaria",
+        "domicilio": "Pasaje El Roble 892, Población San José",
+        "correo": "paola.riquelme@correo.cl"
+      },
+      "padre": {
+        "nombreApellido": "Cristian Andrés Fuentes Olivares",
+        "run": "18.456.789-K",
+        "telefono": "+56 9 6890 1234",
+        "escolaridad": "Educación media",
+        "domicilio": "Av. Colón 445, Depto 302",
+        "correo": "cristian.fuentes@correo.cl"
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Paola Ximena Riquelme Díaz",
+        "run": "17.234.567-0",
+        "telefono": "+56 9 6789 0123",
+        "vinculo": "madre",
+        "correo": "paola.riquelme@correo.cl"
+      },
+      "apoderadoSecundario": {
+        "nombreApellido": "Cristian Andrés Fuentes Olivares",
+        "run": "18.456.789-K",
+        "telefono": "+56 9 6890 1234",
+        "vinculo": "padre",
+        "correo": "cristian.fuentes@correo.cl"
+      },
+      "contactosEmergencia": [
+        { "identificacion": "Silvia Díaz Rojas", "telefono": "+56 9 6901 2345", "vinculo": "abuela" },
+        { "identificacion": "Marcela Fuentes Olivares", "telefono": "+56 9 6012 3456", "vinculo": "tía" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [
+          { "run": "17.234.567-0", "vinculo": "madre" },
+          { "run": "18.456.789-K", "vinculo": "padre" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "Si"
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": true, "medicacion": false },
+      "cambiosRespecto2026": [
+        "domicilio: Los Aromos 1234 → Pasaje El Roble 892",
+        "madre: teléfono +56 9 6123 4567 → +56 9 6789 0123",
+        "curso: 2º B → 3º B"
+      ],
+      "faltantes": []
+    },
+    {
+      "id": "ALU-003",
+      "caso": "sin-padre",
+      "descripcionCaso": "Solo la madre está registrada; el bloque del padre quedó vacío en 2026.",
+      "run": "22.334.455-0",
+      "nombres": "Emilia Paz",
+      "apellidoPaterno": "Sandoval",
+      "apellidoMaterno": "Muñoz",
+      "fechaNacimiento": "2017-11-27",
+      "nacionalidad": "Chilena",
+      "domicilio": "Calle Freire 2210, Villa Las Acacias",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "3º básico", "letra": "A", "anio": 2026 },
+      "curso2027": { "nivel": "4º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Daniela Soledad Muñoz Pérez",
+        "run": "19.123.456-1",
+        "telefono": "+56 9 6123 9876",
+        "escolaridad": "Educación media",
+        "domicilio": "Calle Freire 2210, Villa Las Acacias",
+        "correo": "daniela.munoz@correo.cl"
+      },
+      "padre": null,
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Daniela Soledad Muñoz Pérez",
+        "run": "19.123.456-1",
+        "telefono": "+56 9 6123 9876",
+        "vinculo": "madre",
+        "correo": "daniela.munoz@correo.cl"
+      },
+      "apoderadoSecundario": null,
+      "contactosEmergencia": [
+        { "identificacion": "Rosa Pérez Fuentes", "telefono": "+56 9 6234 8765", "vinculo": "abuela" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [{ "run": "19.123.456-1", "vinculo": "madre" }]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "No"
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": false, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 3º A → 4º A"],
+      "faltantes": ["padre", "apoderado secundario"]
+    },
+    {
+      "id": "ALU-004",
+      "caso": "sin-apoderado-secundario",
+      "descripcionCaso": "Madre y padre registrados, pero sin apoderado suplente.",
+      "run": "23.001.122-2",
+      "nombres": "Tomás Vicente",
+      "apellidoPaterno": "Sepúlveda",
+      "apellidoMaterno": "Lagos",
+      "fechaNacimiento": "2016-06-14",
+      "nacionalidad": "Chilena",
+      "domicilio": "Av. Ochagavía 1455, Block 12 Depto 41",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "4º básico", "letra": "C", "anio": 2026 },
+      "curso2027": { "nivel": "5º básico", "letra": "C", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Verónica del Carmen Lagos Rivas",
+        "run": "14.567.890-0",
+        "telefono": "+56 9 6345 1122",
+        "escolaridad": "Técnico de nivel superior",
+        "domicilio": "Av. Ochagavía 1455, Block 12 Depto 41",
+        "correo": "veronica.lagos@correo.cl"
+      },
+      "padre": {
+        "nombreApellido": "Héctor Manuel Sepúlveda Ortiz",
+        "run": "13.889.900-4",
+        "telefono": "+56 9 6456 2233",
+        "escolaridad": "Educación básica",
+        "domicilio": "Av. Ochagavía 1455, Block 12 Depto 41",
+        "correo": null
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Verónica del Carmen Lagos Rivas",
+        "run": "14.567.890-0",
+        "telefono": "+56 9 6345 1122",
+        "vinculo": "madre",
+        "correo": "veronica.lagos@correo.cl"
+      },
+      "apoderadoSecundario": null,
+      "contactosEmergencia": [
+        { "identificacion": "Patricia Rivas Soto", "telefono": "+56 9 6567 3344", "vinculo": "abuela" },
+        { "identificacion": "Diego Sepúlveda Ortiz", "telefono": "+56 9 6678 4455", "vinculo": "tío" }
+      ],
+      "retiro": {
+        "salidaSolo": "Si",
+        "autorizados": [
+          { "run": "14.567.890-0", "vinculo": "madre" },
+          { "run": "13.889.900-4", "vinculo": "padre" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "Si"
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": true, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 4º C → 5º C"],
+      "faltantes": ["apoderado secundario", "padre: correo electrónico"]
+    },
+    {
+      "id": "ALU-005",
+      "caso": "restriccion-madre",
+      "descripcionCaso": "Existe restricción judicial vigente que impide a la madre vincularse con la estudiante.",
+      "run": "24.455.667-1",
+      "nombres": "Antonia Belén",
+      "apellidoPaterno": "Contreras",
+      "apellidoMaterno": "Silva",
+      "fechaNacimiento": "2015-02-09",
+      "nacionalidad": "Chilena",
+      "domicilio": "Los Nogales 567, Población México",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "5º básico", "letra": "A", "anio": 2026 },
+      "curso2027": { "nivel": "6º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Karen Alejandra Silva Núñez",
+        "run": "15.223.344-2",
+        "telefono": "+56 9 6111 2233",
+        "escolaridad": "Educación media",
+        "domicilio": "Pasaje Nuevo 45",
+        "correo": null
+      },
+      "padre": {
+        "nombreApellido": "Óscar Iván Contreras Bustos",
+        "run": "16.987.654-1",
+        "telefono": "+56 9 6222 3344",
+        "escolaridad": "Educación media técnico-profesional",
+        "domicilio": "Los Nogales 567, Población México",
+        "correo": "oscar.contreras@correo.cl"
+      },
+      "restriccionMadre": "Si",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Óscar Iván Contreras Bustos",
+        "run": "16.987.654-1",
+        "telefono": "+56 9 6222 3344",
+        "vinculo": "padre",
+        "correo": "oscar.contreras@correo.cl"
+      },
+      "apoderadoSecundario": {
+        "nombreApellido": "Mónica Contreras Bustos",
+        "run": "17.112.233-3",
+        "telefono": "+56 9 6333 4455",
+        "vinculo": "tía",
+        "correo": "monica.contreras@correo.cl"
+      },
+      "contactosEmergencia": [
+        { "identificacion": "Mónica Contreras Bustos", "telefono": "+56 9 6333 4455", "vinculo": "tía" },
+        { "identificacion": "Iván Contreras Rojas", "telefono": "+56 9 6444 5566", "vinculo": "abuelo" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [
+          { "run": "16.987.654-1", "vinculo": "padre" },
+          { "run": "17.112.233-3", "vinculo": "tía" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "Si"
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": true, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 5º A → 6º A"],
+      "faltantes": ["madre: correo electrónico"]
+    },
+    {
+      "id": "ALU-006",
+      "caso": "salud-con-tratamiento",
+      "descripcionCaso": "Asma en tratamiento; sirve para probar el bloque de datos médicos.",
+      "run": "25.123.456-6",
+      "nombres": "Matías Ignacio",
+      "apellidoPaterno": "Vergara",
+      "apellidoMaterno": "Pizarro",
+      "fechaNacimiento": "2014-12-03",
+      "nacionalidad": "Chilena",
+      "domicilio": "Pasaje Los Tilos 318, Villa El Bosque",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": false,
+      "curso2026": { "nivel": "6º básico", "letra": "B", "anio": 2026 },
+      "curso2027": { "nivel": "7º básico", "letra": "B", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Andrea Paz Pizarro Rojas",
+        "run": "18.665.544-3",
+        "telefono": "+56 9 6555 6677",
+        "escolaridad": "Educación universitaria",
+        "domicilio": "Pasaje Los Tilos 318, Villa El Bosque",
+        "correo": "andrea.pizarro@correo.cl"
+      },
+      "padre": {
+        "nombreApellido": "Luis Alberto Vergara Soto",
+        "run": "17.667.788-0",
+        "telefono": "+56 9 6666 7788",
+        "escolaridad": "Educación media",
+        "domicilio": "Pasaje Los Tilos 318, Villa El Bosque",
+        "correo": "luis.vergara@correo.cl"
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Andrea Paz Pizarro Rojas",
+        "run": "18.665.544-3",
+        "telefono": "+56 9 6555 6677",
+        "vinculo": "madre",
+        "correo": "andrea.pizarro@correo.cl"
+      },
+      "apoderadoSecundario": {
+        "nombreApellido": "Luis Alberto Vergara Soto",
+        "run": "17.667.788-0",
+        "telefono": "+56 9 6666 7788",
+        "vinculo": "padre",
+        "correo": "luis.vergara@correo.cl"
+      },
+      "contactosEmergencia": [
+        { "identificacion": "Andrea Paz Pizarro Rojas", "telefono": "+56 9 6555 6677", "vinculo": "madre" },
+        { "identificacion": "Sergio Pizarro Rojas", "telefono": "+56 9 6777 8899", "vinculo": "tío" }
+      ],
+      "retiro": {
+        "salidaSolo": "Si",
+        "autorizados": [
+          { "run": "18.665.544-3", "vinculo": "madre" },
+          { "run": "17.667.788-0", "vinculo": "padre" },
+          { "run": "12.998.877-0", "vinculo": "abuela" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "Si",
+        "detalles": [
+          { "identificacion": "Asma bronquial", "situacion": "Crisis con esfuerzo físico y cambios de temperatura", "enTratamiento": "Si" }
+        ],
+        "salidaBano": "No",
+        "paracetamol2026": "No",
+        "nota": "Usa inhalador de rescate; el colegio mantiene uno en secretaría por acuerdo con la familia."
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": false, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 6º B → 7º B"],
+      "faltantes": []
+    },
+    {
+      "id": "ALU-007",
+      "caso": "pie-informado",
+      "descripcionCaso": "Participa en Programa de Integración Escolar; prueba el acceso restringido al detalle.",
+      "run": "23.667.788-5",
+      "nombres": "Javiera Esperanza",
+      "apellidoPaterno": "Núñez",
+      "apellidoMaterno": "Cáceres",
+      "fechaNacimiento": "2013-08-21",
+      "nacionalidad": "Chilena",
+      "domicilio": "Calle Balmaceda 1890, Depto 12",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "activo",
+      "pie": true,
+      "curso2026": { "nivel": "7º básico", "letra": "A", "anio": 2026 },
+      "curso2027": { "nivel": "8º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Claudia Marcela Cáceres Vera",
+        "run": "19.445.566-6",
+        "telefono": "+56 9 6888 9900",
+        "escolaridad": "Educación media",
+        "domicilio": "Calle Balmaceda 1890, Depto 12",
+        "correo": "claudia.caceres@correo.cl"
+      },
+      "padre": null,
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Claudia Marcela Cáceres Vera",
+        "run": "19.445.566-6",
+        "telefono": "+56 9 6888 9900",
+        "vinculo": "madre",
+        "correo": "claudia.caceres@correo.cl"
+      },
+      "apoderadoSecundario": null,
+      "contactosEmergencia": [
+        { "identificacion": "Claudia Marcela Cáceres Vera", "telefono": "+56 9 6888 9900", "vinculo": "madre" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [{ "run": "19.445.566-6", "vinculo": "madre" }]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": "No"
+      },
+      "apoyosPie": {
+        "participa": "Si",
+        "diagnosticoInformado": "Dificultades específicas del aprendizaje",
+        "apoyos": "Apoyo pedagógico en aula de recursos, dos veces por semana",
+        "documentacion": "Informe de evaluación PIE 2026 archivado en el expediente"
+      },
+      "autorizaciones2026": { "imagen": false, "convivencia": false, "medicacion": false },
+      "cambiosRespecto2026": ["curso: 7º A → 8º A"],
+      "faltantes": ["padre", "apoderado secundario"]
+    },
+    {
+      "id": "ALU-008",
+      "caso": "alumno-nuevo",
+      "descripcionCaso": "No tiene ficha 2026: postula por primera vez a 1º básico. El wizard debe abrir vacío.",
+      "run": "24.778.899-9",
+      "nombres": "Vicente Tomás",
+      "apellidoPaterno": "Escobar",
+      "apellidoMaterno": "Fuentes",
+      "fechaNacimiento": "2020-10-05",
+      "nacionalidad": "Chilena",
+      "domicilio": "Pasaje Las Lilas 77, Villa Los Jardines",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "postulante",
+      "pie": null,
+      "curso2026": null,
+      "curso2027": { "nivel": "1º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Francisca Ignacia Fuentes Soto",
+        "run": "20.556.677-5",
+        "telefono": "+56 9 6999 1122",
+        "escolaridad": "Educación universitaria",
+        "domicilio": "Pasaje Las Lilas 77, Villa Los Jardines",
+        "correo": "francisca.fuentes@correo.cl"
+      },
+      "padre": {
+        "nombreApellido": "Nicolás Escobar Rivas",
+        "run": "19.778.899-2",
+        "telefono": "+56 9 6000 2233",
+        "escolaridad": "Educación media",
+        "domicilio": "Pasaje Las Lilas 77, Villa Los Jardines",
+        "correo": null
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Francisca Ignacia Fuentes Soto",
+        "run": "20.556.677-5",
+        "telefono": "+56 9 6999 1122",
+        "vinculo": "madre",
+        "correo": "francisca.fuentes@correo.cl"
+      },
+      "apoderadoSecundario": null,
+      "contactosEmergencia": [],
+      "retiro": { "salidaSolo": "No", "autorizados": [] },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "No",
+        "paracetamol2026": null
+      },
+      "autorizaciones2026": null,
+      "cambiosRespecto2026": [],
+      "faltantes": [
+        "ficha 2026 (alumno nuevo)",
+        "contactos de emergencia",
+        "personas autorizadas a retirar",
+        "padre: correo electrónico",
+        "apoderado secundario"
+      ]
+    },
+    {
+      "id": "ALU-009",
+      "caso": "retirado-en-2026",
+      "descripcionCaso": "Se retiró durante 2026 y pide reingreso; prueba el estado y la continuidad del expediente.",
+      "run": "22.998.877-8",
+      "nombres": "Catalina Ignacia",
+      "apellidoPaterno": "Rojas",
+      "apellidoMaterno": "Herrera",
+      "fechaNacimiento": "2013-03-30",
+      "nacionalidad": "Chilena",
+      "domicilio": "Av. Santa Rosa 7321, Casa 4",
+      "comuna": "San Bernardo",
+      "estadoMatricula": "retirado",
+      "pie": false,
+      "curso2026": { "nivel": "8º básico", "letra": "B", "anio": 2026 },
+      "curso2027": { "nivel": "8º básico", "letra": "B", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Marisol Herrera Peña",
+        "run": "16.665.544-7",
+        "telefono": "+56 9 6111 3344",
+        "escolaridad": "Educación básica",
+        "domicilio": "Av. Santa Rosa 7321, Casa 4",
+        "correo": null
+      },
+      "padre": {
+        "nombreApellido": "Gonzalo Rojas Medina",
+        "run": "15.556.677-9",
+        "telefono": "+56 9 6222 4455",
+        "escolaridad": "Educación media",
+        "domicilio": "Av. Santa Rosa 7321, Casa 4",
+        "correo": "gonzalo.rojas@correo.cl"
+      },
+      "restriccionMadre": "No",
+      "apoderadoPrincipal": {
+        "nombreApellido": "Marisol Herrera Peña",
+        "run": "16.665.544-7",
+        "telefono": "+56 9 6111 3344",
+        "vinculo": "madre",
+        "correo": null
+      },
+      "apoderadoSecundario": {
+        "nombreApellido": "Gonzalo Rojas Medina",
+        "run": "15.556.677-9",
+        "telefono": "+56 9 6222 4455",
+        "vinculo": "padre",
+        "correo": "gonzalo.rojas@correo.cl"
+      },
+      "contactosEmergencia": [
+        { "identificacion": "Gonzalo Rojas Medina", "telefono": "+56 9 6222 4455", "vinculo": "padre" }
+      ],
+      "retiro": {
+        "salidaSolo": "No",
+        "autorizados": [
+          { "run": "16.665.544-7", "vinculo": "madre" },
+          { "run": "15.556.677-9", "vinculo": "padre" }
+        ]
+      },
+      "salud": {
+        "tieneSituacion": "No",
+        "detalles": [],
+        "salidaBano": "Si",
+        "paracetamol2026": "Si",
+        "nota": "Salida al baño autorizada por condición médica informada en 2025."
+      },
+      "autorizaciones2026": { "imagen": true, "convivencia": false, "medicacion": false },
+      "cambiosRespecto2026": ["estado: retirado → postulante", "curso: 8º B → 8º B (mismo nivel)"],
+      "faltantes": ["madre: correo electrónico", "autorización de convivencia"]
+    },
+    {
+      "id": "ALU-010",
+      "caso": "datos-incompletos",
+      "descripcionCaso": "Ficha 2026 a medias: sin domicilio ni contactos de emergencia. Sirve para ver qué falta.",
+      "run": "25.889.900-8",
+      "nombres": "Agustín Alonso",
+      "apellidoPaterno": "Morales",
+      "apellidoMaterno": "Tapia",
+      "fechaNacimiento": "2018-01-16",
+      "nacionalidad": "Chilena",
+      "domicilio": null,
+      "comuna": null,
+      "estadoMatricula": "activo",
+      "pie": null,
+      "curso2026": { "nivel": "2º básico", "letra": "A", "anio": 2026 },
+      "curso2027": { "nivel": "3º básico", "letra": "A", "anio": 2027 },
+      "madre": {
+        "nombreApellido": "Rocío Tapia Vega",
+        "run": "18.889.900-5",
+        "telefono": "+56 9 6333 5566",
+        "escolaridad": null,
+        "domicilio": null,
+        "correo": null
+      },
+      "padre": null,
+      "restriccionMadre": null,
+      "apoderadoPrincipal": {
+        "nombreApellido": "Rocío Tapia Vega",
+        "run": "18.889.900-5",
+        "telefono": "+56 9 6333 5566",
+        "vinculo": "madre",
+        "correo": null
+      },
+      "apoderadoSecundario": null,
+      "contactosEmergencia": [],
+      "retiro": { "salidaSolo": null, "autorizados": [] },
+      "salud": {
+        "tieneSituacion": null,
+        "detalles": [],
+        "salidaBano": null,
+        "paracetamol2026": null
+      },
+      "autorizaciones2026": null,
+      "cambiosRespecto2026": ["curso: 2º A → 3º A"],
+      "faltantes": [
+        "domicilio",
+        "comuna",
+        "contactos de emergencia",
+        "personas autorizadas a retirar",
+        "salida solo (SI/NO)",
+        "situación médica (SI/NO)",
+        "diagnóstico PIE",
+        "padre",
+        "autorizaciones 2026"
+      ]
+    }
+  ]
+}
