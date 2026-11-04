@@ -1,17 +1,143 @@
+@model MarcelaPaz.Web.Models.FichaForm
 @{
     Layout = "_WizardLayout";
 }
 <h1 class="wizard__titulo-paso">Paso 6 · Datos médicos</h1>
-<p class="wizard__ayuda">
-    Paso pendiente de construcción: la pregunta de situación médica, el detalle
-    de situaciones (registros 01 a 03), el uso de baños y el uso de paracetamol
-    se armarán con el colegio.
-</p>
+<p class="wizard__ayuda">Información médica relevante para la atención escolar. Por ahora nada es obligatorio.</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="6" method="post">
-    <div class="acceso__aviso">
-        Contenido de este paso sin construir todavía. Puede avanzar para revisar la estructura completa.
-    </div>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Situación médica (SI/NO)</legend>
+        <p class="wizard__restriccion-pregunta">
+            ¿El estudiante cuenta con alguna situación médica, cualquiera que sea?
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="TieneSituacionMedica" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="TieneSituacionMedica" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 01</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Medica1_Identificacion" class="acceso__etiqueta">Identificación</label>
+                <input asp-for="Medica1_Identificacion" class="acceso__input" placeholder="Ej: asma" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Medica1_Situacion" class="acceso__etiqueta">Situación médica</label>
+                <input asp-for="Medica1_Situacion" class="acceso__input" autocomplete="off" />
+            </div>
+        </div>
+        <div class="acceso__campo">
+            <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <div class="wizard__radios">
+                <label class="acceso__radio">
+                    <input asp-for="Medica1_Tratamiento" type="radio" value="Si" />
+                    <span>Si</span>
+                </label>
+                <label class="acceso__radio">
+                    <input asp-for="Medica1_Tratamiento" type="radio" value="No" />
+                    <span>No</span>
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 02</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Medica2_Identificacion" class="acceso__etiqueta">Identificación</label>
+                <input asp-for="Medica2_Identificacion" class="acceso__input" placeholder="Ej: alergia alimentaria" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Medica2_Situacion" class="acceso__etiqueta">Situación médica</label>
+                <input asp-for="Medica2_Situacion" class="acceso__input" autocomplete="off" />
+            </div>
+        </div>
+        <div class="acceso__campo">
+            <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <div class="wizard__radios">
+                <label class="acceso__radio">
+                    <input asp-for="Medica2_Tratamiento" type="radio" value="Si" />
+                    <span>Si</span>
+                </label>
+                <label class="acceso__radio">
+                    <input asp-for="Medica2_Tratamiento" type="radio" value="No" />
+                    <span>No</span>
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 03</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Medica3_Identificacion" class="acceso__etiqueta">Identificación</label>
+                <input asp-for="Medica3_Identificacion" class="acceso__input" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Medica3_Situacion" class="acceso__etiqueta">Situación médica</label>
+                <input asp-for="Medica3_Situacion" class="acceso__input" autocomplete="off" />
+            </div>
+        </div>
+        <div class="acceso__campo">
+            <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <div class="wizard__radios">
+                <label class="acceso__radio">
+                    <input asp-for="Medica3_Tratamiento" type="radio" value="Si" />
+                    <span>Si</span>
+                </label>
+                <label class="acceso__radio">
+                    <input asp-for="Medica3_Tratamiento" type="radio" value="No" />
+                    <span>No</span>
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Uso de baños (SI/NO)</legend>
+        <p class="wizard__restriccion-pregunta">
+            ¿El estudiante está diagnosticado con alguna condición médica que amerite la salida constante al baño?
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="SalidaBano" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="SalidaBano" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Uso de paracetamol (SI/NO)</legend>
+        <p class="wizard__restriccion-pregunta">
+            Siendo el adulto responsable del estudiante, ¿autoriza el uso de paracetamol en situaciones que se consideren necesarias?
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="AutorizaParacetamol" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="AutorizaParacetamol" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
 
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="5">Volver</a>

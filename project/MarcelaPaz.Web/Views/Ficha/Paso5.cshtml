@@ -1,17 +1,72 @@
+@model MarcelaPaz.Web.Models.FichaForm
 @{
     Layout = "_WizardLayout";
 }
 <h1 class="wizard__titulo-paso">Paso 5 · Retiro del estudiante</h1>
-<p class="wizard__ayuda">
-    Paso pendiente de construcción: la pregunta de salida sola al finalizar la
-    jornada y la tabla de personas autorizadas para retirarlo durante la jornada
-    se armarán con el colegio.
-</p>
+<p class="wizard__ayuda">Salida al finalizar la jornada y personas autorizadas a retirar. Por ahora nada es obligatorio.</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="5" method="post">
-    <div class="acceso__aviso">
-        Contenido de este paso sin construir todavía. Puede avanzar para revisar la estructura completa.
-    </div>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Salida al finalizar la jornada (SI/NO)</legend>
+        <p class="wizard__restriccion-pregunta">
+            Al finalizar la jornada de clases, ¿el estudiante está autorizado para salir solo de la escuela?
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="SalidaSolo" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="SalidaSolo" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <p class="wizard__restriccion-pregunta">Durante la jornada, el estudiante solo puede ser retirado por:</p>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 01</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Retiro1_Rut" class="acceso__etiqueta">RUT</label>
+                <input asp-for="Retiro1_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Retiro1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                <input asp-for="Retiro1_Vinculo" class="acceso__input" placeholder="Ej: madre" autocomplete="off" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 02</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Retiro2_Rut" class="acceso__etiqueta">RUT</label>
+                <input asp-for="Retiro2_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Retiro2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                <input asp-for="Retiro2_Vinculo" class="acceso__input" autocomplete="off" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__registro">
+        <legend class="wizard__registro-titulo">Registro 03</legend>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Retiro3_Rut" class="acceso__etiqueta">RUT</label>
+                <input asp-for="Retiro3_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Retiro3_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                <input asp-for="Retiro3_Vinculo" class="acceso__input" autocomplete="off" />
+            </div>
+        </div>
+    </fieldset>
 
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="4">Volver</a>

@@ -99,7 +99,39 @@ public class FichaController : Controller
                 GuardarCampo(datos, "apoderado secundario: correo", form.Secundario_Correo);
                 break;
 
-            // Pasos 4 a 6: aún sin campos; solo se conserva el borrador y se avanza.
+            case 4:
+                GuardarCampo(datos, "contacto emergencia 01: identificación", form.Contacto1_Identificacion);
+                GuardarCampo(datos, "contacto emergencia 01: teléfono", form.Contacto1_Telefono);
+                GuardarCampo(datos, "contacto emergencia 01: vínculo", form.Contacto1_Vinculo);
+                GuardarCampo(datos, "contacto emergencia 02: identificación", form.Contacto2_Identificacion);
+                GuardarCampo(datos, "contacto emergencia 02: teléfono", form.Contacto2_Telefono);
+                GuardarCampo(datos, "contacto emergencia 02: vínculo", form.Contacto2_Vinculo);
+                break;
+
+            case 5:
+                GuardarCampo(datos, "salida solo al finalizar jornada (SI/NO)", form.SalidaSolo);
+                GuardarCampo(datos, "retiro autorizado 01: rut", form.Retiro1_Rut);
+                GuardarCampo(datos, "retiro autorizado 01: vínculo", form.Retiro1_Vinculo);
+                GuardarCampo(datos, "retiro autorizado 02: rut", form.Retiro2_Rut);
+                GuardarCampo(datos, "retiro autorizado 02: vínculo", form.Retiro2_Vinculo);
+                GuardarCampo(datos, "retiro autorizado 03: rut", form.Retiro3_Rut);
+                GuardarCampo(datos, "retiro autorizado 03: vínculo", form.Retiro3_Vinculo);
+                break;
+
+            case 6:
+                GuardarCampo(datos, "situación médica (SI/NO)", form.TieneSituacionMedica);
+                GuardarCampo(datos, "situación médica 01: identificación", form.Medica1_Identificacion);
+                GuardarCampo(datos, "situación médica 01: detalle", form.Medica1_Situacion);
+                GuardarCampo(datos, "situación médica 01: en tratamiento", form.Medica1_Tratamiento);
+                GuardarCampo(datos, "situación médica 02: identificación", form.Medica2_Identificacion);
+                GuardarCampo(datos, "situación médica 02: detalle", form.Medica2_Situacion);
+                GuardarCampo(datos, "situación médica 02: en tratamiento", form.Medica2_Tratamiento);
+                GuardarCampo(datos, "situación médica 03: identificación", form.Medica3_Identificacion);
+                GuardarCampo(datos, "situación médica 03: detalle", form.Medica3_Situacion);
+                GuardarCampo(datos, "situación médica 03: en tratamiento", form.Medica3_Tratamiento);
+                GuardarCampo(datos, "salida al baño (SI/NO)", form.SalidaBano);
+                GuardarCampo(datos, "autorización de paracetamol (SI/NO)", form.AutorizaParacetamol);
+                break;
 
             case 7:
                 // Confirmación estructural: sin declaración de veracidad ni envío real todavía.

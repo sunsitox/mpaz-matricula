@@ -48,6 +48,47 @@ public class FichaForm
     public string? Secundario_Vinculo { get; set; }
     public string? Secundario_Correo { get; set; }
 
-    // Pasos 4 a 6 (contactos de emergencia, retiro y datos médicos):
-    // aún sin campos; se armarán con Dirección y Secretaría antes de cerrar.
+    // Paso 4 · Contactos de emergencia (registros 01 y 02 de la ficha)
+    public string? Contacto1_Identificacion { get; set; }
+    public string? Contacto1_Telefono { get; set; }
+    public string? Contacto1_Vinculo { get; set; }
+
+    public string? Contacto2_Identificacion { get; set; }
+    public string? Contacto2_Telefono { get; set; }
+    public string? Contacto2_Vinculo { get; set; }
+
+    // Paso 5 · Retiro del estudiante
+    // ¿Autorizado para salir solo al finalizar la jornada? (Si / No)
+    public string? SalidaSolo { get; set; }
+
+    public string? Retiro1_Rut { get; set; }
+    public string? Retiro1_Vinculo { get; set; }
+
+    public string? Retiro2_Rut { get; set; }
+    public string? Retiro2_Vinculo { get; set; }
+
+    public string? Retiro3_Rut { get; set; }
+    public string? Retiro3_Vinculo { get; set; }
+
+    // Paso 6 · Datos médicos
+    // ¿Cuenta con alguna situación médica? (Si / No)
+    public string? TieneSituacionMedica { get; set; }
+
+    public string? Medica1_Identificacion { get; set; }
+    public string? Medica1_Situacion { get; set; }
+    public string? Medica1_Tratamiento { get; set; }
+
+    public string? Medica2_Identificacion { get; set; }
+    public string? Medica2_Situacion { get; set; }
+    public string? Medica2_Tratamiento { get; set; }
+
+    public string? Medica3_Identificacion { get; set; }
+    public string? Medica3_Situacion { get; set; }
+    public string? Medica3_Tratamiento { get; set; }
+
+    // ¿Condición médica que amerite salir constantemente al baño? (Si / No)
+    public string? SalidaBano { get; set; }
+
+    // Autorización de paracetamol de la ficha vigente (Si / No)
+    public string? AutorizaParacetamol { get; set; }
 }
