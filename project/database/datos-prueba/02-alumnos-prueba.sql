@@ -89,24 +89,24 @@ insert into estudiante_persona (estudiante_id, persona_id, parentesco, vinculo,
                                 tipo_apoderado, tiene_restriccion)
 select e.id, p.id, v.parentesco, v.vinculo, v.apoderado, v.restriccion
 from (values
-    ('20.114.567-8', '15.887.654-K', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('20.114.567-8', '16.754.321-9', 'PADRE', NULL, SECUNDARIO, NULL),
-    ('21.456.789-K', '17.234.567-0', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('21.456.789-K', '18.456.789-K', 'PADRE', NULL, SECUNDARIO, NULL),
-    ('22.334.455-0', '19.123.456-1', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('23.001.122-2', '14.567.890-0', 'MADRE', NULL, PRINCIPAL, FALSE),
+    ('20.114.567-8', '15.887.654-K', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('20.114.567-8', '16.754.321-9', 'PADRE', NULL, 'SECUNDARIO', NULL),
+    ('21.456.789-K', '17.234.567-0', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('21.456.789-K', '18.456.789-K', 'PADRE', NULL, 'SECUNDARIO', NULL),
+    ('22.334.455-0', '19.123.456-1', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('23.001.122-2', '14.567.890-0', 'MADRE', NULL, 'PRINCIPAL', FALSE),
     ('23.001.122-2', '13.889.900-4', 'PADRE', NULL, NULL, NULL),
     ('24.455.667-1', '15.223.344-2', 'MADRE', NULL, NULL, TRUE),
-    ('24.455.667-1', '16.987.654-1', 'PADRE', NULL, PRINCIPAL, NULL),
-    ('24.455.667-1', '17.112.233-3', 'OTRO', 'tía', SECUNDARIO, NULL),
-    ('25.123.456-6', '18.665.544-3', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('25.123.456-6', '17.667.788-0', 'PADRE', NULL, SECUNDARIO, NULL),
-    ('23.667.788-5', '19.445.566-6', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('24.778.899-9', '20.556.677-5', 'MADRE', NULL, PRINCIPAL, FALSE),
+    ('24.455.667-1', '16.987.654-1', 'PADRE', NULL, 'PRINCIPAL', NULL),
+    ('24.455.667-1', '17.112.233-3', 'OTRO', 'tía', 'SECUNDARIO', NULL),
+    ('25.123.456-6', '18.665.544-3', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('25.123.456-6', '17.667.788-0', 'PADRE', NULL, 'SECUNDARIO', NULL),
+    ('23.667.788-5', '19.445.566-6', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('24.778.899-9', '20.556.677-5', 'MADRE', NULL, 'PRINCIPAL', FALSE),
     ('24.778.899-9', '19.778.899-2', 'PADRE', NULL, NULL, NULL),
-    ('22.998.877-8', '16.665.544-7', 'MADRE', NULL, PRINCIPAL, FALSE),
-    ('22.998.877-8', '15.556.677-9', 'PADRE', NULL, SECUNDARIO, NULL),
-    ('25.889.900-8', '18.889.900-5', 'MADRE', NULL, PRINCIPAL, NULL)
+    ('22.998.877-8', '16.665.544-7', 'MADRE', NULL, 'PRINCIPAL', FALSE),
+    ('22.998.877-8', '15.556.677-9', 'PADRE', NULL, 'SECUNDARIO', NULL),
+    ('25.889.900-8', '18.889.900-5', 'MADRE', NULL, 'PRINCIPAL', NULL)
 ) as v(est_run, per_run, parentesco, vinculo, apoderado, restriccion)
 join estudiante e on e.identificador = normalizar_rut(v.est_run)
 join persona    p on p.identificador = normalizar_rut(v.per_run)
