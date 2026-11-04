@@ -1,14 +1,30 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
+@using Microsoft.Extensions.Configuration
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Inicio";
+
+    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "revisión";
     var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role)
         .Select(c => c.Value)
         .OrderBy(r => r)
         .ToList();
+
+    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeFuncionarios = !exigirLogin || User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
+}
+
+@if (!exigirLogin)
+{
+    <div class="acceso__info" role="status">
+        Modo revisión: el inicio de sesión está desactivado temporalmente.
+        Para exigirlo, ponga <code>Seguridad:ExigirInicioSesion</code> en <code>true</code>.
+    </div>
 }
 
 <div class="admin__tarjeta">
-    <h1 class="admin__titulo-seccion">Hola, @(User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name)</h1>
+    <h1 class="admin__titulo-seccion">Hola, @nombre</h1>
     <p class="admin__ayuda">
         Acceso de funcionarios al Portal de Matrícula. Las secciones disponibles dependen de su rol.
     </p>
@@ -16,7 +32,7 @@
     <div>
         @if (roles.Count == 0)
         {
-            <span class="admin__ayuda">Su cuenta no tiene roles vigentes. Solicítelos a Administración TI.</span>
+            <span class="admin__ayuda">Sin roles activos en esta sesión.</span>
         }
         @foreach (var rol in roles)
         {
@@ -25,7 +41,7 @@
     </div>
 </div>
 
-@if (User.HasClaim("permiso", "GENERAL:CREAR"))
+@if (puedeMatricula)
 {
     <div class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Matrícula</h2>
@@ -34,11 +50,11 @@
     </div>
 }
 
-@if (User.HasClaim("permiso", "ADMIN:ADMINISTRAR"))
+@if (puedeFuncionarios)
 {
     <div class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Funcionarios</h2>
-        <p class="admin__ayuda">Cuentas, roles, desactivaciones y cierre de roles.</p>
+        <p class="admin__ayuda">Cuentas, roles, desactivaciones y cierre de roles. Requiere la base de datos configurada.</p>
         <a class="admin__boton admin__boton--primario" asp-controller="Funcionarios" asp-action="Index">Administrar funcionarios</a>
     </div>
 }

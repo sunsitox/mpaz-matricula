@@ -1,4 +1,5 @@
 using MarcelaPaz.Domain.Entidades;
+using System.Data.Common;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
 using MarcelaPaz.Web.Seguridad;
@@ -41,6 +42,19 @@ public class FuncionariosController : Controller
 
     [HttpGet("")]
     public async Task<IActionResult> Index()
+    {
+        try
+        {
+            return await ListarAsync();
+        }
+        catch (DbException)
+        {
+            TempData["Aviso"] = "No se pudo conectar con la base de datos. Revise ConnectionStrings:Default.";
+            return View(new List<FuncionarioListado>());
+        }
+    }
+
+    private async Task<IActionResult> ListarAsync()
     {
         var hoy = DateOnly.FromDateTime(DateTime.Today);
 

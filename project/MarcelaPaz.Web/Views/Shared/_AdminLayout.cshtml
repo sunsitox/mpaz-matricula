@@ -1,5 +1,5 @@
 @{
-    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name;
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "Modo revisión (sin login)";
 }
 <!DOCTYPE html>
 <html lang="es">

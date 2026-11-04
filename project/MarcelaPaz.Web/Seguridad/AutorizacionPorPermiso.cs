@@ -4,6 +4,21 @@ using Microsoft.Extensions.Options;
 namespace MarcelaPaz.Web.Seguridad;
 
 /// <summary>
+/// Interruptor temporal de seguridad. Con <see cref="ExigirInicioSesion"/> en false
+/// las políticas dejan pasar sin sesión, para revisar la interfaz mientras se
+/// ajustan los estilos. En true vuelve el acceso obligatorio.
+/// </summary>
+public sealed class ConfiguracionSeguridad
+{
+    public ConfiguracionSeguridad(bool exigirInicioSesion)
+    {
+        ExigirInicioSesion = exigirInicioSesion;
+    }
+
+    public bool ExigirInicioSesion { get; }
+}
+
+/// <summary>
 /// Exige un permiso concreto (área + acción) calculado desde <c>rol_permiso</c>.
 /// El nombre de la política se escribe "Permiso:AREA:ACCION".
 /// </summary>
@@ -28,19 +43,32 @@ public sealed class PermisoPolicyProvider : IAuthorizationPolicyProvider
 {
     public const string Prefijo = "Permiso:";
 
-    private readonly DefaultAuthorizationPolicyProvider _respaldo;
+    /// <summary>Política que no exige autenticación ni permisos (modo revisión).</summary>
+    private static readonly AuthorizationPolicy Abierta =
+        new AuthorizationPolicyBuilder().RequireAssertion(_ => true).Build();
 
-    public PermisoPolicyProvider(IOptions<AuthorizationOptions> opciones)
+    private readonly DefaultAuthorizationPolicyProvider _respaldo;
+    private readonly ConfiguracionSeguridad _seguridad;
+
+    public PermisoPolicyProvider(IOptions<AuthorizationOptions> opciones, ConfiguracionSeguridad seguridad)
     {
         _respaldo = new DefaultAuthorizationPolicyProvider(opciones);
+        _seguridad = seguridad;
     }
 
-    public Task<AuthorizationPolicy> GetDefaultPolicyAsync() => _respaldo.GetDefaultPolicyAsync();
+    public Task<AuthorizationPolicy> GetDefaultPolicyAsync() =>
+        _seguridad.ExigirInicioSesion ? _respaldo.GetDefaultPolicyAsync() : Task.FromResult(Abierta);
 
-    public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() => _respaldo.GetFallbackPolicyAsync();
+    public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() =>
+        _seguridad.ExigirInicioSesion ? _respaldo.GetFallbackPolicyAsync() : Task.FromResult<AuthorizationPolicy?>(Abierta);
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string nombre)
     {
+        if (!_seguridad.ExigirInicioSesion)
+        {
+            return Task.FromResult<AuthorizationPolicy?>(Abierta);
+        }
+
         if (nombre.StartsWith(Prefijo, StringComparison.Ordinal))
         {
             var partes = nombre.Split(':');
@@ -96,8 +124,6 @@ public sealed class PermisoAuthorizationHandler : AuthorizationHandler<PermisoRe
             area: requisito.Area,
             recurso: Truncar(ruta, 63),
             detalle: $"{{\"permiso_requerido\":\"{esperado}\"}}");
-
-        // Sin context.Fail() el resultado sigue siendo denegado por defecto.
     }
 
     private static string Truncar(string valor, int largo) =>

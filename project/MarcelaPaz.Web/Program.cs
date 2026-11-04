@@ -66,6 +66,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthorization();
 
+// Interruptor temporal: mientras se revisan estilos se puede navegar sin iniciar sesión.
+// Para volver al acceso obligatorio, poner "Seguridad:ExigirInicioSesion": true.
+var exigirInicioSesion = builder.Configuration.GetValue("Seguridad:ExigirInicioSesion", false);
+builder.Services.AddSingleton(new ConfiguracionSeguridad(exigirInicioSesion));
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
