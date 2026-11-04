@@ -30,6 +30,14 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<RegistroAcceso> RegistrosAcceso => Set<RegistroAcceso>();
 
+    public DbSet<Estudiante> Estudiantes => Set<Estudiante>();
+
+    public DbSet<MatriculaAnual> Matriculas => Set<MatriculaAnual>();
+
+    public DbSet<Curso> Cursos => Set<Curso>();
+
+    public DbSet<Comuna> Comunas => Set<Comuna>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -104,6 +112,56 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Detalle).HasColumnName("detalle").HasColumnType("jsonb");
             e.Property(x => x.Ip).HasColumnName("ip");
             e.Property(x => x.OcurridoEn).HasColumnName("ocurrido_en").HasDefaultValueSql("now()");
+        });
+
+        // Registro único de estudiantes: sólo lectura para la ficha.
+        builder.Entity<Estudiante>(e =>
+        {
+            e.ToTable("estudiante", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.TipoIdentificador).HasColumnName("tipo_identificador").HasMaxLength(10).IsRequired();
+            e.Property(x => x.Identificador).HasColumnName("identificador").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Nombres).HasColumnName("nombres").HasMaxLength(120).IsRequired();
+            e.Property(x => x.ApellidoPaterno).HasColumnName("apellido_paterno").HasMaxLength(80).IsRequired();
+            e.Property(x => x.ApellidoMaterno).HasColumnName("apellido_materno").HasMaxLength(80);
+            e.Property(x => x.FechaNacimiento).HasColumnName("fecha_nacimiento");
+            e.Property(x => x.Nacionalidad).HasColumnName("nacionalidad").HasMaxLength(60).IsRequired();
+            e.Property(x => x.Domicilio).HasColumnName("domicilio").HasMaxLength(255).IsRequired();
+            e.Property(x => x.ComunaId).HasColumnName("comuna_id");
+            e.Property(x => x.SaleSoloFinalJornada).HasColumnName("sale_solo_final_jornada");
+            e.HasOne(x => x.Comuna).WithMany().HasForeignKey(x => x.ComunaId);
+        });
+
+        // Historial de matrículas: cada año su propio registro.
+        builder.Entity<MatriculaAnual>(e =>
+        {
+            e.ToTable("matricula_anual", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Anio).HasColumnName("anio");
+            e.Property(x => x.CursoId).HasColumnName("curso_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(20).IsRequired();
+            e.HasOne(x => x.Curso).WithMany().HasForeignKey(x => x.CursoId);
+        });
+
+        builder.Entity<Curso>(e =>
+        {
+            e.ToTable("curso", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(30).IsRequired();
+            e.Property(x => x.Activo).HasColumnName("activo");
+        });
+
+        builder.Entity<Comuna>(e =>
+        {
+            e.ToTable("comuna", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(80).IsRequired();
         });
     }
 }

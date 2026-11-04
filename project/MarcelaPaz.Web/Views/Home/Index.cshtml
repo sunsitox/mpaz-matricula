@@ -45,8 +45,11 @@
 {
     <div class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Matrícula</h2>
-        <p class="admin__ayuda">Captura de la ficha de matrícula 2027.</p>
-        <a class="admin__boton admin__boton--primario" asp-controller="Ficha" asp-action="Paso" asp-route-id="1">Abrir ficha</a>
+        <p class="admin__ayuda">
+            Busque al estudiante por RUN: si ya está inscrito se abre la renovación,
+            si no está en el registro se crea una matrícula nueva.
+        </p>
+        <a class="admin__boton admin__boton--primario" asp-controller="Ficha" asp-action="Buscar">Buscar estudiante</a>
     </div>
 }
 

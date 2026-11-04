@@ -1,0 +1,72 @@
+@model MarcelaPaz.Web.Models.BusquedaFicha
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Buscar estudiante";
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Matrícula 2027</h1>
+    <p class="admin__ayuda">
+        Busque al estudiante por RUN. Si ya tuvo matrícula en un año anterior se abre la
+        renovación con sus datos; si no está registrado, se inicia una matrícula nueva.
+    </p>
+
+    <form method="get" asp-controller="Ficha" asp-action="Buscar">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="rut">RUN del estudiante</label>
+            <input class="acceso__input" id="rut" name="rut" value="@Model.Rut"
+                   placeholder="Ej: 20.114.567-8" autocomplete="off" />
+        </div>
+        <button type="submit" class="admin__boton admin__boton--primario">Buscar</button>
+    </form>
+</div>
+
+@if (Model.Buscado)
+{
+    <div class="admin__tarjeta">
+        @if (!Model.Existe)
+        {
+            <h2 class="admin__titulo-seccion">Sin registro</h2>
+            <p class="admin__ayuda">
+                No hay un estudiante con el RUN <strong>@Model.Rut</strong> en el registro único.
+                Corresponde una matrícula nueva.
+            </p>
+            <form method="post" asp-controller="Ficha" asp-action="Nueva">
+                <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
+            </form>
+        }
+        else if (Model.YaMatriculado)
+        {
+            <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
+            <p class="admin__ayuda">
+                Ya tiene matrícula 2027 en estado <strong>@Model.EstadoVigente</strong>.
+                No se crea un segundo expediente para el mismo año.
+            </p>
+            <a class="admin__boton" asp-controller="Home" asp-action="Index">Volver al inicio</a>
+        }
+        else if (Model.PuedeRenovar)
+        {
+            <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
+            <p class="admin__ayuda">
+                Estudiante ya inscrito: matrícula @Model.AnioAnterior@(string.IsNullOrWhiteSpace(Model.CursoAnterior) ? "" : $" · {Model.CursoAnterior}").
+                La renovación 2027 abre un expediente nuevo con estos datos; la matrícula
+                anterior queda intacta.
+            </p>
+            <form method="post" asp-controller="Ficha" asp-action="Renovar">
+                <input type="hidden" name="id" value="@Model.EstudianteId" />
+                <button type="submit" class="admin__boton admin__boton--primario">Renovar matrícula 2027</button>
+            </form>
+        }
+        else
+        {
+            <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
+            <p class="admin__ayuda">
+                Está en el registro de estudiantes, pero no tiene matrícula anterior.
+                Corresponde una matrícula nueva.
+            </p>
+            <form method="post" asp-controller="Ficha" asp-action="Nueva">
+                <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
+            </form>
+        }
+    </div>
+}

@@ -35,6 +35,17 @@
         }
     </header>
 
+    @if (ViewData["Modo"] is string modo)
+    {
+        <div class="wizard__modo" role="status">
+            <strong>@modo</strong>
+            @if (ViewData["ModoDetalle"] is string detalleModo)
+            {
+                <span class="wizard__modo-detalle">@detalleModo</span>
+            }
+        </div>
+    }
+
     <!-- Stepper de progreso -->
     <nav class="wizard__pasos" aria-label="Pasos de la ficha">
         @for (var i = 1; i <= 7; i++)
