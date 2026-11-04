@@ -3,47 +3,60 @@
     Layout = "_WizardLayout";
 }
 <h1 class="wizard__titulo-paso">Paso 4 · Contactos de emergencia</h1>
-<p class="wizard__ayuda">Hasta dos contactos. Por ahora ningún campo es obligatorio.</p>
+<p class="wizard__ayuda">
+    Hasta dos contactos, en bloques desplegables.
+    Por ahora ninguno es obligatorio.
+</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="4" method="post">
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 01</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Contacto1_Identificacion" class="acceso__etiqueta">Identificación (nombre y apellido)</label>
-                <input asp-for="Contacto1_Identificacion" class="acceso__input" autocomplete="off" />
+    <details class="wizard__desplegable" open>
+        <summary class="wizard__desplegable-resumen">
+            Registro 01 · Contacto de emergencia
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Contacto1_Identificacion" class="acceso__etiqueta">Identificación (nombre y apellido)</label>
+                    <input asp-for="Contacto1_Identificacion" class="acceso__input" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Contacto1_Telefono" class="acceso__etiqueta">Teléfono</label>
+                    <input asp-for="Contacto1_Telefono" type="tel" class="acceso__input"
+                           placeholder="Ej: +56 9 6123 4567" autocomplete="off" />
+                </div>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Contacto1_Telefono" class="acceso__etiqueta">Teléfono</label>
-                <input asp-for="Contacto1_Telefono" type="tel" class="acceso__input"
-                       placeholder="Ej: +56 9 6123 4567" autocomplete="off" />
+                <label asp-for="Contacto1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                <input asp-for="Contacto1_Vinculo" class="acceso__input" placeholder="Ej: tía" autocomplete="off" />
             </div>
         </div>
-        <div class="acceso__campo">
-            <label asp-for="Contacto1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
-            <input asp-for="Contacto1_Vinculo" class="acceso__input" placeholder="Ej: tía" autocomplete="off" />
-        </div>
-    </fieldset>
+    </details>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 02</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Contacto2_Identificacion" class="acceso__etiqueta">Identificación (nombre y apellido)</label>
-                <input asp-for="Contacto2_Identificacion" class="acceso__input" autocomplete="off" />
+    <details class="wizard__desplegable">
+        <summary class="wizard__desplegable-resumen">
+            Registro 02 · Contacto de emergencia
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Contacto2_Identificacion" class="acceso__etiqueta">Identificación (nombre y apellido)</label>
+                    <input asp-for="Contacto2_Identificacion" class="acceso__input" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Contacto2_Telefono" class="acceso__etiqueta">Teléfono</label>
+                    <input asp-for="Contacto2_Telefono" type="tel" class="acceso__input"
+                           placeholder="Ej: +56 9 6123 4567" autocomplete="off" />
+                </div>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Contacto2_Telefono" class="acceso__etiqueta">Teléfono</label>
-                <input asp-for="Contacto2_Telefono" type="tel" class="acceso__input"
-                       placeholder="Ej: +56 9 6123 4567" autocomplete="off" />
+                <label asp-for="Contacto2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                <input asp-for="Contacto2_Vinculo" class="acceso__input" placeholder="Ej: abuelo" autocomplete="off" />
             </div>
         </div>
-        <div class="acceso__campo">
-            <label asp-for="Contacto2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
-            <input asp-for="Contacto2_Vinculo" class="acceso__input" placeholder="Ej: abuelo" autocomplete="off" />
-        </div>
-    </fieldset>
+    </details>
 
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="3">Volver</a>

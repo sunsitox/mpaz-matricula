@@ -922,27 +922,6 @@ select.acceso__input {
     font-size: 0.95rem;
 }
 
-/* Registros numerados de los pasos 4 a 6 (contactos, retiro y datos médicos) */
-.wizard__registro {
-    border: 1px solid var(--color-input-border);
-    border-radius: 8px;
-    padding: 1.25rem 1.25rem 0.25rem;
-    margin: 0 0 1.5rem;
-}
-
-.wizard__registro-titulo {
-    padding: 0 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-}
-
-.wizard__registro .wizard__fila {
-    margin-bottom: 1rem;
-}
-
 /* Salida de la ficha desde el encabezado del wizard */
 .wizard__acciones {
     margin-left: auto;

@@ -3,7 +3,10 @@
     Layout = "_WizardLayout";
 }
 <h1 class="wizard__titulo-paso">Paso 5 · Retiro del estudiante</h1>
-<p class="wizard__ayuda">Salida al finalizar la jornada y personas autorizadas a retirar. Por ahora nada es obligatorio.</p>
+<p class="wizard__ayuda">
+    Salida al finalizar la jornada y personas autorizadas a retirar, en bloques desplegables.
+    Por ahora nada es obligatorio.
+</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="5" method="post">
 
@@ -26,47 +29,62 @@
 
     <p class="wizard__restriccion-pregunta">Durante la jornada, el estudiante solo puede ser retirado por:</p>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 01</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Retiro1_Rut" class="acceso__etiqueta">RUT</label>
-                <input asp-for="Retiro1_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
-            </div>
-            <div class="acceso__campo">
-                <label asp-for="Retiro1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
-                <input asp-for="Retiro1_Vinculo" class="acceso__input" placeholder="Ej: madre" autocomplete="off" />
+    <details class="wizard__desplegable" open>
+        <summary class="wizard__desplegable-resumen">
+            Registro 01 · Persona autorizada a retirar
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Retiro1_Rut" class="acceso__etiqueta">RUT</label>
+                    <input asp-for="Retiro1_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Retiro1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                    <input asp-for="Retiro1_Vinculo" class="acceso__input" placeholder="Ej: madre" autocomplete="off" />
+                </div>
             </div>
         </div>
-    </fieldset>
+    </details>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 02</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Retiro2_Rut" class="acceso__etiqueta">RUT</label>
-                <input asp-for="Retiro2_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
-            </div>
-            <div class="acceso__campo">
-                <label asp-for="Retiro2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
-                <input asp-for="Retiro2_Vinculo" class="acceso__input" autocomplete="off" />
+    <details class="wizard__desplegable">
+        <summary class="wizard__desplegable-resumen">
+            Registro 02 · Persona autorizada a retirar
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Retiro2_Rut" class="acceso__etiqueta">RUT</label>
+                    <input asp-for="Retiro2_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Retiro2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                    <input asp-for="Retiro2_Vinculo" class="acceso__input" autocomplete="off" />
+                </div>
             </div>
         </div>
-    </fieldset>
+    </details>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 03</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Retiro3_Rut" class="acceso__etiqueta">RUT</label>
-                <input asp-for="Retiro3_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
-            </div>
-            <div class="acceso__campo">
-                <label asp-for="Retiro3_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
-                <input asp-for="Retiro3_Vinculo" class="acceso__input" autocomplete="off" />
+    <details class="wizard__desplegable">
+        <summary class="wizard__desplegable-resumen">
+            Registro 03 · Persona autorizada a retirar
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Retiro3_Rut" class="acceso__etiqueta">RUT</label>
+                    <input asp-for="Retiro3_Rut" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Retiro3_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
+                    <input asp-for="Retiro3_Vinculo" class="acceso__input" autocomplete="off" />
+                </div>
             </div>
         </div>
-    </fieldset>
+    </details>
 
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="4">Volver</a>

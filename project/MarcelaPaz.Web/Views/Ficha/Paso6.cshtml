@@ -3,7 +3,10 @@
     Layout = "_WizardLayout";
 }
 <h1 class="wizard__titulo-paso">Paso 6 · Datos médicos</h1>
-<p class="wizard__ayuda">Información médica relevante para la atención escolar. Por ahora nada es obligatorio.</p>
+<p class="wizard__ayuda">
+    Información médica relevante para la atención escolar, con cada situación en un bloque desplegable.
+    Por ahora nada es obligatorio.
+</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="6" method="post">
 
@@ -24,86 +27,101 @@
         </div>
     </fieldset>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 01</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Medica1_Identificacion" class="acceso__etiqueta">Identificación</label>
-                <input asp-for="Medica1_Identificacion" class="acceso__input" placeholder="Ej: asma" autocomplete="off" />
+    <details class="wizard__desplegable" open>
+        <summary class="wizard__desplegable-resumen">
+            Registro 01 · Situación médica
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Medica1_Identificacion" class="acceso__etiqueta">Identificación</label>
+                    <input asp-for="Medica1_Identificacion" class="acceso__input" placeholder="Ej: asma" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Medica1_Situacion" class="acceso__etiqueta">Situación médica</label>
+                    <input asp-for="Medica1_Situacion" class="acceso__input" autocomplete="off" />
+                </div>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Medica1_Situacion" class="acceso__etiqueta">Situación médica</label>
-                <input asp-for="Medica1_Situacion" class="acceso__input" autocomplete="off" />
+                <span class="acceso__etiqueta">¿En tratamiento?</span>
+                <div class="wizard__radios">
+                    <label class="acceso__radio">
+                        <input asp-for="Medica1_Tratamiento" type="radio" value="Si" />
+                        <span>Si</span>
+                    </label>
+                    <label class="acceso__radio">
+                        <input asp-for="Medica1_Tratamiento" type="radio" value="No" />
+                        <span>No</span>
+                    </label>
+                </div>
             </div>
         </div>
-        <div class="acceso__campo">
-            <span class="acceso__etiqueta">¿En tratamiento?</span>
-            <div class="wizard__radios">
-                <label class="acceso__radio">
-                    <input asp-for="Medica1_Tratamiento" type="radio" value="Si" />
-                    <span>Si</span>
-                </label>
-                <label class="acceso__radio">
-                    <input asp-for="Medica1_Tratamiento" type="radio" value="No" />
-                    <span>No</span>
-                </label>
-            </div>
-        </div>
-    </fieldset>
+    </details>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 02</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Medica2_Identificacion" class="acceso__etiqueta">Identificación</label>
-                <input asp-for="Medica2_Identificacion" class="acceso__input" placeholder="Ej: alergia alimentaria" autocomplete="off" />
+    <details class="wizard__desplegable">
+        <summary class="wizard__desplegable-resumen">
+            Registro 02 · Situación médica
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Medica2_Identificacion" class="acceso__etiqueta">Identificación</label>
+                    <input asp-for="Medica2_Identificacion" class="acceso__input" placeholder="Ej: alergia alimentaria" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Medica2_Situacion" class="acceso__etiqueta">Situación médica</label>
+                    <input asp-for="Medica2_Situacion" class="acceso__input" autocomplete="off" />
+                </div>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Medica2_Situacion" class="acceso__etiqueta">Situación médica</label>
-                <input asp-for="Medica2_Situacion" class="acceso__input" autocomplete="off" />
+                <span class="acceso__etiqueta">¿En tratamiento?</span>
+                <div class="wizard__radios">
+                    <label class="acceso__radio">
+                        <input asp-for="Medica2_Tratamiento" type="radio" value="Si" />
+                        <span>Si</span>
+                    </label>
+                    <label class="acceso__radio">
+                        <input asp-for="Medica2_Tratamiento" type="radio" value="No" />
+                        <span>No</span>
+                    </label>
+                </div>
             </div>
         </div>
-        <div class="acceso__campo">
-            <span class="acceso__etiqueta">¿En tratamiento?</span>
-            <div class="wizard__radios">
-                <label class="acceso__radio">
-                    <input asp-for="Medica2_Tratamiento" type="radio" value="Si" />
-                    <span>Si</span>
-                </label>
-                <label class="acceso__radio">
-                    <input asp-for="Medica2_Tratamiento" type="radio" value="No" />
-                    <span>No</span>
-                </label>
-            </div>
-        </div>
-    </fieldset>
+    </details>
 
-    <fieldset class="wizard__registro">
-        <legend class="wizard__registro-titulo">Registro 03</legend>
-        <div class="wizard__fila">
-            <div class="acceso__campo">
-                <label asp-for="Medica3_Identificacion" class="acceso__etiqueta">Identificación</label>
-                <input asp-for="Medica3_Identificacion" class="acceso__input" autocomplete="off" />
+    <details class="wizard__desplegable">
+        <summary class="wizard__desplegable-resumen">
+            Registro 03 · Situación médica
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Medica3_Identificacion" class="acceso__etiqueta">Identificación</label>
+                    <input asp-for="Medica3_Identificacion" class="acceso__input" autocomplete="off" />
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Medica3_Situacion" class="acceso__etiqueta">Situación médica</label>
+                    <input asp-for="Medica3_Situacion" class="acceso__input" autocomplete="off" />
+                </div>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Medica3_Situacion" class="acceso__etiqueta">Situación médica</label>
-                <input asp-for="Medica3_Situacion" class="acceso__input" autocomplete="off" />
+                <span class="acceso__etiqueta">¿En tratamiento?</span>
+                <div class="wizard__radios">
+                    <label class="acceso__radio">
+                        <input asp-for="Medica3_Tratamiento" type="radio" value="Si" />
+                        <span>Si</span>
+                    </label>
+                    <label class="acceso__radio">
+                        <input asp-for="Medica3_Tratamiento" type="radio" value="No" />
+                        <span>No</span>
+                    </label>
+                </div>
             </div>
         </div>
-        <div class="acceso__campo">
-            <span class="acceso__etiqueta">¿En tratamiento?</span>
-            <div class="wizard__radios">
-                <label class="acceso__radio">
-                    <input asp-for="Medica3_Tratamiento" type="radio" value="Si" />
-                    <span>Si</span>
-                </label>
-                <label class="acceso__radio">
-                    <input asp-for="Medica3_Tratamiento" type="radio" value="No" />
-                    <span>No</span>
-                </label>
-            </div>
-        </div>
-    </fieldset>
+    </details>
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Uso de baños (SI/NO)</legend>
