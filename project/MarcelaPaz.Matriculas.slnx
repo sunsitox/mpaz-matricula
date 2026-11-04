@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MarcelaPaz.Application/MarcelaPaz.Application.csproj" />
+  <Project Path="MarcelaPaz.Domain/MarcelaPaz.Domain.csproj" />
+  <Project Path="MarcelaPaz.Infrastructure/MarcelaPaz.Infrastructure.csproj" />
+  <Project Path="MarcelaPaz.Web/MarcelaPaz.Web.csproj" />
+</Solution>

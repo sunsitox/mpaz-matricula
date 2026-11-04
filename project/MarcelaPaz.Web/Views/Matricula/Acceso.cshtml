@@ -1,0 +1,101 @@
+@model MarcelaPaz.Web.Models.AccesoForm
+@{
+    Layout = null;
+    ViewData["Title"] = "Acceso · Matrícula 2027";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] as string) - Escuela Básica Escritora Marcela Paz</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="acceso">
+    <div class="acceso__grid">
+
+        <!-- Panel izquierdo: orientación simple (mockup 01) -->
+        <aside class="acceso__panel">
+            <!-- Logo oficial del colegio: emblema circular con borde dorado -->
+            <img src="~/images/logo-mpaz.png"
+                 alt="Logo Escuela Escritora Marcela Paz"
+                 class="acceso__logo-img"
+                 width="112" />
+
+            <div class="acceso__panel-texto">
+                <h1 class="acceso__titulo">Revisar los datos<br />de matrícula</h1>
+                <div class="acceso__regla" aria-hidden="true"></div>
+                <p class="acceso__panel-parrafo">
+                    Primero, confirme que usted es el apoderado
+                    del estudiante o la estudiante.
+                </p>
+                <ol class="acceso__pasos">
+                    <li>Necesitará el RUT del estudiante.</li>
+                    <li>Necesitará su propio RUT.</li>
+                </ol>
+            </div>
+
+            <footer class="acceso__panel-pie">
+                Ley 19.628: protección de datos personales
+            </footer>
+        </aside>
+
+        <!-- Panel derecho: formulario de acceso -->
+        <main class="acceso__form-area">
+            <div class="acceso__card">
+                <h2 class="acceso__subtitulo">Verifiquemos su identidad</h2>
+                <p class="acceso__ayuda-titulo">
+                    Si no logra ingresar, puede pedir ayuda en la secretaría del colegio.
+                </p>
+
+                @if (TempData["Aviso"] is string aviso)
+                {
+                    <div class="acceso__info" role="status">@aviso</div>
+                }
+
+                <form asp-controller="Matricula" asp-action="Acceso" method="post">
+                    <!-- Validaciones generales del formulario -->
+                    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+
+                    <!-- RUT del Estudiante -->
+                    <div class="acceso__campo">
+                        <label asp-for="RutEstudiante" class="acceso__etiqueta">RUT del estudiante</label>
+                        <input asp-for="RutEstudiante"
+                               class="acceso__input"
+                               placeholder="12.345.678-5"
+                               autocomplete="off" />
+                    </div>
+
+                    <!-- Fecha de Nacimiento del estudiante -->
+                    <div class="acceso__campo">
+                        <label asp-for="FechaNacimientoEstudiante" class="acceso__etiqueta">Fecha de Nacimiento del Estudiante</label>
+                        <input asp-for="FechaNacimientoEstudiante"
+                               type="date"
+                               class="acceso__input" />
+                    </div>
+
+                    <!-- Rut del Apoderado -->
+                    <div class="acceso__campo">
+                        <label asp-for="RutApoderado" class="acceso__etiqueta">RUT del apoderado</label>
+                        <input asp-for="RutApoderado"
+                               class="acceso__input"
+                               placeholder="9.876.543-2"
+                               autocomplete="off" />
+                    </div>
+
+                    <button type="submit" class="acceso__boton">Ingresar</button>
+                </form>
+
+                <div class="acceso__aviso">
+                    Si los datos no coinciden, se bloqueará el ingreso por un tiempo.
+                </div>
+
+                <div class="acceso__ayuda">
+                    <p>No recuerda un dato. Pase por la secretaría del colegio con su carnet.</p>
+                    <p>No necesitamos correo electrónico para este portal.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

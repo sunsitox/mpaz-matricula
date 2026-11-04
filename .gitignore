@@ -1,0 +1,10 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# Locales y secretos
+appsettings.*.local.json
+*.db
+*.log

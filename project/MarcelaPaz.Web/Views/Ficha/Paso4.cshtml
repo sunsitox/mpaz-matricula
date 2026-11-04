@@ -1,0 +1,19 @@
+@{
+    Layout = "_WizardLayout";
+}
+<h1 class="wizard__titulo-paso">Paso 4 · Contactos de emergencia</h1>
+<p class="wizard__ayuda">
+    Paso pendiente de construcción: la tabla de contactos (registros 01 y 02 —
+    identificación, teléfono y vínculo con el estudiante) se armará con el colegio.
+</p>
+
+<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="4" method="post">
+    <div class="acceso__aviso">
+        Contenido de este paso sin construir todavía. Puede avanzar para revisar la estructura completa.
+    </div>
+
+    <div class="wizard__botones">
+        <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="3">Volver</a>
+        <button type="submit" class="acceso__boton wizard__guardar">Guardar y continuar</button>
+    </div>
+</form>

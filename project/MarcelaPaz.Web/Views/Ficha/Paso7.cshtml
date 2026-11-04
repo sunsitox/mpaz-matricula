@@ -1,0 +1,44 @@
+@model MarcelaPaz.Web.Models.FichaForm
+@{
+    Layout = "_WizardLayout";
+    var datos = (Dictionary<string, string>)(ViewData["Borrador"] ?? new Dictionary<string, string>());
+
+    var orden = new[]
+    {
+        "nombres", "apellido paterno", "apellido materno", "cédula de identidad",
+        "fecha nacimiento", "nacionalidad", "domicilio", "comuna",
+        "madre: nombre y apellido", "madre: cédula de identidad", "madre: teléfono",
+        "madre: escolaridad", "madre: domicilio", "madre: correo electrónico",
+        "restricción madre (SI/NO)",
+        "padre: nombre y apellido", "padre: cédula de identidad", "padre: teléfono",
+        "padre: escolaridad", "padre: domicilio", "padre: correo electrónico",
+    };
+}
+<h1 class="wizard__titulo-paso">Paso 7 · Revisar y confirmar</h1>
+<p class="wizard__ayuda">Estos son los datos del borrador. Revise y confirme.</p>
+
+@if (datos.Count == 0)
+{
+    <div class="acceso__aviso">
+        Aun no hay datos en el borrador. Vuelva a un paso anterior antes de confirmar.
+    </div>
+}
+else
+{
+    <dl class="wizard__resumen">
+        @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
+        {
+            <div class="wizard__resumen-item">
+                <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
+                <dd>@valor</dd>
+            </div>
+        }
+    </dl>
+}
+
+<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
+    <div class="wizard__botones">
+        <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="6">Volver</a>
+        <button type="submit" class="acceso__boton wizard__guardar">Enviar a revisión</button>
+    </div>
+</form>
