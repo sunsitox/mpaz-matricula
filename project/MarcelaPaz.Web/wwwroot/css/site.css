@@ -942,3 +942,27 @@ select.acceso__input {
 .wizard__registro .wizard__fila {
     margin-bottom: 1rem;
 }
+
+/* Salida de la ficha desde el encabezado del wizard */
+.wizard__acciones {
+    margin-left: auto;
+}
+
+.wizard__salir {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.wizard__salir:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #FFFFFF;
+    color: #FFFFFF;
+}

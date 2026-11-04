@@ -25,6 +25,10 @@
             </div>
         </div>
 
+        <div class="wizard__acciones">
+            <a class="wizard__salir" asp-controller="Home" asp-action="Index">Salir de la ficha</a>
+        </div>
+
         @if (TempData["Aviso"] is string aviso)
         {
             <div class="wizard__aviso-header" role="status">@aviso</div>
