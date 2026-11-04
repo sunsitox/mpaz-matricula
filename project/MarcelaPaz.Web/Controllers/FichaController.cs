@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -9,6 +10,7 @@ namespace MarcelaPaz.Web.Controllers;
 /// PostgreSQL ni validación de campos. Los bloques definitivos y sus campos
 /// obligatorios se definen con Dirección y Secretaría (Flujo B).
 /// </summary>
+[Authorize]
 public class FichaController : Controller
 {
     private const string ClaveBorrador = "Ficha";
@@ -16,6 +18,7 @@ public class FichaController : Controller
     // El parámetro de ruta por defecto se llama 'id' (Program.cs), así que se ocupa ese nombre:
     // GET /Ficha/Paso/{pasito mostrado}
     [HttpGet]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
     public IActionResult Paso(int? id)
     {
         var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };
@@ -31,6 +34,8 @@ public class FichaController : Controller
     /// y avanza. Los datos no se persisten en la base todavía.
     /// </summary>
     [HttpPost]
+    [Authorize(Policy = "Permiso:GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
     public IActionResult Guardar(int? id, Models.FichaForm form)
     {
         var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };

@@ -1,0 +1,12 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Sin permiso";
+}
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">No tiene permiso para esta sección</h1>
+    <p class="admin__ayuda">
+        Su rol no incluye esta acción. El intento quedó registrado en la auditoría.
+        Si la necesita para su trabajo, solicítela a Administración TI.
+    </p>
+    <a class="admin__boton" asp-controller="Home" asp-action="Index">Volver al inicio</a>
+</div>

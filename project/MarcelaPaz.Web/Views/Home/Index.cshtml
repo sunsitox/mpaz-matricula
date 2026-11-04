@@ -1,0 +1,44 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Inicio";
+    var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role)
+        .Select(c => c.Value)
+        .OrderBy(r => r)
+        .ToList();
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Hola, @(User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name)</h1>
+    <p class="admin__ayuda">
+        Acceso de funcionarios al Portal de Matrícula. Las secciones disponibles dependen de su rol.
+    </p>
+
+    <div>
+        @if (roles.Count == 0)
+        {
+            <span class="admin__ayuda">Su cuenta no tiene roles vigentes. Solicítelos a Administración TI.</span>
+        }
+        @foreach (var rol in roles)
+        {
+            <span class="admin__chip">@rol</span>
+        }
+    </div>
+</div>
+
+@if (User.HasClaim("permiso", "GENERAL:CREAR"))
+{
+    <div class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Matrícula</h2>
+        <p class="admin__ayuda">Captura de la ficha de matrícula 2027.</p>
+        <a class="admin__boton admin__boton--primario" asp-controller="Ficha" asp-action="Paso" asp-route-id="1">Abrir ficha</a>
+    </div>
+}
+
+@if (User.HasClaim("permiso", "ADMIN:ADMINISTRAR"))
+{
+    <div class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Funcionarios</h2>
+        <p class="admin__ayuda">Cuentas, roles, desactivaciones y cierre de roles.</p>
+        <a class="admin__boton admin__boton--primario" asp-controller="Funcionarios" asp-action="Index">Administrar funcionarios</a>
+    </div>
+}

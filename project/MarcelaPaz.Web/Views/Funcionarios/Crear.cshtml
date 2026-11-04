@@ -1,0 +1,55 @@
+@model MarcelaPaz.Web.Models.FuncionarioForm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Crear funcionario";
+    var roles = (List<MarcelaPaz.Domain.Entidades.Rol>)(ViewData["Roles"] ?? new List<MarcelaPaz.Domain.Entidades.Rol>());
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Crear funcionario</h1>
+    <p class="admin__ayuda">
+        Se crea la cuenta con una contraseña inicial que usted entrega en persona.
+        La persona no se registra por su cuenta.
+    </p>
+
+    <form asp-action="Crear" method="post">
+        <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+
+        <div class="acceso__campo">
+            <label asp-for="Nombre" class="acceso__etiqueta"></label>
+            <input asp-for="Nombre" class="acceso__input" autocomplete="off" />
+            <span asp-validation-for="Nombre" class="acceso__error"></span>
+        </div>
+
+        <div class="acceso__campo">
+            <label asp-for="Correo" class="acceso__etiqueta"></label>
+            <input asp-for="Correo" class="acceso__input" autocomplete="off" />
+            <span asp-validation-for="Correo" class="acceso__error"></span>
+        </div>
+
+        <div class="acceso__campo">
+            <label asp-for="Contrasena" class="acceso__etiqueta"></label>
+            <input asp-for="Contrasena" class="acceso__input" autocomplete="new-password" />
+            <span asp-validation-for="Contrasena" class="acceso__error"></span>
+        </div>
+
+        <fieldset class="acceso__campo admin__fieldset">
+            <legend class="acceso__etiqueta">Roles</legend>
+            <div class="admin__lista-roles">
+                @foreach (var rol in roles)
+                {
+                    <label class="admin__check">
+                        <input type="checkbox" name="Roles" value="@rol.Codigo"
+                               checked="@(Model.Roles.Contains(rol.Codigo))" />
+                        <span>@rol.Nombre</span>
+                    </label>
+                }
+            </div>
+        </fieldset>
+
+        <div class="admin__acciones">
+            <button type="submit" class="admin__boton admin__boton--primario">Crear funcionario</button>
+            <a class="admin__boton" asp-action="Index">Volver</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,80 @@
+@model List<MarcelaPaz.Web.Models.FuncionarioListado>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Funcionarios";
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Funcionarios</h1>
+    <p class="admin__ayuda">
+        Las cuentas las crea Administración TI. Para retirar a una persona se desactiva su cuenta
+        o se cierra su rol con fecha; nunca se borra, para conservar la trazabilidad.
+    </p>
+    <a class="admin__boton admin__boton--primario" asp-action="Crear">Crear funcionario</a>
+</div>
+
+<div class="admin__tarjeta">
+    @if (Model.Count == 0)
+    {
+        <p class="admin__ayuda">Todavía no hay funcionarios registrados.</p>
+    }
+    else
+    {
+        <table class="admin__tabla">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Roles vigentes</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var funcionario in Model)
+                {
+                    <tr>
+                        <td>@funcionario.Nombre</td>
+                        <td>@funcionario.Correo</td>
+                        <td>
+                            @if (funcionario.Roles.Count == 0)
+                            {
+                                <span class="admin__ayuda">Sin rol vigente</span>
+                            }
+                            @foreach (var rol in funcionario.Roles)
+                            {
+                                <span class="admin__chip">
+                                    @rol.Codigo
+                                    <form asp-action="CerrarRol" method="post">
+                                        <input type="hidden" name="funcionarioId" value="@funcionario.Id" />
+                                        <input type="hidden" name="rolId" value="@rol.RolId" />
+                                        <button type="submit" title="Cerrar este rol hoy">×</button>
+                                    </form>
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (funcionario.Activo)
+                            {
+                                <span class="admin__estado--activo">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="admin__estado--inactivo">Inactivo</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="CambiarEstado" method="post">
+                                <input type="hidden" name="id" value="@funcionario.Id" />
+                                <input type="hidden" name="activo" value="@(funcionario.Activo ? "false" : "true")" />
+                                <button type="submit" class="admin__boton">
+                                    @(funcionario.Activo ? "Desactivar" : "Activar")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

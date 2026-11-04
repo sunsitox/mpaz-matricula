@@ -1,0 +1,77 @@
+@model MarcelaPaz.Web.Models.LoginForm
+@{
+    Layout = null;
+    ViewData["Title"] = "Acceso funcionarios";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Portal de Matrícula 2027</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="acceso">
+    <div class="acceso__grid">
+
+        <aside class="acceso__panel">
+            <img src="~/images/logo-mpaz.svg"
+                 alt="Logo Escuela Escritora Marcela Paz"
+                 class="acceso__logo-img"
+                 width="112" />
+
+            <div class="acceso__panel-texto">
+                <h1 class="acceso__titulo">Portal de<br />Matrícula 2027</h1>
+                <div class="acceso__regla" aria-hidden="true"></div>
+                <p class="acceso__panel-parrafo">
+                    Acceso exclusivo para funcionarios de la escuela.
+                    La matrícula la ingresa Secretaría; el apoderado firma la ficha impresa.
+                </p>
+                <ol class="acceso__pasos">
+                    <li>Use su correo institucional.</li>
+                    <li>Si no tiene cuenta, solicítela a Administración TI.</li>
+                </ol>
+            </div>
+
+            <footer class="acceso__panel-pie">
+                Ley 21.719: protección de datos personales
+            </footer>
+        </aside>
+
+        <main class="acceso__form-area">
+            <div class="acceso__card">
+                <h2 class="acceso__subtitulo">Iniciar sesión</h2>
+                <p class="acceso__ayuda-titulo">Ingrese con su correo institucional y contraseña.</p>
+
+                <form asp-controller="Cuenta" asp-action="Login" method="post">
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+
+                    <div class="acceso__campo">
+                        <label asp-for="Correo" class="acceso__etiqueta"></label>
+                        <input asp-for="Correo" class="acceso__input" autocomplete="username" />
+                        <span asp-validation-for="Correo" class="acceso__error"></span>
+                    </div>
+
+                    <div class="acceso__campo">
+                        <label asp-for="Contrasena" class="acceso__etiqueta"></label>
+                        <input asp-for="Contrasena" class="acceso__input" autocomplete="current-password" />
+                        <span asp-validation-for="Contrasena" class="acceso__error"></span>
+                    </div>
+
+                    <button type="submit" class="acceso__boton">Ingresar</button>
+                </form>
+
+                <div class="acceso__aviso">
+                    Después de varios intentos fallidos la cuenta se bloquea por 15 minutos.
+                </div>
+
+                <div class="acceso__ayuda">
+                    <p>¿Olvidó su contraseña? Solicite el restablecimiento a Administración TI; no se envía por correo.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

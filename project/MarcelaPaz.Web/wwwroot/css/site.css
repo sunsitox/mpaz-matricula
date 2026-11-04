@@ -712,3 +712,212 @@ select.acceso__input {
         padding: 1.75rem 1.25rem;
     }
 }
+
+/* ==========================================================================
+   Login institucional y administración de funcionarios
+   ========================================================================== */
+
+.acceso__error {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--color-danger);
+    font-size: 0.85rem;
+}
+
+.admin__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1rem 2rem;
+    background: var(--color-primary);
+    color: #FFFFFF;
+    flex-wrap: wrap;
+}
+
+.admin__marca {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.admin__marca .acceso__logo-img {
+    width: 40px;
+}
+
+.admin__titulo {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.admin__subtitulo {
+    color: var(--color-text-panel);
+    font-size: 0.85rem;
+}
+
+.admin__sesion {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin__usuario {
+    color: var(--color-text-panel);
+    font-size: 0.9rem;
+}
+
+.admin__salir {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: transparent;
+    color: #FFFFFF;
+    border-radius: 6px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.admin__salir:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.admin__contenedor {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+.admin__tarjeta {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+}
+
+.admin__tarjeta + .admin__tarjeta {
+    margin-top: 1.5rem;
+}
+
+.admin__titulo-seccion {
+    font-size: 1.35rem;
+    margin: 0 0 0.35rem;
+}
+
+.admin__ayuda {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin: 0 0 1.5rem;
+}
+
+.admin__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.admin__tabla th,
+.admin__tabla td {
+    text-align: left;
+    padding: 0.75rem 0.6rem;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+}
+
+.admin__tabla th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+}
+
+.admin__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    margin: 0 0.3rem 0.3rem 0;
+}
+
+.admin__chip form {
+    margin: 0;
+}
+
+.admin__chip button {
+    border: none;
+    background: none;
+    color: var(--color-danger);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.admin__estado--activo {
+    color: #1F6B45;
+    font-weight: 600;
+}
+
+.admin__estado--inactivo {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.admin__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.admin__acciones form {
+    margin: 0;
+}
+
+.admin__boton {
+    display: inline-block;
+    border: 1px solid var(--color-input-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.admin__boton:hover {
+    border-color: var(--color-action);
+}
+
+.admin__boton--primario {
+    background: var(--color-action);
+    border-color: var(--color-action);
+    color: #FFFFFF;
+    padding: 0.7rem 1.2rem;
+}
+
+.admin__boton--primario:hover {
+    background: var(--color-primary);
+}
+
+.admin__fieldset {
+    border: none;
+    padding: 0;
+    margin: 0 0 2rem;
+}
+
+.admin__lista-roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.5rem;
+}
+
+.admin__check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
