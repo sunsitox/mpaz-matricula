@@ -1,3 +1,4 @@
+using MarcelaPaz.Infrastructure;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Seguridad;
 using Microsoft.AspNetCore.Authorization;
@@ -10,15 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Base de datos: el DDL institucional vive en "public" y Identity en "auth".
-var cadena = builder.Configuration.GetConnectionString("Default");
-if (string.IsNullOrWhiteSpace(cadena))
-{
-    // Sin cadena configurada la aplicación igual parte y muestra el login;
-    // cualquier acceso a datos fallará hasta definir ConnectionStrings:Default.
-    cadena = "Host=localhost;Port=5432;Database=mpaz;Username=mpaz_app";
-}
-
-builder.Services.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(cadena));
+// La conexión, el proveedor de PostgreSQL y el DbContext se configuran en
+// Infrastructure; esta capa sólo entrega la cadena.
+builder.Services.AddPersistencia(builder.Configuration.GetConnectionString("Default"));
 
 // Credenciales de funcionarios: ASP.NET Core Identity (hash) con los roles del DDL.
 builder.Services
