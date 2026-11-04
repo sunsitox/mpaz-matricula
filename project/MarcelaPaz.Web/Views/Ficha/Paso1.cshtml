@@ -4,13 +4,54 @@
 }
 <h1 class="wizard__titulo-paso">Paso 1 · Datos del apoderado</h1>
 <p class="wizard__ayuda">
-    Datos en dos bloques desplegables: identificación y domicilio.
+    Primero el curso al que postula, luego la identificación y el domicilio.
     Los campos obligatorios y sus textos se definirán con el colegio.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="1" method="post">
 
     <details class="wizard__desplegable" open>
+        <summary class="wizard__desplegable-resumen">
+            Curso y año
+            <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
+        </summary>
+        <div class="wizard__desplegable-cuerpo">
+            <div class="wizard__fila">
+                <div class="acceso__campo">
+                    <label asp-for="Curso_Nivel" class="acceso__etiqueta">Curso</label>
+                    <select asp-for="Curso_Nivel" class="acceso__input">
+                        <option value="">— Seleccione —</option>
+                        <option>NT1</option>
+                        <option>NT2</option>
+                        <option>1º básico</option>
+                        <option>2º básico</option>
+                        <option>3º básico</option>
+                        <option>4º básico</option>
+                        <option>5º básico</option>
+                        <option>6º básico</option>
+                        <option>7º básico</option>
+                        <option>8º básico</option>
+                    </select>
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Curso_Letra" class="acceso__etiqueta">Letra</label>
+                    <select asp-for="Curso_Letra" class="acceso__input">
+                        <option value="">— Seleccione —</option>
+                        <option>A</option>
+                        <option>B</option>
+                        <option>C</option>
+                        <option>D</option>
+                    </select>
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Curso_Anio" class="acceso__etiqueta">Año escolar</label>
+                    <input asp-for="Curso_Anio" class="acceso__input" value="2027" readonly />
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details class="wizard__desplegable">
         <summary class="wizard__desplegable-resumen">
             Identificación del apoderado
             <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>

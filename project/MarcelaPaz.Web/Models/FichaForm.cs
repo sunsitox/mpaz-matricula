@@ -6,6 +6,11 @@ namespace MarcelaPaz.Web.Models;
 /// </summary>
 public class FichaForm
 {
+    // Paso 1 · Curso al que postula (encabezado de la ficha: nivel, letra y año)
+    public string? Curso_Nivel { get; set; }
+    public string? Curso_Letra { get; set; }
+    public string? Curso_Anio { get; set; }
+
     // Paso 1 · Datos del apoderado (antecedentes de la ficha, sección 1)
     public string? Nombres { get; set; }
     public string? Apellido_Paterno { get; set; }

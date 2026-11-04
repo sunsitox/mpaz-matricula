@@ -45,6 +45,9 @@ public class FichaController : Controller
         switch (paso)
         {
             case 1:
+                GuardarCampo(datos, "curso: nivel", form.Curso_Nivel);
+                GuardarCampo(datos, "curso: letra", form.Curso_Letra);
+                GuardarCampo(datos, "año escolar", form.Curso_Anio);
                 GuardarCampo(datos, "nombres", form.Nombres);
                 GuardarCampo(datos, "apellido paterno", form.Apellido_Paterno);
                 GuardarCampo(datos, "apellido materno", form.Apellido_Materno);
