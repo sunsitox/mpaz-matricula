@@ -964,3 +964,9 @@ select.acceso__input {
 .wizard__modo-detalle {
   color: #6b5c2b;
 }
+
+/* Acción secundaria del inicio junto al botón principal */
+.admin__accion-inline {
+  display: inline;
+  margin-left: .5rem;
+}

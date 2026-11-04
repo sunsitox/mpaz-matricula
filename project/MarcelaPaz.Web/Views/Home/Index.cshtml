@@ -50,6 +50,9 @@
             si no está en el registro se crea una matrícula nueva.
         </p>
         <a class="admin__boton admin__boton--primario" asp-controller="Ficha" asp-action="Buscar">Buscar estudiante</a>
+        <form method="post" asp-controller="Ficha" asp-action="Nueva" class="admin__accion-inline">
+            <button type="submit" class="admin__boton">Matrícula nueva</button>
+        </form>
     </div>
 }
 
