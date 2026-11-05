@@ -35,12 +35,27 @@ else
             </div>
         }
     </dl>
+
+    <section class="wizard__pdf">
+        <h2 class="wizard__subtitulo">Ficha para firma</h2>
+        <p class="wizard__ayuda">
+            Esta es la versión imprimible con folio, año y bloques de firma.
+            Revísela antes de enviarla a revisión.
+        </p>
+        <iframe class="wizard__pdf-marco"
+                src="@Url.Action("Comprobante", "Ficha")"
+                title="Vista previa de la ficha de matrícula"></iframe>
+    </section>
 }
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="6">Volver</a>
-        <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" target="_blank" rel="noopener">Descargar ficha en PDF</a>
+        @if (datos.Count > 0)
+        {
+            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" asp-route-descargar="true">Descargar PDF</a>
+            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" target="_blank" rel="noopener">Abrir en otra pestaña</a>
+        }
         <button type="submit" class="acceso__boton wizard__guardar">Enviar a revisión</button>
     </div>
 </form>

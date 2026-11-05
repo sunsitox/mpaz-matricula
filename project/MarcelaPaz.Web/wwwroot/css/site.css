@@ -970,3 +970,24 @@ select.acceso__input {
   display: inline;
   margin-left: .5rem;
 }
+
+/* Vista previa de la ficha imprimible en el paso 7 */
+.wizard__pdf {
+  margin-top: 1.5rem;
+}
+
+.wizard__subtitulo {
+  margin: 0 0 .35rem;
+  font-size: 1.05rem;
+  color: #0C255B;
+}
+
+.wizard__pdf-marco {
+  display: block;
+  width: 100%;
+  height: 620px;
+  margin-top: .75rem;
+  border: 1px solid #c9d1dc;
+  border-radius: 6px;
+  background: #ffffff;
+}

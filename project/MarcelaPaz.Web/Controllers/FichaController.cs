@@ -294,10 +294,12 @@ public class FichaController : Controller
     /// <summary>
     /// Ficha imprimible para firma (MAT-08): folio, año, versión y bloques de
     /// firma. Se arma con el borrador actual, sin registrar todavía la matrícula.
+    /// Sin <paramref name="descargar"/> se muestra en el navegador; con él se
+    /// descarga como archivo.
     /// </summary>
     [HttpGet]
     [Authorize(Policy = "Permiso:GENERAL:LEER")]
-    public IActionResult Comprobante()
+    public IActionResult Comprobante(bool descargar = false)
     {
         var datos = LeerBorrador();
 
@@ -310,7 +312,9 @@ public class FichaController : Controller
         var ficha = FichaImpresion.DesdeBorrador(datos, AnioMatricula, DateTime.Now);
         var archivo = _pdf.Generar(ficha);
 
-        return File(archivo, "application/pdf", $"ficha-matricula-{ficha.Folio}.pdf");
+        return descargar
+            ? File(archivo, "application/pdf", $"ficha-matricula-{ficha.Folio}.pdf")
+            : File(archivo, "application/pdf");
     }
 
     private Dictionary<string, string> LeerBorrador()
