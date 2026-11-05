@@ -26,26 +26,28 @@
 }
 else
 {
-    <dl class="wizard__resumen">
-        @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
-        {
-            <div class="wizard__resumen-item">
-                <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
-                <dd>@valor</dd>
-            </div>
-        }
-    </dl>
+    <div class="wizard__revision">
+        <dl class="wizard__resumen">
+            @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
+            {
+                <div class="wizard__resumen-item">
+                    <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
+                    <dd>@valor</dd>
+                </div>
+            }
+        </dl>
 
-    <section class="wizard__pdf">
-        <h2 class="wizard__subtitulo">Ficha para firma</h2>
-        <p class="wizard__ayuda">
-            Esta es la versión imprimible con folio, año y bloques de firma.
-            Revísela antes de enviarla a revisión.
-        </p>
-        <iframe class="wizard__pdf-marco"
-                src="@Url.Action("Comprobante", "Ficha")"
-                title="Vista previa de la ficha de matrícula"></iframe>
-    </section>
+        <aside class="wizard__pdf">
+            <h2 class="wizard__subtitulo">Ficha para firma</h2>
+            <p class="wizard__ayuda">
+                Versión imprimible con folio, año y bloques de firma.
+                Revísela antes de enviarla a revisión.
+            </p>
+            <iframe class="wizard__pdf-marco"
+                    src="@Url.Action("Comprobante", "Ficha")"
+                    title="Vista previa de la ficha de matrícula"></iframe>
+        </aside>
+    </div>
 }
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">

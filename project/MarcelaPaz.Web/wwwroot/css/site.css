@@ -971,9 +971,17 @@ select.acceso__input {
   margin-left: .5rem;
 }
 
-/* Vista previa de la ficha imprimible en el paso 7 */
+/* Revisión final: resumen a la izquierda y ficha imprimible al costado */
+.wizard__revision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 38%);
+  gap: 1.25rem;
+  align-items: start;
+}
+
 .wizard__pdf {
-  margin-top: 1.5rem;
+  position: sticky;
+  top: 1rem;
 }
 
 .wizard__subtitulo {
@@ -985,9 +993,23 @@ select.acceso__input {
 .wizard__pdf-marco {
   display: block;
   width: 100%;
-  height: 620px;
+  height: 560px;
   margin-top: .75rem;
   border: 1px solid #c9d1dc;
   border-radius: 6px;
   background: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .wizard__revision {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wizard__pdf {
+    position: static;
+  }
+
+  .wizard__pdf-marco {
+    height: 520px;
+  }
 }
