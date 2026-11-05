@@ -15,6 +15,9 @@ builder.Services.AddControllersWithViews();
 // Infrastructure; esta capa sólo entrega la cadena.
 builder.Services.AddPersistencia(builder.Configuration.GetConnectionString("Default"));
 
+// Documentos imprimibles (PDF) generados desde el formulario.
+builder.Services.AddDocumentos();
+
 // Credenciales de funcionarios: ASP.NET Core Identity (hash) con los roles del DDL.
 builder.Services
     .AddIdentityCore<IdentityUser>(opciones =>

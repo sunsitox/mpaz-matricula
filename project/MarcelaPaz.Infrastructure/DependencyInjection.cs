@@ -1,3 +1,4 @@
+using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,14 @@ public static class DependencyInjection
         var conexion = string.IsNullOrWhiteSpace(cadena) ? CadenaPorDefecto : cadena;
 
         servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(conexion));
+
+        return servicios;
+    }
+
+    /// <summary>Generación de documentos imprimibles (PDF).</summary>
+    public static IServiceCollection AddDocumentos(this IServiceCollection servicios)
+    {
+        servicios.AddSingleton<FichaMatriculaPdf>();
 
         return servicios;
     }

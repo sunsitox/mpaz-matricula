@@ -1,3 +1,4 @@
+using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,8 +23,13 @@ public class FichaController : Controller
     private const int AnioMatricula = 2027;
 
     private readonly MatriculaDbContext _db;
+    private readonly FichaMatriculaPdf _pdf;
 
-    public FichaController(MatriculaDbContext db) => _db = db;
+    public FichaController(MatriculaDbContext db, FichaMatriculaPdf pdf)
+    {
+        _db = db;
+        _pdf = pdf;
+    }
 
     // El parámetro de ruta por defecto se llama 'id' (Program.cs), así que se ocupa ese nombre:
     // GET /Ficha/Paso/{pasito mostrado}
@@ -283,6 +289,28 @@ public class FichaController : Controller
 
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
         return RedirectToAction(nameof(Paso), new { id = 1 });
+    }
+
+    /// <summary>
+    /// Ficha imprimible para firma (MAT-08): folio, año, versión y bloques de
+    /// firma. Se arma con el borrador actual, sin registrar todavía la matrícula.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
+    public IActionResult Comprobante()
+    {
+        var datos = LeerBorrador();
+
+        if (datos.Count == 0)
+        {
+            TempData["Aviso"] = "Aún no hay datos en el borrador: complete el formulario antes de generar la ficha.";
+            return RedirectToAction(nameof(Paso), new { id = 1 });
+        }
+
+        var ficha = FichaImpresion.DesdeBorrador(datos, AnioMatricula, DateTime.Now);
+        var archivo = _pdf.Generar(ficha);
+
+        return File(archivo, "application/pdf", $"ficha-matricula-{ficha.Folio}.pdf");
     }
 
     private Dictionary<string, string> LeerBorrador()
