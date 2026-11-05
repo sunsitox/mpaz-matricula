@@ -391,7 +391,7 @@ body {
 
 /* Paso 7: la ficha imprimible se muestra a tamaño real (A4 ≈ 794 px de ancho) */
 .wizard__cuerpo--amplio {
-    max-width: 1340px;
+    max-width: 1240px;
 }
 
 .wizard__tarjeta {
@@ -979,14 +979,18 @@ select.acceso__input {
 /* Revisión final: resumen a la izquierda y ficha imprimible al costado */
 .wizard__revision {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(560px, 794px);
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 540px);
+  gap: 1.75rem;
   align-items: start;
 }
 
 .wizard__pdf {
   position: sticky;
   top: 1rem;
+  padding: 1.35rem 1.5rem 1.6rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
 }
 
 .wizard__subtitulo {
@@ -997,12 +1001,14 @@ select.acceso__input {
 
 .wizard__pdf-marco {
   display: block;
-  width: 100%;
-  height: min(1123px, calc(100vh - 9rem));
-  margin-top: .75rem;
-  border: 1px solid #c9d1dc;
-  border-radius: 6px;
+  /* Hoja A4 a escala: ancho limitado por la columna y por el alto disponible. */
+  width: min(100%, calc((100vh - 14rem) * 0.707));
+  aspect-ratio: 210 / 297;
+  margin: 1rem auto 0;
+  border: 1px solid #dbe1ea;
+  border-radius: 4px;
   background: #ffffff;
+  box-shadow: 0 10px 26px rgba(12, 37, 91, .14);
 }
 
 @media (max-width: 1024px) {
@@ -1015,6 +1021,7 @@ select.acceso__input {
   }
 
   .wizard__pdf-marco {
-    height: 520px;
+    width: 100%;
+    max-width: 460px;
   }
 }
