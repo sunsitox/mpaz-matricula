@@ -22,13 +22,18 @@ public class FichaController : Controller
     /// <summary>Año escolar que se está matriculando (paso 1 · campo de sólo lectura).</summary>
     private const int AnioMatricula = 2027;
 
+    /// <summary>Escudo institucional con lema que se imprime en la ficha.</summary>
+    private const string RutaLogo = "images/logo-mpaz-con-lema.png";
+
     private readonly MatriculaDbContext _db;
     private readonly FichaMatriculaPdf _pdf;
+    private readonly IWebHostEnvironment _entorno;
 
-    public FichaController(MatriculaDbContext db, FichaMatriculaPdf pdf)
+    public FichaController(MatriculaDbContext db, FichaMatriculaPdf pdf, IWebHostEnvironment entorno)
     {
         _db = db;
         _pdf = pdf;
+        _entorno = entorno;
     }
 
     // El parámetro de ruta por defecto se llama 'id' (Program.cs), así que se ocupa ese nombre:
@@ -309,12 +314,20 @@ public class FichaController : Controller
             return RedirectToAction(nameof(Paso), new { id = 1 });
         }
 
-        var ficha = FichaImpresion.DesdeBorrador(datos, AnioMatricula, DateTime.Now);
+        var ficha = FichaImpresion.DesdeBorrador(datos, AnioMatricula, DateTime.Now, LogoInstitucional());
         var archivo = _pdf.Generar(ficha);
 
         return descargar
             ? File(archivo, "application/pdf", $"ficha-matricula-{ficha.Folio}.pdf")
             : File(archivo, "application/pdf");
+    }
+
+    /// <summary>Lee el escudo desde wwwroot; si falta, la ficha se genera sin logo.</summary>
+    private byte[]? LogoInstitucional()
+    {
+        var ruta = Path.Combine(_entorno.WebRootPath, RutaLogo);
+
+        return System.IO.File.Exists(ruta) ? System.IO.File.ReadAllBytes(ruta) : null;
     }
 
     private Dictionary<string, string> LeerBorrador()

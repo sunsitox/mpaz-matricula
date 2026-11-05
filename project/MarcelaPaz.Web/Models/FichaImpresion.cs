@@ -69,7 +69,8 @@ public static class FichaImpresion
     public static DocumentoFicha DesdeBorrador(
         IReadOnlyDictionary<string, string> datos,
         int anio,
-        DateTime generadoEn)
+        DateTime generadoEn,
+        byte[]? logo = null)
     {
         var secciones = new List<SeccionFicha>();
 
@@ -94,6 +95,7 @@ public static class FichaImpresion
             Version = "borrador (sin registrar)",
             GeneradoEn = generadoEn,
             Detalle = datos.GetValueOrDefault("modo: detalle"),
+            Logo = logo,
             Secciones = secciones,
         };
     }

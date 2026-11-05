@@ -1,6 +1,8 @@
 @model MarcelaPaz.Web.Models.FichaForm
 @{
     Layout = "_WizardLayout";
+    // La ficha se muestra a tamaño real: este paso ocupa más ancho que el resto.
+    ViewData["AnchoAmplio"] = true;
     var datos = (Dictionary<string, string>)(ViewData["Borrador"] ?? new Dictionary<string, string>());
 
     var orden = new[]

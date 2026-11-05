@@ -46,13 +46,19 @@ public sealed class FichaMatriculaPdf
         {
             columna.Item().Row(fila =>
             {
-                fila.RelativeItem().Column(titulo =>
+                if (ficha.Logo is { Length: > 0 })
                 {
-                    titulo.Item().Text("Escuela Básica Escritora Marcela Paz").FontSize(12).SemiBold().FontColor(Azul);
-                    titulo.Item().Text($"Ficha de matrícula {ficha.Anio}").FontSize(9).FontColor(Gris);
+                    // Escudo institucional con lema, en la esquina superior izquierda.
+                    fila.ConstantItem(24, Unit.Millimetre).Image(ficha.Logo).FitArea();
+                }
+
+                fila.RelativeItem().PaddingLeft(10).AlignMiddle().Column(titulo =>
+                {
+                    titulo.Item().Text($"Ficha de matrícula {ficha.Anio}").FontSize(13).SemiBold().FontColor(Azul);
+                    titulo.Item().Text("Escuela Escritora Marcela Paz · documento para revisión y firma").FontSize(8.5f).FontColor(Gris);
                 });
 
-                fila.ConstantItem(170).AlignRight().Column(identificacion =>
+                fila.ConstantItem(150).AlignMiddle().AlignRight().Column(identificacion =>
                 {
                     identificacion.Item().Text($"Folio {ficha.Folio}").SemiBold();
                     identificacion.Item().Text($"Versión {ficha.Version}").FontSize(8).FontColor(Gris);

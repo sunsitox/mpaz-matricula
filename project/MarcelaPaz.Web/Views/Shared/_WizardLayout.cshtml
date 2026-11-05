@@ -61,7 +61,7 @@
         }
     </nav>
 
-    <main class="wizard__cuerpo">
+    <main class="wizard__cuerpo @(ViewData["AnchoAmplio"] is true ? "wizard__cuerpo--amplio" : null)">
         <div class="wizard__tarjeta">
             @RenderBody()
         </div>

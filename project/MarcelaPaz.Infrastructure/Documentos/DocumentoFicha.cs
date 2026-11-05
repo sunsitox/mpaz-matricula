@@ -19,6 +19,9 @@ public sealed class DocumentoFicha
 
     public string? Detalle { get; init; }
 
+    /// <summary>Escudo institucional con lema (PNG); se imprime arriba a la izquierda.</summary>
+    public byte[]? Logo { get; init; }
+
     public required IReadOnlyList<SeccionFicha> Secciones { get; init; }
 }
 
