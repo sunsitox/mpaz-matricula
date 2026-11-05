@@ -1,6 +1,7 @@
 using MarcelaPaz.Infrastructure;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Seguridad;
+using MarcelaPaz.Web.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,9 @@ builder.Services.AddPersistencia(builder.Configuration.GetConnectionString("Defa
 
 // Documentos imprimibles (PDF) generados desde el formulario.
 builder.Services.AddDocumentos();
+
+// Guardado del asistente en las tablas del DDL institucional.
+builder.Services.AddScoped<RegistroFicha>();
 
 // Credenciales de funcionarios: ASP.NET Core Identity (hash) con los roles del DDL.
 builder.Services

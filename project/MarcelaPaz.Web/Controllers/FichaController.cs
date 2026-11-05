@@ -1,6 +1,7 @@
 using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
+using MarcelaPaz.Web.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +10,11 @@ using System.Text.Json;
 namespace MarcelaPaz.Web.Controllers;
 
 /// <summary>
-/// Estructura del wizard de la ficha de matrícula (mockup 02 · ficha-pasos-apoderado).
-/// Cuatro pasos con borrador temporal en TempData: aún no hay persistencia en
-/// PostgreSQL ni validación de campos. Los bloques definitivos y sus campos
-/// obligatorios se definen con Dirección y Secretaría (Flujo B).
+/// Asistente de la ficha de matrícula (mockup 02 · ficha-pasos-apoderado).
+/// Cada paso se guarda en PostgreSQL a través de <see cref="RegistroFicha"/> y el
+/// borrador se conserva en TempData para poder navegar entre pasos. Sin validación
+/// de campos: los bloques definitivos y sus campos obligatorios se definen con
+/// Dirección y Secretaría (Flujo B).
 /// </summary>
 [Authorize]
 public class FichaController : Controller
@@ -28,12 +30,18 @@ public class FichaController : Controller
     private readonly MatriculaDbContext _db;
     private readonly FichaMatriculaPdf _pdf;
     private readonly IWebHostEnvironment _entorno;
+    private readonly RegistroFicha _registro;
 
-    public FichaController(MatriculaDbContext db, FichaMatriculaPdf pdf, IWebHostEnvironment entorno)
+    public FichaController(
+        MatriculaDbContext db,
+        FichaMatriculaPdf pdf,
+        IWebHostEnvironment entorno,
+        RegistroFicha registro)
     {
         _db = db;
         _pdf = pdf;
         _entorno = entorno;
+        _registro = registro;
     }
 
     // El parámetro de ruta por defecto se llama 'id' (Program.cs), así que se ocupa ese nombre:
@@ -55,13 +63,13 @@ public class FichaController : Controller
     }
 
     /// <summary>
-    /// Estructural por ahora: guarda los campos del paso en un borrador temporal
-    /// y avanza. Los datos no se persisten en la base todavía.
+    /// Guarda los campos del paso: primero en el borrador temporal y luego en las
+    /// tablas del DDL institucional, y avanza al paso siguiente.
     /// </summary>
     [HttpPost]
     [Authorize(Policy = "Permiso:GENERAL:CREAR")]
     [ValidateAntiForgeryToken]
-    public IActionResult Guardar(int? id, Models.FichaForm form)
+    public async Task<IActionResult> Guardar(int? id, Models.FichaForm form)
     {
         var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };
 
@@ -162,12 +170,21 @@ public class FichaController : Controller
                 break;
 
             case 7:
-                // Confirmación estructural: sin declaración de veracidad ni envío real todavía.
-                TempData["Aviso"] = "Estructura completa. El envío real se implementará junto con la persistencia en PostgreSQL.";
+                // La ficha se registra con folio recién cuando exista la sesión del
+                // funcionario que la genera (ficha_version.generada_por).
+                TempData["Aviso"] = "Los datos están guardados en la base como borrador. El registro de la ficha con folio se habilitará cuando el portal tenga la sesión del funcionario.";
                 return RedirectToAction(nameof(Paso), new { id = 7 });
         }
 
+        var aviso = await _registro.AplicarAsync(paso, datos, AnioMatricula);
+
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
+
+        if (aviso is not null)
+        {
+            TempData["Aviso"] = aviso;
+        }
+
         return RedirectToAction(nameof(Paso), new { id = paso + 1 });
     }
 

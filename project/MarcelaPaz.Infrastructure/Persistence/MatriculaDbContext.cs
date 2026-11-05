@@ -38,6 +38,20 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Comuna> Comunas => Set<Comuna>();
 
+    public DbSet<Persona> Personas => Set<Persona>();
+
+    public DbSet<EstudiantePersona> EstudiantesPersonas => Set<EstudiantePersona>();
+
+    public DbSet<ContactoEmergencia> ContactosEmergencia => Set<ContactoEmergencia>();
+
+    public DbSet<RetiroAutorizado> RetirosAutorizados => Set<RetiroAutorizado>();
+
+    public DbSet<SituacionMedica> SituacionesMedicas => Set<SituacionMedica>();
+
+    public DbSet<AntecedenteSalud> AntecedentesSalud => Set<AntecedenteSalud>();
+
+    public DbSet<RestriccionFamiliar> RestriccionesFamiliares => Set<RestriccionFamiliar>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -162,6 +176,103 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(80).IsRequired();
+        });
+
+        // Personas vinculadas al estudiante (madre, padre, apoderados).
+        builder.Entity<Persona>(e =>
+        {
+            e.ToTable("persona", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.TipoIdentificador).HasColumnName("tipo_identificador").HasMaxLength(10).IsRequired();
+            e.Property(x => x.Identificador).HasColumnName("identificador").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Nombres).HasColumnName("nombres").HasMaxLength(120).IsRequired();
+            e.Property(x => x.Apellidos).HasColumnName("apellidos").HasMaxLength(120).IsRequired();
+            e.Property(x => x.Telefono).HasColumnName("telefono").HasMaxLength(30);
+            e.Property(x => x.Correo).HasColumnName("correo").HasMaxLength(120);
+            e.Property(x => x.Domicilio).HasColumnName("domicilio").HasMaxLength(255);
+            e.Property(x => x.Escolaridad).HasColumnName("escolaridad").HasMaxLength(80);
+        });
+
+        builder.Entity<EstudiantePersona>(e =>
+        {
+            e.ToTable("estudiante_persona", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.PersonaId).HasColumnName("persona_id");
+            e.Property(x => x.Parentesco).HasColumnName("parentesco").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Vinculo).HasColumnName("vinculo").HasMaxLength(60);
+            e.Property(x => x.TipoApoderado).HasColumnName("tipo_apoderado").HasMaxLength(15);
+            e.Property(x => x.TieneRestriccion).HasColumnName("tiene_restriccion");
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId);
+            e.HasOne(x => x.Estudiante).WithMany().HasForeignKey(x => x.EstudianteId);
+        });
+
+        builder.Entity<ContactoEmergencia>(e =>
+        {
+            e.ToTable("contacto_emergencia", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Orden).HasColumnName("orden");
+            e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
+            e.Property(x => x.Telefono).HasColumnName("telefono").HasMaxLength(30).IsRequired();
+            e.Property(x => x.Vinculo).HasColumnName("vinculo").HasMaxLength(60).IsRequired();
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+        });
+
+        builder.Entity<RetiroAutorizado>(e =>
+        {
+            e.ToTable("retiro_autorizado", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
+            e.Property(x => x.TipoIdentificador).HasColumnName("tipo_identificador").HasMaxLength(10).IsRequired();
+            e.Property(x => x.Identificador).HasColumnName("identificador").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Vinculo).HasColumnName("vinculo").HasMaxLength(60).IsRequired();
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+        });
+
+        builder.Entity<SituacionMedica>(e =>
+        {
+            e.ToTable("situacion_medica", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Descripcion).HasColumnName("descripcion").HasMaxLength(255).IsRequired();
+            e.Property(x => x.EnTratamiento).HasColumnName("en_tratamiento");
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+        });
+
+        builder.Entity<AntecedenteSalud>(e =>
+        {
+            e.ToTable("antecedente_salud", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.TieneSituacionMedica).HasColumnName("tiene_situacion_medica");
+            e.Property(x => x.NecesidadesAtencion).HasColumnName("necesidades_atencion");
+        });
+
+        builder.Entity<RestriccionFamiliar>(e =>
+        {
+            e.ToTable("restriccion_familiar", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudiantePersonaId).HasColumnName("estudiante_persona_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Descripcion).HasColumnName("descripcion").IsRequired();
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.HasOne(x => x.EstudiantePersona).WithMany().HasForeignKey(x => x.EstudiantePersonaId);
         });
     }
 }
