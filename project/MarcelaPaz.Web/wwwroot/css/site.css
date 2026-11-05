@@ -979,7 +979,7 @@ select.acceso__input {
 /* Revisión final: resumen a la izquierda y ficha imprimible al costado */
 .wizard__revision {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 540px);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 620px);
   gap: 1.75rem;
   align-items: start;
 }
@@ -987,7 +987,7 @@ select.acceso__input {
 .wizard__pdf {
   position: sticky;
   top: 1rem;
-  padding: 1.35rem 1.5rem 1.6rem;
+  padding: 1.1rem 1.25rem 1.4rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -1002,9 +1002,9 @@ select.acceso__input {
 .wizard__pdf-marco {
   display: block;
   /* Hoja A4 a escala: ancho limitado por la columna y por el alto disponible. */
-  width: min(100%, calc((100vh - 14rem) * 0.707));
+  width: min(100%, calc((100vh - 7rem) * 0.707));
   aspect-ratio: 210 / 297;
-  margin: 1rem auto 0;
+  margin: .85rem auto 0;
   border: 1px solid #dbe1ea;
   border-radius: 4px;
   background: #ffffff;
