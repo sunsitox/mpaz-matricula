@@ -12,6 +12,20 @@
     barra.setAttribute('aria-hidden', 'true');
     document.body.appendChild(barra);
 
+    // Velo con rueda de carga para envíos que tardan (envío a revisión).
+    const velo = document.createElement('div');
+    velo.className = 'ux-cargando';
+    velo.setAttribute('role', 'status');
+    velo.setAttribute('aria-live', 'polite');
+    velo.innerHTML = '<span class="ux-cargando__rueda" aria-hidden="true"></span>'
+        + '<p class="ux-cargando__texto"></p>';
+    document.body.appendChild(velo);
+
+    const mostrarVelo = texto => {
+        velo.querySelector('.ux-cargando__texto').textContent = texto || 'Procesando…';
+        velo.classList.add('ux-cargando--visible');
+    };
+
     let avance = 0;
     let temporizador = null;
 
@@ -101,6 +115,10 @@
         }
 
         empezar();
+
+        if (formulario.dataset.uxEnvio) {
+            mostrarVelo(formulario.dataset.uxEnvio);
+        }
     }, true);
 
     // Descargas generadas al vuelo (PDF): spinner mientras el archivo se genera.
@@ -130,5 +148,58 @@
         }
 
         marco.addEventListener('load', listo);
+    });
+
+    // Notificación flotante tras completar una acción: entra sola y se retira.
+    document.querySelectorAll('[data-ux-toast]').forEach(aviso => {
+        // La barra de acciones de la ficha es fija y puede ocupar dos filas:
+        // la notificación se apoya sobre su alto real en lugar de un valor fijo.
+        const barraFija = document.querySelector('.wizard__botones');
+
+        const posicionar = () => {
+            if (!barraFija || window.getComputedStyle(barraFija).position !== 'fixed') {
+                return;
+            }
+
+            const altoBarra = window.innerHeight - barraFija.getBoundingClientRect().top;
+            aviso.style.bottom = Math.max(16, Math.round(altoBarra + 28)) + 'px';
+        };
+
+        posicionar();
+        window.addEventListener('resize', posicionar);
+
+        // La barra cambia de alto si los botones pasan a dos filas o si las
+        // fuentes terminan de cargar: se vuelve a medir en cada cambio.
+        if (barraFija && 'ResizeObserver' in window) {
+            new ResizeObserver(posicionar).observe(barraFija);
+        }
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(posicionar);
+            window.setTimeout(posicionar, 600);
+        }
+
+        window.setTimeout(() => aviso.classList.add('ux-toast--visible'), 20);
+
+        let ida = null;
+
+        const cerrar = () => {
+            if (ida) {
+                return;
+            }
+
+            ida = window.setTimeout(() => {
+                aviso.classList.remove('ux-toast--visible');
+                window.setTimeout(() => aviso.remove(), 300);
+            }, 0);
+        };
+
+        const boton = aviso.querySelector('[data-ux-cerrar]');
+
+        if (boton) {
+            boton.addEventListener('click', cerrar);
+        }
+
+        window.setTimeout(cerrar, 12000);
     });
 })();

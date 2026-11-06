@@ -199,7 +199,9 @@ public class FichaController : Controller
 
                 // La ficha se registra con folio recién cuando exista la sesión del
                 // funcionario que la genera (ficha_version.generada_por).
-                TempData["Aviso"] = "Los datos están guardados en la base como borrador. El registro de la ficha con folio se habilitará cuando el portal tenga la sesión del funcionario.";
+                TempData["NotificacionTitulo"] = "Ficha guardada";
+                TempData["Notificacion"] = "Los datos quedaron registrados en la base. La ficha queda a la espera del folio para su revisión por Secretaría.";
+                TempData["NotificacionTipo"] = "exito";
                 return RedirectToAction(nameof(Paso), new { id = 7 });
         }
 

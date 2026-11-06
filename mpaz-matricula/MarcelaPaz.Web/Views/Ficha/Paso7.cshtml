@@ -22,7 +22,8 @@
 
 @* El formulario envuelve el resumen y la vista previa: así la barra de acciones
    queda fija al pie desde el inicio del paso, sin tener que bajar hasta el final. *@
-<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
+<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post"
+      data-ux-envio="Enviando la ficha a revisión…">
     @if (datos.Count == 0)
     {
         <div class="acceso__aviso">

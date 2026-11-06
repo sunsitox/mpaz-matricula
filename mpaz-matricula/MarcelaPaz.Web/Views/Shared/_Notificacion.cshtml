@@ -1,0 +1,16 @@
+@if (TempData["Notificacion"] is string notificacion)
+{
+    var tipo = TempData["NotificacionTipo"] as string ?? "exito";
+
+    <div class="ux-toast ux-toast--@tipo" role="status" aria-live="polite" data-ux-toast>
+        <span class="ux-toast__marca" aria-hidden="true"></span>
+        <div class="ux-toast__texto">
+            @if (TempData["NotificacionTitulo"] is string titulo)
+            {
+                <strong class="ux-toast__titulo">@titulo</strong>
+            }
+            <span>@notificacion</span>
+        </div>
+        <button type="button" class="ux-toast__cerrar" aria-label="Cerrar la notificación" data-ux-cerrar>&times;</button>
+    </div>
+}
