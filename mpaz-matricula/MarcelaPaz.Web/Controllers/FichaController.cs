@@ -202,11 +202,11 @@ public class FichaController : Controller
                 break;
 
             case 7:
-                // La revisión exige la confirmación expresa de que se leyó la ficha.
+                // El cierre de la ficha exige la confirmación expresa de que se leyó.
                 if (!form.Confirmo_Revision)
                 {
                     TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
-                    TempData["Aviso"] = "Para enviar la ficha a revisión, marque la confirmación de que revisó todos los datos.";
+                    TempData["Aviso"] = "Para guardar la ficha, marque la confirmación de que revisó todos los datos.";
                     return RedirectToAction(nameof(Paso), new { id = 7 });
                 }
 
