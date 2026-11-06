@@ -1,3 +1,4 @@
+using MarcelaPaz.Domain.Entidades;
 using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
@@ -48,11 +49,18 @@ public class FichaController : Controller
     // GET /Ficha/Paso/{pasito mostrado}
     [HttpGet]
     [Authorize(Policy = "Permiso:GENERAL:LEER")]
-    public IActionResult Paso(int? id)
+    public async Task<IActionResult> Paso(int? id)
     {
         var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };
 
         var datos = LeerBorrador();
+
+        // La ficha de un estudiante ya registrado se abre con sus apoderados,
+        // contactos, retiros y datos médicos tomados de la base.
+        if (await CompletarDesdeBaseAsync(datos))
+        {
+            TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
+        }
 
         ViewData["Paso"] = paso;
         ViewData["Borrador"] = datos;
@@ -321,9 +329,12 @@ public class FichaController : Controller
     /// </summary>
     [HttpGet]
     [Authorize(Policy = "Permiso:GENERAL:LEER")]
-    public IActionResult Comprobante(bool descargar = false)
+    public async Task<IActionResult> Comprobante(bool descargar = false)
     {
         var datos = LeerBorrador();
+
+        // La ficha para firma muestra también lo que ya está en la base.
+        await CompletarDesdeBaseAsync(datos);
 
         if (datos.Count == 0)
         {
@@ -420,6 +431,216 @@ public class FichaController : Controller
         };
     }
 
+    /// <summary>
+    /// Completa los pasos 2 a 6 del borrador con lo que ya está guardado del
+    /// estudiante (madre, padre, apoderados, contactos de emergencia, retiros y
+    /// datos médicos). Sólo rellena lo que falta: nunca pisa lo escrito en el
+    /// asistente. Devuelve true si agregó algún dato.
+    /// </summary>
+    private async Task<bool> CompletarDesdeBaseAsync(Dictionary<string, string> datos)
+    {
+        var rut = datos.GetValueOrDefault("cédula de identidad");
+
+        if (string.IsNullOrWhiteSpace(rut))
+        {
+            return false;
+        }
+
+        var identificador = NormalizarRut(rut);
+        var estudiante = await _db.Estudiantes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Identificador == identificador);
+
+        if (estudiante is null)
+        {
+            return false;
+        }
+
+        var agregados = 0;
+
+        // Paso 5 · ¿puede salir solo al finalizar la jornada?
+        if (estudiante.SaleSoloFinalJornada is bool saleSolo)
+        {
+            agregados += PonerSiFalta(datos, "salida solo al finalizar jornada (SI/NO)", saleSolo ? "Si" : "No");
+        }
+
+        // Pasos 2 y 3 · madre, padre y apoderados vigentes.
+        var vinculos = await _db.EstudiantesPersonas
+            .AsNoTracking()
+            .Include(v => v.Persona)
+            .Where(v => v.EstudianteId == estudiante.Id && v.VigenteHasta == null)
+            .OrderBy(v => v.Id)
+            .ToListAsync();
+
+        var madre = vinculos.FirstOrDefault(v => v.Parentesco == "MADRE");
+        var padre = vinculos.FirstOrDefault(v => v.Parentesco == "PADRE");
+
+        if (madre?.Persona is not null)
+        {
+            agregados += PonerSiFalta(datos, "madre: nombre apellido", NombreCompleto(madre.Persona));
+            agregados += PonerSiFalta(datos, "madre: cédula identidad", madre.Persona.Identificador);
+            agregados += PonerSiFalta(datos, "madre: teléfono", madre.Persona.Telefono);
+            agregados += PonerSiFalta(datos, "madre: escolaridad", madre.Persona.Escolaridad);
+            agregados += PonerSiFalta(datos, "madre: domicilio", madre.Persona.Domicilio);
+            agregados += PonerSiFalta(datos, "madre: correo", madre.Persona.Correo);
+        }
+
+        if (padre?.Persona is not null)
+        {
+            agregados += PonerSiFalta(datos, "padre: nombre apellido", NombreCompleto(padre.Persona));
+            agregados += PonerSiFalta(datos, "padre: cédula identidad", padre.Persona.Identificador);
+            agregados += PonerSiFalta(datos, "padre: teléfono", padre.Persona.Telefono);
+            agregados += PonerSiFalta(datos, "padre: escolaridad", padre.Persona.Escolaridad);
+            agregados += PonerSiFalta(datos, "padre: domicilio", padre.Persona.Domicilio);
+            agregados += PonerSiFalta(datos, "padre: correo", padre.Persona.Correo);
+        }
+
+        agregados += AgregarApoderado(datos, "apoderado principal",
+            vinculos.FirstOrDefault(v => v.TipoApoderado == "PRINCIPAL"));
+        agregados += AgregarApoderado(datos, "apoderado secundario",
+            vinculos.FirstOrDefault(v => v.TipoApoderado == "SECUNDARIO"));
+
+        if (vinculos.Any(v => v.TieneRestriccion == true))
+        {
+            agregados += PonerSiFalta(datos, "restricción madre (SI/NO)", "Si");
+        }
+        else if (vinculos.Any(v => v.TieneRestriccion == false))
+        {
+            agregados += PonerSiFalta(datos, "restricción madre (SI/NO)", "No");
+        }
+
+        // Paso 4 · contactos de emergencia.
+        var contactos = await _db.ContactosEmergencia
+            .AsNoTracking()
+            .Where(c => c.EstudianteId == estudiante.Id && c.VigenteHasta == null)
+            .OrderBy(c => c.Orden)
+            .Take(2)
+            .ToListAsync();
+
+        var numeroContacto = 1;
+        foreach (var contacto in contactos)
+        {
+            var prefijo = $"contacto emergencia {numeroContacto:00}";
+            agregados += PonerSiFalta(datos, $"{prefijo}: identificación", contacto.Nombre);
+            agregados += PonerSiFalta(datos, $"{prefijo}: teléfono", contacto.Telefono);
+            agregados += PonerSiFalta(datos, $"{prefijo}: vínculo", contacto.Vinculo);
+            numeroContacto++;
+        }
+
+        // Paso 5 · personas autorizadas a retirar.
+        var retiros = await _db.RetirosAutorizados
+            .AsNoTracking()
+            .Where(r => r.EstudianteId == estudiante.Id && r.VigenteHasta == null)
+            .OrderBy(r => r.Id)
+            .Take(3)
+            .ToListAsync();
+
+        var numeroRetiro = 1;
+        foreach (var retiro in retiros)
+        {
+            agregados += PonerSiFalta(datos, $"retiro autorizado {numeroRetiro:00}: rut", retiro.Identificador);
+            agregados += PonerSiFalta(datos, $"retiro autorizado {numeroRetiro:00}: vínculo", retiro.Vinculo);
+            numeroRetiro++;
+        }
+
+        // Paso 6 · salud declarada.
+        var salud = await _db.AntecedentesSalud
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.EstudianteId == estudiante.Id);
+
+        if (salud?.TieneSituacionMedica is bool tieneSituacion)
+        {
+            agregados += PonerSiFalta(datos, "situación médica (SI/NO)", tieneSituacion ? "Si" : "No");
+        }
+
+        if (!string.IsNullOrWhiteSpace(salud?.NecesidadesAtencion))
+        {
+            if (salud.NecesidadesAtencion.Contains(": SI", StringComparison.Ordinal))
+            {
+                agregados += PonerSiFalta(datos, "salida al baño (SI/NO)", "Si");
+            }
+            else if (salud.NecesidadesAtencion.Contains(": NO", StringComparison.Ordinal))
+            {
+                agregados += PonerSiFalta(datos, "salida al baño (SI/NO)", "No");
+            }
+        }
+
+        var situaciones = await _db.SituacionesMedicas
+            .AsNoTracking()
+            .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null)
+            .OrderBy(s => s.Id)
+            .Take(3)
+            .ToListAsync();
+
+        var numeroSituacion = 1;
+        foreach (var situacion in situaciones)
+        {
+            var (identificacion, detalle) = SepararDescripcion(situacion.Descripcion);
+            agregados += PonerSiFalta(datos, $"situación médica {numeroSituacion:00}: identificación", identificacion);
+            agregados += PonerSiFalta(datos, $"situación médica {numeroSituacion:00}: detalle", detalle);
+
+            if (situacion.EnTratamiento is bool enTratamiento)
+            {
+                agregados += PonerSiFalta(datos, $"situación médica {numeroSituacion:00}: en tratamiento", enTratamiento ? "Si" : "No");
+            }
+
+            numeroSituacion++;
+        }
+
+        return agregados > 0;
+    }
+
+    /// <summary>Agrega el bloque de un apoderado desde su vínculo con el estudiante.</summary>
+    private static int AgregarApoderado(
+        Dictionary<string, string> datos,
+        string prefijo,
+        EstudiantePersona? vinculo)
+    {
+        if (vinculo?.Persona is null)
+        {
+            return 0;
+        }
+
+        return PonerSiFalta(datos, $"{prefijo}: nombre apellido", NombreCompleto(vinculo.Persona))
+             + PonerSiFalta(datos, $"{prefijo}: cédula identidad", vinculo.Persona.Identificador)
+             + PonerSiFalta(datos, $"{prefijo}: teléfono", vinculo.Persona.Telefono)
+             + PonerSiFalta(datos, $"{prefijo}: vínculo", EtiquetaVinculo(vinculo))
+             + PonerSiFalta(datos, $"{prefijo}: correo", vinculo.Persona.Correo);
+    }
+
+    /// <summary>Agrega una clave al borrador sólo si venía vacía.</summary>
+    private static int PonerSiFalta(Dictionary<string, string> datos, string clave, string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor) || datos.ContainsKey(clave))
+        {
+            return 0;
+        }
+
+        datos[clave] = valor.Trim();
+        return 1;
+    }
+
+    private static string NombreCompleto(Persona persona) =>
+        $"{persona.Nombres} {persona.Apellidos}".Trim();
+
+    /// <summary>«MADRE» → «Madre»; para «OTRO» se usa el vínculo declarado (por ejemplo, abuela).</summary>
+    private static string? EtiquetaVinculo(EstudiantePersona vinculo) => vinculo.Parentesco switch
+    {
+        "MADRE" => "Madre",
+        "PADRE" => "Padre",
+        _ => vinculo.Vinculo,
+    };
+
+    /// <summary>«Asma: usa inhalador» → («Asma», «usa inhalador»).</summary>
+    private static (string? identificacion, string? detalle) SepararDescripcion(string descripcion)
+    {
+        var corte = descripcion.IndexOf(": ", StringComparison.Ordinal);
+
+        return corte < 0
+            ? (descripcion, null)
+            : (descripcion[..corte], descripcion[(corte + 2)..]);
+    }
+
     /// <summary>Vuelve a llenar el formulario con lo que ya estaba en el borrador.</summary>
     private static FichaForm FormularioDesdeBorrador(Dictionary<string, string> datos) => new()
     {
@@ -434,6 +655,70 @@ public class FichaController : Controller
         Nacionalidad = datos.GetValueOrDefault("nacionalidad"),
         Domicilio = datos.GetValueOrDefault("domicilio"),
         Comuna = datos.GetValueOrDefault("comuna"),
+
+        Madre_Nombre_Apellido = datos.GetValueOrDefault("madre: nombre apellido"),
+        Madre_Cedula_Identidad = datos.GetValueOrDefault("madre: cédula identidad"),
+        Madre_Telefono = datos.GetValueOrDefault("madre: teléfono"),
+        Madre_Escolaridad = datos.GetValueOrDefault("madre: escolaridad"),
+        Madre_Domicilio = datos.GetValueOrDefault("madre: domicilio"),
+        Madre_Correo = datos.GetValueOrDefault("madre: correo"),
+
+        Padre_Nombre_Apellido = datos.GetValueOrDefault("padre: nombre apellido"),
+        Padre_Cedula_Identidad = datos.GetValueOrDefault("padre: cédula identidad"),
+        Padre_Telefono = datos.GetValueOrDefault("padre: teléfono"),
+        Padre_Escolaridad = datos.GetValueOrDefault("padre: escolaridad"),
+        Padre_Domicilio = datos.GetValueOrDefault("padre: domicilio"),
+        Padre_Correo = datos.GetValueOrDefault("padre: correo"),
+
+        Restriccion_Madre = datos.GetValueOrDefault("restricción madre (SI/NO)"),
+
+        Principal_Nombre_Apellido = datos.GetValueOrDefault("apoderado principal: nombre apellido"),
+        Principal_Cedula_Identidad = datos.GetValueOrDefault("apoderado principal: cédula identidad"),
+        Principal_Telefono = datos.GetValueOrDefault("apoderado principal: teléfono"),
+        Principal_Vinculo = datos.GetValueOrDefault("apoderado principal: vínculo"),
+        Principal_Correo = datos.GetValueOrDefault("apoderado principal: correo"),
+
+        Secundario_Nombre_Apellido = datos.GetValueOrDefault("apoderado secundario: nombre apellido"),
+        Secundario_Cedula_Identidad = datos.GetValueOrDefault("apoderado secundario: cédula identidad"),
+        Secundario_Telefono = datos.GetValueOrDefault("apoderado secundario: teléfono"),
+        Secundario_Vinculo = datos.GetValueOrDefault("apoderado secundario: vínculo"),
+        Secundario_Correo = datos.GetValueOrDefault("apoderado secundario: correo"),
+
+        Contacto1_Identificacion = datos.GetValueOrDefault("contacto emergencia 01: identificación"),
+        Contacto1_Telefono = datos.GetValueOrDefault("contacto emergencia 01: teléfono"),
+        Contacto1_Vinculo = datos.GetValueOrDefault("contacto emergencia 01: vínculo"),
+
+        Contacto2_Identificacion = datos.GetValueOrDefault("contacto emergencia 02: identificación"),
+        Contacto2_Telefono = datos.GetValueOrDefault("contacto emergencia 02: teléfono"),
+        Contacto2_Vinculo = datos.GetValueOrDefault("contacto emergencia 02: vínculo"),
+
+        SalidaSolo = datos.GetValueOrDefault("salida solo al finalizar jornada (SI/NO)"),
+
+        Retiro1_Rut = datos.GetValueOrDefault("retiro autorizado 01: rut"),
+        Retiro1_Vinculo = datos.GetValueOrDefault("retiro autorizado 01: vínculo"),
+
+        Retiro2_Rut = datos.GetValueOrDefault("retiro autorizado 02: rut"),
+        Retiro2_Vinculo = datos.GetValueOrDefault("retiro autorizado 02: vínculo"),
+
+        Retiro3_Rut = datos.GetValueOrDefault("retiro autorizado 03: rut"),
+        Retiro3_Vinculo = datos.GetValueOrDefault("retiro autorizado 03: vínculo"),
+
+        TieneSituacionMedica = datos.GetValueOrDefault("situación médica (SI/NO)"),
+
+        Medica1_Identificacion = datos.GetValueOrDefault("situación médica 01: identificación"),
+        Medica1_Situacion = datos.GetValueOrDefault("situación médica 01: detalle"),
+        Medica1_Tratamiento = datos.GetValueOrDefault("situación médica 01: en tratamiento"),
+
+        Medica2_Identificacion = datos.GetValueOrDefault("situación médica 02: identificación"),
+        Medica2_Situacion = datos.GetValueOrDefault("situación médica 02: detalle"),
+        Medica2_Tratamiento = datos.GetValueOrDefault("situación médica 02: en tratamiento"),
+
+        Medica3_Identificacion = datos.GetValueOrDefault("situación médica 03: identificación"),
+        Medica3_Situacion = datos.GetValueOrDefault("situación médica 03: detalle"),
+        Medica3_Tratamiento = datos.GetValueOrDefault("situación médica 03: en tratamiento"),
+
+        SalidaBano = datos.GetValueOrDefault("salida al baño (SI/NO)"),
+        AutorizaParacetamol = datos.GetValueOrDefault("autorización de paracetamol (SI/NO)"),
     };
 
     /// <summary>Un bloque (madre o padre) queda vacío cuando no se escribió nada en él.</summary>
