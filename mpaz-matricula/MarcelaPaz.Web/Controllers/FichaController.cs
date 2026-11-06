@@ -200,9 +200,30 @@ public class FichaController : Controller
                 // La ficha se registra con folio recién cuando exista la sesión del
                 // funcionario que la genera (ficha_version.generada_por).
                 TempData["NotificacionTitulo"] = "Ficha guardada";
-                TempData["Notificacion"] = "Los datos quedaron registrados en la base. La ficha queda a la espera del folio para su revisión por Secretaría.";
+                TempData["Notificacion"] = "Los datos quedaron registrados en la base y la ficha pasa a revisión. La Secretaría emitirá el folio al cerrar la revisión.";
                 TempData["NotificacionTipo"] = "exito";
-                return RedirectToAction(nameof(Paso), new { id = 7 });
+
+                // Al confirmar, la ficha vuelve a la ficha del estudiante: ahí se ve el
+                // expediente completo en lugar de dejar al usuario en el paso 7.
+                var rutBorrador = datos.GetValueOrDefault("cédula de identidad");
+                var rutEstudiante = string.IsNullOrWhiteSpace(rutBorrador)
+                    ? string.Empty
+                    : NormalizarRut(rutBorrador!);
+
+                var alumnoId = string.IsNullOrWhiteSpace(rutEstudiante)
+                    ? (int?)null
+                    : await _db.Estudiantes
+                        .Where(e => e.Identificador == rutEstudiante)
+                        .Select(e => (int?)e.Id)
+                        .FirstOrDefaultAsync();
+
+                if (alumnoId is int idAlumno)
+                {
+                    return RedirectToAction("Detalle", "Alumnos", new { id = idAlumno });
+                }
+
+                TempData["Notificacion"] = "La ficha quedó guardada, pero no se pudo identificar al estudiante en la base. Búsquelo por RUN para ver su ficha.";
+                return RedirectToAction(nameof(Buscar));
         }
 
         var aviso = await _registro.AplicarAsync(paso, datos, AnioMatricula);
