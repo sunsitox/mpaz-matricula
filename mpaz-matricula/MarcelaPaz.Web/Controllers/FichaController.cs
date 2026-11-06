@@ -69,6 +69,19 @@ public class FichaController : Controller
     }
 
     /// <summary>
+    /// Confirmación intermedia del envío: muestra la rueda y el mensaje antes de
+    /// volver a la ficha del estudiante, que se abre sola unos segundos después.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
+    public async Task<IActionResult> Enviada(int id)
+    {
+        var existe = await _db.Estudiantes.AnyAsync(e => e.Id == id);
+
+        return existe ? View(id) : RedirectToAction(nameof(Buscar));
+    }
+
+    /// <summary>
     /// Guarda los campos del paso: primero en el borrador temporal y luego en las
     /// tablas del DDL institucional, y avanza al paso siguiente.
     /// </summary>
@@ -199,12 +212,8 @@ public class FichaController : Controller
 
                 // La ficha se registra con folio recién cuando exista la sesión del
                 // funcionario que la genera (ficha_version.generada_por).
-                TempData["NotificacionTitulo"] = "Ficha guardada";
-                TempData["Notificacion"] = "Los datos quedaron registrados en la base. La ficha queda a la espera del folio para su revisión por Secretaría.";
-                TempData["NotificacionTipo"] = "exito";
-
-                // Al confirmar, la ficha vuelve a la ficha del estudiante: ahí se ve el
-                // expediente completo en lugar de dejar al usuario en el paso 7.
+                // Al confirmar, el portal muestra la confirmación con la rueda y el
+                // mensaje, y desde ahí vuelve a la ficha del estudiante.
                 var rutBorrador = datos.GetValueOrDefault("cédula de identidad");
                 var rutEstudiante = string.IsNullOrWhiteSpace(rutBorrador)
                     ? string.Empty
@@ -219,7 +228,7 @@ public class FichaController : Controller
 
                 if (alumnoId is int idAlumno)
                 {
-                    return RedirectToAction("Detalle", "Alumnos", new { id = idAlumno });
+                    return RedirectToAction(nameof(Enviada), new { id = idAlumno });
                 }
 
                 TempData["Notificacion"] = "La ficha quedó guardada, pero no se pudo identificar al estudiante en la base. Búsquelo por RUN para ver su ficha.";

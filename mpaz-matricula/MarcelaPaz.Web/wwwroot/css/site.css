@@ -1844,3 +1844,74 @@ a.wizard__salir {
         transition: none;
     }
 }
+
+/* ==========================================================================
+   Confirmación del envío antes de volver a la ficha del estudiante
+   ========================================================================== */
+
+.envio {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(12, 37, 91, .55);
+}
+
+.envio__tarjeta {
+    width: min(28rem, 100%);
+    padding: 1.9rem 1.6rem 1.6rem;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 24px 48px rgba(12, 37, 91, .3);
+    text-align: center;
+    animation: ux-entrada .3s ease-out both;
+}
+
+.envio__rueda {
+    display: inline-block;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 1rem;
+    border: 4px solid rgba(12, 37, 91, .18);
+    border-top-color: var(--color-action);
+    border-radius: 50%;
+    animation: ux-girar .8s linear infinite;
+}
+
+.envio__titulo {
+    margin: 0 0 .5rem;
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.envio__texto {
+    margin: 0 0 .6rem;
+    color: #3A4A63;
+    font-size: .95rem;
+    line-height: 1.5;
+}
+
+.envio__detalle {
+    margin: 0 0 1.1rem;
+    color: #6B7A90;
+    font-size: .85rem;
+}
+
+.envio__boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .envio__rueda {
+        animation-duration: 2.4s;
+    }
+
+    .envio__tarjeta {
+        animation: none;
+    }
+}

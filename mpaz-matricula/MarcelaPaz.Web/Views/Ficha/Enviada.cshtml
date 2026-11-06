@@ -1,0 +1,29 @@
+@model int
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ficha enviada a revisión";
+
+    var destino = Url.Action("Detalle", "Alumnos", new { id = Model });
+}
+<div class="envio" role="dialog" aria-modal="true" aria-labelledby="envio-titulo">
+    <div class="envio__tarjeta">
+        <span class="envio__rueda" aria-hidden="true"></span>
+
+        <h1 class="envio__titulo" id="envio-titulo">Ficha guardada</h1>
+
+        <p class="envio__texto">
+            Los datos quedaron registrados en la base. La ficha queda a la espera del folio
+            para su revisión por Secretaría.
+        </p>
+
+        <p class="envio__detalle" role="status">Te llevamos a la ficha del estudiante…</p>
+
+        <a class="acceso__boton envio__boton" href="@destino">Ir a la ficha ahora</a>
+    </div>
+</div>
+
+<script>
+    window.setTimeout(function () {
+        window.location.replace('@destino');
+    }, 2500);
+</script>
