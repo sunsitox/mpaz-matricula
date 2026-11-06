@@ -1915,3 +1915,10 @@ a.wizard__salir {
         animation: none;
     }
 }
+
+/* El botón de la confirmación es un enlace: se muestra como botón, sin subrayado */
+.envio__boton:link,
+.envio__boton:visited {
+    color: #fff;
+    text-decoration: none;
+}
