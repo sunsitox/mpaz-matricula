@@ -1604,3 +1604,61 @@ select.acceso__input {
         padding: 0.75rem 0.85rem;
     }
 }
+
+/* ==========================================================================
+   Ancho único y bloques emparejados: los pasos dejan de cambiar de tamaño
+   ========================================================================== */
+
+/* Todas las pantallas comparten el mismo ancho de contenido */
+.wizard__cuerpo,
+.wizard__cuerpo--amplio {
+    max-width: 1080px;
+    --wizard-ancho: 1080px;
+}
+
+/* Bloques hermanos en columnas: madre/padre, apoderados, contactos, retiros y registros */
+.wizard__rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 0.9rem;
+    align-items: start;
+    margin-bottom: 0.9rem;
+}
+
+.wizard__rejilla--dos {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.wizard__rejilla > .wizard__desplegable {
+    margin-bottom: 0;
+}
+
+/* Preguntas SI/NO emparejadas: panel propio para no perder el límite */
+.wizard__rejilla > .wizard__restriccion {
+    margin: 0;
+    padding: 0.8rem 1rem 0.9rem;
+    border: 1px solid var(--color-input-border);
+    border-radius: 8px;
+    background: #FAFBFD;
+}
+
+.wizard__rejilla > .wizard__restriccion legend {
+    padding: 0 0.35rem;
+}
+
+/* Paso 7: la ficha se adapta al ancho común, sin salto respecto a los demás pasos */
+.wizard__revision {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 1.5rem;
+}
+
+.wizard__pdf-marco {
+    width: min(100%, calc((100vh - 13rem) * 0.707));
+}
+
+@media (max-width: 699px) {
+    .wizard__rejilla,
+    .wizard__rejilla--dos {
+        grid-template-columns: 1fr;
+    }
+}
