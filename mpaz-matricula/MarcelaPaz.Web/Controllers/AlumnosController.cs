@@ -25,7 +25,7 @@ public class AlumnosController : Controller
     public AlumnosController(MatriculaDbContext db) => _db = db;
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, string? curso, string? estado)
+    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir)
     {
         var estudiantes = await _db.Estudiantes
             .AsNoTracking()
@@ -68,12 +68,20 @@ public class AlumnosController : Controller
             })
             .ToList();
 
+        // Sólo se aceptan las columnas conocidas; cualquier otra vuelve a nombre.
+        var columnas = new[] { "nombre", "rut", "curso", "estado", "tipo", "comuna" };
+        var ordenPedido = (orden ?? string.Empty).ToLowerInvariant();
+        var ordenValido = columnas.Contains(ordenPedido) ? ordenPedido : "nombre";
+        var descendente = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
+
         var filtro = new FiltroAlumnos
         {
             Anio = Anio,
             Texto = q?.Trim(),
             Curso = string.IsNullOrWhiteSpace(curso) ? null : curso,
             Estado = string.IsNullOrWhiteSpace(estado) ? null : estado,
+            Orden = ordenValido,
+            Direccion = descendente ? "desc" : "asc",
             Cursos = todos
                 .Where(a => !string.IsNullOrWhiteSpace(a.Curso))
                 .Select(a => a.Curso!)
@@ -117,7 +125,7 @@ public class AlumnosController : Controller
             filas = filas.Where(a => a.EstadoTexto == filtro.Estado);
         }
 
-        filtro.Alumnos = filas.ToList();
+        filtro.Alumnos = Ordenar(filas, filtro.Orden, filtro.Direccion == "desc").ToList();
 
         return View(filtro);
     }
@@ -251,6 +259,52 @@ public class AlumnosController : Controller
         }
 
         return View(perfil);
+    }
+
+    /// <summary>
+    /// Ordena el listado por la columna elegida. Los valores vacíos se mandan al
+    /// final para que no se mezclen con los datos reales.
+    /// </summary>
+    private static IEnumerable<AlumnoListado> Ordenar(
+        IEnumerable<AlumnoListado> filas,
+        string orden,
+        bool descendente)
+    {
+        static string ConValor(string? valor) => string.IsNullOrWhiteSpace(valor) ? "\uffff" : valor;
+
+        return orden switch
+        {
+            "rut" => descendente
+                ? filas.OrderByDescending(a => NumeroRut(a.Rut))
+                : filas.OrderBy(a => NumeroRut(a.Rut)),
+            "curso" => descendente
+                ? filas.OrderByDescending(a => ConValor(a.Curso), StringComparer.CurrentCulture)
+                : filas.OrderBy(a => ConValor(a.Curso), StringComparer.CurrentCulture),
+            "estado" => descendente
+                ? filas.OrderByDescending(a => a.EstadoTexto, StringComparer.CurrentCulture)
+                : filas.OrderBy(a => a.EstadoTexto, StringComparer.CurrentCulture),
+            "tipo" => descendente
+                ? filas.OrderByDescending(a => a.TipoTexto, StringComparer.CurrentCulture)
+                : filas.OrderBy(a => a.TipoTexto, StringComparer.CurrentCulture),
+            "comuna" => descendente
+                ? filas.OrderByDescending(a => ConValor(a.Comuna), StringComparer.CurrentCulture)
+                : filas.OrderBy(a => ConValor(a.Comuna), StringComparer.CurrentCulture),
+            _ => descendente
+                ? filas.OrderByDescending(a => a.Nombre, StringComparer.CurrentCulture)
+                : filas.OrderBy(a => a.Nombre, StringComparer.CurrentCulture),
+        };
+    }
+
+    /// <summary>
+    /// Cuerpo numérico del RUN (sin dígito verificador), para ordenar
+    /// 9.111.111 antes que 24.455.667 y no por el texto con puntos.
+    /// </summary>
+    private static long NumeroRut(string rut)
+    {
+        var cuerpo = rut.Split('-')[0];
+        var digitos = new string(cuerpo.Where(char.IsDigit).ToArray());
+
+        return long.TryParse(digitos, out var numero) ? numero : 0;
     }
 
     private static string NombrePersona(Persona persona) =>

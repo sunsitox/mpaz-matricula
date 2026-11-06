@@ -15,6 +15,12 @@ public class FiltroAlumnos
 
     public string? Estado { get; set; }
 
+    /// <summary>Columna por la que está ordenado el listado.</summary>
+    public string Orden { get; set; } = "nombre";
+
+    /// <summary>«asc» o «desc».</summary>
+    public string Direccion { get; set; } = "asc";
+
     public List<AlumnoListado> Alumnos { get; set; } = new();
 
     public List<string> Cursos { get; set; } = new();

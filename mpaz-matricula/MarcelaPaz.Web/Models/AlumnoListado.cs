@@ -24,6 +24,15 @@ public class AlumnoListado
 
     public string EstadoTexto => TieneMatricula ? Estado! : "Sin matrícula";
 
+    /// <summary>Clase del distintivo de estado, para colorearlo en la tabla.</summary>
+    public string EstadoClase => !TieneMatricula
+        ? "alumnos__estado--sin"
+        : Estado is "FIRMADA" or "CONFIRMADA" or "FORMALIZADA"
+            ? "alumnos__estado--cerrada"
+            : Estado == "BORRADOR"
+                ? "alumnos__estado--borrador"
+                : "alumnos__estado--otro";
+
     public string TipoTexto => Tipo switch
     {
         "RENOVACION" => "Renovación",

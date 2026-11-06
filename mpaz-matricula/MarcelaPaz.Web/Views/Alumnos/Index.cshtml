@@ -2,14 +2,33 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Alumnos";
+
+    Func<string, string> enlaceOrden = columna => Url.Action("Index", new
+    {
+        q = Model.Texto,
+        curso = Model.Curso,
+        estado = Model.Estado,
+        orden = columna,
+        dir = Model.Orden == columna && Model.Direccion == "asc" ? "desc" : "asc",
+    })!;
+
+    Func<string, string> flecha = columna =>
+        Model.Orden != columna ? string.Empty : Model.Direccion == "desc" ? "▼" : "▲";
+
+    Func<string, string> claseOrden = columna =>
+        Model.Orden == columna ? "alumnos__orden alumnos__orden--activo" : "alumnos__orden";
 }
 
 <section class="admin__tarjeta">
-    <h1 class="admin__titulo-seccion">Alumnos</h1>
-    <p class="admin__ayuda">
-        Busque por nombre o RUN y filtre por curso o estado. Haga clic en un alumno
-        para ver su ficha completa.
-    </p>
+    <div class="alumnos__encabezado">
+        <div>
+            <h1 class="admin__titulo-seccion">Alumnos</h1>
+            <p class="admin__ayuda">
+                Busque por nombre o RUN, filtre por curso o estado y ordene por cualquier columna.
+            </p>
+        </div>
+        <span class="alumnos__insignia">@Model.Anio</span>
+    </div>
 
     <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
         <div class="acceso__campo alumnos__campo-texto">
@@ -19,7 +38,7 @@
         </div>
 
         <div class="acceso__campo">
-            <label class="acceso__etiqueta" for="curso">Curso @Model.Anio</label>
+            <label class="acceso__etiqueta" for="curso">Curso</label>
             <select class="acceso__input" id="curso" name="curso">
                 <option value="">Todos</option>
                 @foreach (var curso in Model.Cursos)
@@ -40,12 +59,10 @@
             </select>
         </div>
 
-        <div class="alumnos__botones">
-            <button type="submit" class="admin__boton admin__boton--primario">Filtrar</button>
-        </div>
+        <button type="submit" class="admin__boton admin__boton--primario alumnos__boton-buscar">Filtrar</button>
     </form>
 
-    <p class="alumnos__filtros-ayuda">Presione Enter para buscar. Los RUN se aceptan con o sin puntos.</p>
+    <p class="alumnos__filtros-ayuda">Presione Enter para buscar. El RUN se acepta con o sin puntos.</p>
 </section>
 
 <section class="admin__tarjeta">
@@ -67,55 +84,74 @@
     @if (Model.Alumnos.Count == 0)
     {
         <div class="alumnos__vacio">
-            <p class="admin__ayuda">No hay alumnos que coincidan con la búsqueda.</p>
+            <p class="alumnos__vacio-texto">No hay alumnos que coincidan con la búsqueda.</p>
             <a class="admin__boton" asp-controller="Alumnos" asp-action="Index">Ver todos los alumnos</a>
         </div>
     }
     else
     {
-        <table class="admin__tabla alumnos__tabla">
-            <thead>
-                <tr>
-                    <th>Alumno</th>
-                    <th>RUN</th>
-                    <th>Curso @Model.Anio</th>
-                    <th>Estado</th>
-                    <th>Matrícula</th>
-                    <th>Comuna</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var alumno in Model.Alumnos)
-                {
+        <div class="alumnos__tabla-envoltura">
+            <table class="admin__tabla alumnos__tabla">
+                <thead>
                     <tr>
-                        <td>
-                            <a class="alumnos__nombre" asp-action="Detalle" asp-route-id="@alumno.Id">
-                                @alumno.Nombre
+                        <th>
+                            <a class="@claseOrden("nombre")" href="@enlaceOrden("nombre")">
+                                Alumno <span class="alumnos__flecha">@flecha("nombre")</span>
                             </a>
-                        </td>
-                        <td>@alumno.Rut</td>
-                        <td>@(alumno.Curso ?? "—")</td>
-                        <td>@alumno.EstadoTexto</td>
-                        <td>@alumno.TipoTexto</td>
-                        <td>@(alumno.Comuna ?? "—")</td>
-                        <td>
-                            <div class="alumnos__acciones">
-                                <a class="admin__boton admin__boton--mini admin__boton--primario"
-                                   asp-action="Detalle" asp-route-id="@alumno.Id">Ver ficha</a>
-                                <button type="button" class="admin__boton admin__boton--mini" disabled
-                                        title="Pendiente: definir qué documentos se pueden extraer">
-                                    Documentos
-                                </button>
-                            </div>
-                        </td>
+                        </th>
+                        <th>
+                            <a class="@claseOrden("rut")" href="@enlaceOrden("rut")">
+                                RUN <span class="alumnos__flecha">@flecha("rut")</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="@claseOrden("curso")" href="@enlaceOrden("curso")">
+                                Curso @Model.Anio <span class="alumnos__flecha">@flecha("curso")</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="@claseOrden("estado")" href="@enlaceOrden("estado")">
+                                Estado <span class="alumnos__flecha">@flecha("estado")</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="@claseOrden("tipo")" href="@enlaceOrden("tipo")">
+                                Matrícula <span class="alumnos__flecha">@flecha("tipo")</span>
+                            </a>
+                        </th>
+                        <th>
+                            <a class="@claseOrden("comuna")" href="@enlaceOrden("comuna")">
+                                Comuna <span class="alumnos__flecha">@flecha("comuna")</span>
+                            </a>
+                        </th>
+                        <th class="alumnos__col-accion">Ficha</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-
-        <p class="alumnos__nota">
-            La extracción de documentos por alumno está pendiente de definir con el colegio.
-        </p>
+                </thead>
+                <tbody>
+                    @foreach (var alumno in Model.Alumnos)
+                    {
+                        <tr>
+                            <td>
+                                <a class="alumnos__nombre" asp-action="Detalle" asp-route-id="@alumno.Id">
+                                    @alumno.Nombre
+                                </a>
+                            </td>
+                            <td class="alumnos__dato">@alumno.Rut</td>
+                            <td class="alumnos__dato">@(alumno.Curso ?? "—")</td>
+                            <td>
+                                <span class="alumnos__estado @alumno.EstadoClase">@alumno.EstadoTexto</span>
+                            </td>
+                            <td class="alumnos__dato">@alumno.TipoTexto</td>
+                            <td class="alumnos__dato">@(alumno.Comuna ?? "—")</td>
+                            <td class="alumnos__col-accion">
+                                <a class="alumnos__ver" asp-action="Detalle" asp-route-id="@alumno.Id">
+                                    Ver ficha
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </section>

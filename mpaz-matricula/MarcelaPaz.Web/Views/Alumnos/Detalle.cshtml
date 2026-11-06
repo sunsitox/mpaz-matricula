@@ -39,10 +39,6 @@
                 <a class="admin__boton admin__boton--primario"
                    asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
             }
-            <button type="button" class="admin__boton" disabled
-                    title="Pendiente: definir qué documentos se pueden extraer">
-                Documentos
-            </button>
         </div>
     </div>
 </div>
@@ -252,8 +248,4 @@
             </ul>
         </div>
     }
-
-    <p class="alumnos__nota">
-        La extracción de documentos de este alumno está pendiente de definir con el colegio.
-    </p>
 </section>
