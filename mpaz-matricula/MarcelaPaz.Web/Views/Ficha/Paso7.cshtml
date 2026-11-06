@@ -41,9 +41,15 @@ else
 
         <aside class="wizard__pdf">
             <h2 class="wizard__subtitulo">Ficha para firma</h2>
-            <iframe class="wizard__pdf-marco"
-                    src="@Url.Action("Comprobante", "Ficha")"
-                    title="Vista previa de la ficha de matrícula"></iframe>
+            <div class="wizard__pdf-caja">
+                <div class="wizard__pdf-cargando" aria-hidden="true">
+                    <span class="wizard__pdf-spinner"></span>
+                    Preparando la vista previa…
+                </div>
+                <iframe class="wizard__pdf-marco"
+                        src="@Url.Action("Comprobante", "Ficha")"
+                        title="Vista previa de la ficha de matrícula"></iframe>
+            </div>
         </aside>
     </div>
 }

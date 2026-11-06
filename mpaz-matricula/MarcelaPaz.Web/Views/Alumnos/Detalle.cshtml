@@ -35,7 +35,8 @@
 
         <div class="alumnos__acciones">
             <a class="admin__boton admin__boton--primario"
-               asp-controller="Ficha" asp-action="FormularioAlumno" asp-route-id="@Model.Id">
+               asp-controller="Ficha" asp-action="FormularioAlumno" asp-route-id="@Model.Id"
+               data-ux-cargando>
                 Descargar formulario
             </a>
             @if (puedeMatricula)
