@@ -1662,3 +1662,40 @@ select.acceso__input {
         grid-template-columns: 1fr;
     }
 }
+
+/* Paso 7: resumen en dos columnas para revisar sin bajar tanto */
+@media (min-width: 1000px) {
+    .wizard__revision {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .wizard__resumen {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wizard__resumen-item {
+        grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
+        gap: 0.75rem;
+        border-top: 1px solid var(--color-border);
+        padding: 0.45rem 0.9rem;
+    }
+
+    .wizard__resumen-item:nth-child(-n+2) {
+        border-top: none;
+    }
+
+    .wizard__resumen-item:nth-child(even) {
+        border-left: 1px solid var(--color-border);
+    }
+
+    .wizard__pdf {
+        position: static;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .wizard__pdf-marco {
+        width: min(100%, 360px);
+    }
+}
