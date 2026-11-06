@@ -34,9 +34,13 @@
         </div>
 
         <div class="alumnos__acciones">
+            <a class="admin__boton admin__boton--primario"
+               asp-controller="Ficha" asp-action="FormularioAlumno" asp-route-id="@Model.Id">
+                Descargar formulario
+            </a>
             @if (puedeMatricula)
             {
-                <a class="admin__boton admin__boton--primario"
+                <a class="admin__boton"
                    asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
             }
         </div>

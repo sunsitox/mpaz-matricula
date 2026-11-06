@@ -362,6 +362,83 @@ public class FichaController : Controller
             : File(archivo, "application/pdf");
     }
 
+    /// <summary>
+    /// Formulario de matrícula de un alumno ya registrado, para descargar desde su
+    /// ficha. Se arma con los datos de la base y se imprime con el mismo PDF
+    /// institucional de la ficha (MAT-08).
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
+    public async Task<IActionResult> FormularioAlumno(int id, bool descargar = true)
+    {
+        var estudiante = await _db.Estudiantes
+            .AsNoTracking()
+            .Include(e => e.Comuna)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (estudiante is null)
+        {
+            return NotFound();
+        }
+
+        var matriculas = await _db.Matriculas
+            .AsNoTracking()
+            .Include(m => m.Curso)
+            .Where(m => m.EstudianteId == id)
+            .OrderByDescending(m => m.Anio)
+            .ToListAsync();
+
+        // Se imprime la matrícula del año en curso; si aún no existe, la última registrada.
+        var matricula = matriculas.FirstOrDefault(m => m.Anio == AnioMatricula)
+            ?? matriculas.FirstOrDefault();
+
+        var anio = matricula?.Anio ?? AnioMatricula;
+
+        var datos = new Dictionary<string, string>
+        {
+            ["cédula de identidad"] = estudiante.Identificador,
+            ["nombres"] = estudiante.Nombres,
+            ["apellido paterno"] = estudiante.ApellidoPaterno,
+            ["apellido materno"] = estudiante.ApellidoMaterno,
+            ["año escolar"] = anio.ToString(),
+            ["modo"] = $"Matrícula {anio}",
+        };
+
+        if (estudiante.FechaNacimiento != default)
+        {
+            GuardarCampo(datos, "fecha nacimiento", estudiante.FechaNacimiento.ToString("dd-MM-yyyy"));
+        }
+
+        GuardarCampo(datos, "nacionalidad", estudiante.Nacionalidad);
+        GuardarCampo(datos, "domicilio", estudiante.Domicilio);
+        GuardarCampo(datos, "comuna", estudiante.Comuna?.Nombre);
+
+        var (nivel, letra) = SepararCurso(matricula?.Curso?.Nombre);
+        GuardarCampo(datos, "curso: nivel", nivel);
+        GuardarCampo(datos, "curso: letra", letra);
+
+        datos["modo: detalle"] = matricula is null
+            ? $"El alumno no tiene matrícula {AnioMatricula} registrada; la ficha se genera con sus datos personales."
+            : $"Matrícula {matricula.Anio}"
+              + (string.IsNullOrWhiteSpace(matricula.Curso?.Nombre) ? string.Empty : $" · {matricula.Curso!.Nombre}")
+              + $" · {matricula.Estado.ToLowerInvariant()}.";
+
+        // Apoderados, contactos, retiros y salud salen de la base, igual que en el asistente.
+        await CompletarDesdeBaseAsync(datos);
+
+        var version = matricula is null
+            ? $"sin matrícula {AnioMatricula} registrada"
+            : $"matrícula {matricula.Anio} · {matricula.Estado.ToLowerInvariant()}";
+
+        var ficha = FichaImpresion.DesdeBorrador(datos, anio, DateTime.Now, LogoInstitucional(), version);
+        var archivo = _pdf.Generar(ficha);
+        var nombre = $"formulario-matricula-{estudiante.Identificador}-{anio}.pdf";
+
+        return descargar
+            ? File(archivo, "application/pdf", nombre)
+            : File(archivo, "application/pdf");
+    }
+
     /// <summary>Lee el escudo desde wwwroot; si falta, la ficha se genera sin logo.</summary>
     private byte[]? LogoInstitucional()
     {

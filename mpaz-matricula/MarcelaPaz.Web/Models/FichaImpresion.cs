@@ -71,7 +71,8 @@ public static class FichaImpresion
         IReadOnlyDictionary<string, string> datos,
         int anio,
         DateTime generadoEn,
-        byte[]? logo = null)
+        byte[]? logo = null,
+        string version = "borrador (sin registrar)")
     {
         var secciones = new List<SeccionFicha>();
 
@@ -98,7 +99,7 @@ public static class FichaImpresion
             Folio = Folio(datos, anio, generadoEn),
             Anio = anio,
             TipoTramite = datos.GetValueOrDefault("modo") ?? "Matrícula",
-            Version = "borrador (sin registrar)",
+            Version = version,
             GeneradoEn = generadoEn,
             Detalle = datos.GetValueOrDefault("modo: detalle"),
             Logo = logo,
