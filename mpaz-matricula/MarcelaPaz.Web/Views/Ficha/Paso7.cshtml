@@ -49,6 +49,14 @@ else
 }
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
+    <label class="wizard__confirmacion">
+        <input asp-for="Confirmo_Revision" type="checkbox" required />
+        <span>
+            Confirmo que revisé con el apoderado todos los datos de esta ficha, incluidas las autorizaciones,
+            y que la información es fiel a lo declarado.
+        </span>
+    </label>
+
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="6">Volver</a>
         @if (datos.Count > 0)

@@ -121,4 +121,12 @@ public class FichaForm
 
     // Apoyos informados o diagnóstico declarado
     public string? PieApoyos { get; set; }
+
+    // Autorizaciones del apoderado (Si / No)
+    public string? AutorizaImagen { get; set; }
+
+    public string? AutorizaConvivencia { get; set; }
+
+    // Paso 7 · confirmación obligatoria para enviar la ficha a revisión
+    public bool Confirmo_Revision { get; set; }
 }

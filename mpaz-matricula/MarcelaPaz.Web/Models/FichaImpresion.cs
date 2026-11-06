@@ -71,26 +71,48 @@ public static class FichaImpresion
         }),
     };
 
+    private const string ClaveImagen = "autorización de uso de imagen (SI/NO)";
+
+    private const string ClaveConvivencia = "autorización de convivencia escolar (SI/NO)";
+
     /// <summary>
-    /// Consentimientos que se imprimen con la ficha para que el apoderado los marque
-    /// y firme. Los textos quedan pendientes de la revisión de Dirección y Convivencia.
+    /// Consentimientos que se imprimen con la ficha. La casilla marcada sale de la
+    /// respuesta del formulario; los textos quedan pendientes de la revisión de
+    /// Dirección y Convivencia.
     /// </summary>
-    private static readonly AutorizacionFicha[] AutorizacionesFormulario =
-    {
+    private static IReadOnlyList<AutorizacionFicha> AutorizacionesDe(IReadOnlyDictionary<string, string> datos) =>
+    [
         new AutorizacionFicha
         {
             Titulo = "Autorización de uso de imagen",
             Texto = "Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales "
                   + "(registro interno, sitio web y redes sociales del establecimiento), sin exponer datos sensibles. "
                   + "Puedo revocar esta autorización por escrito en cualquier momento.",
+            Respuesta = RespuestaSiNo(datos, ClaveImagen),
         },
         new AutorizacionFicha
         {
             Titulo = "Autorización para el trabajo con Convivencia Escolar",
             Texto = "Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea "
                   + "necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.",
+            Respuesta = RespuestaSiNo(datos, ClaveConvivencia),
         },
-    };
+    ];
+
+    /// <summary>«Si» → true, «No» → false; sin respuesta → null (casilla sin marcar).</summary>
+    private static bool? RespuestaSiNo(IReadOnlyDictionary<string, string> datos, string clave)
+    {
+        var valor = datos.GetValueOrDefault(clave)?.Trim();
+
+        if (string.IsNullOrEmpty(valor))
+        {
+            return null;
+        }
+
+        return valor.StartsWith('S') || valor.StartsWith('s') ? true
+             : valor.StartsWith('N') || valor.StartsWith('n') ? false
+             : null;
+    }
 
     /// <summary>Etiquetas propias para claves cuyo nombre técnico no se lee bien.</summary>
     private static readonly Dictionary<string, string> EtiquetasPropias = new()
@@ -138,7 +160,7 @@ public static class FichaImpresion
             Detalle = datos.GetValueOrDefault("modo: detalle"),
             Logo = logo,
             Secciones = secciones,
-            Autorizaciones = AutorizacionesFormulario,
+            Autorizaciones = AutorizacionesDe(datos),
         };
     }
 

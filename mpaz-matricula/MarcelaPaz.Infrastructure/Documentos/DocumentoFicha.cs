@@ -34,6 +34,9 @@ public sealed class AutorizacionFicha
     public required string Titulo { get; init; }
 
     public required string Texto { get; init; }
+
+    /// <summary>true = Sí, false = No, null = el apoderado aún no responde.</summary>
+    public bool? Respuesta { get; init; }
 }
 
 /// <summary>Un bloque de la ficha (estudiante, madre, apoderados, etc.).</summary>

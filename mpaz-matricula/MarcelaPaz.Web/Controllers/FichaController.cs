@@ -184,9 +184,19 @@ public class FichaController : Controller
                 GuardarCampo(datos, "PIE: participa (SI/NO/PENDIENTE)", form.ParticipaPie);
                 GuardarCampo(datos, "PIE: diagnosticado (SI/NO)", form.PieDiagnostico);
                 GuardarCampo(datos, "PIE: apoyos o diagnóstico", form.PieApoyos);
+                GuardarCampo(datos, "autorización de uso de imagen (SI/NO)", form.AutorizaImagen);
+                GuardarCampo(datos, "autorización de convivencia escolar (SI/NO)", form.AutorizaConvivencia);
                 break;
 
             case 7:
+                // La revisión exige la confirmación expresa de que se leyó la ficha.
+                if (!form.Confirmo_Revision)
+                {
+                    TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
+                    TempData["Aviso"] = "Para enviar la ficha a revisión, marque la confirmación de que revisó todos los datos.";
+                    return RedirectToAction(nameof(Paso), new { id = 7 });
+                }
+
                 // La ficha se registra con folio recién cuando exista la sesión del
                 // funcionario que la genera (ficha_version.generada_por).
                 TempData["Aviso"] = "Los datos están guardados en la base como borrador. El registro de la ficha con folio se habilitará cuando el portal tenga la sesión del funcionario.";

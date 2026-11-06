@@ -204,8 +204,12 @@ public sealed class FichaMatriculaPdf
                                 {
                                     titulo.RelativeItem().Text(autorizacion.Titulo)
                                         .FontSize(6.7f).SemiBold().FontColor(Azul);
-                                    titulo.ConstantItem(34, Unit.Millimetre).AlignRight().Text("Sí [  ]   No [  ]")
-                                        .FontSize(6.2f).FontColor(Texto);
+
+                                    titulo.AutoItem().Element(marca =>
+                                        Opcion(marca, "Sí", autorizacion.Respuesta == true));
+                                    titulo.ConstantItem(5);
+                                    titulo.AutoItem().Element(marca =>
+                                        Opcion(marca, "No", autorizacion.Respuesta == false));
                                 });
                                 texto.Item().Text(autorizacion.Texto).FontSize(6.3f).FontColor(Gris);
                             });
@@ -217,6 +221,20 @@ public sealed class FichaMatriculaPdf
                         .FontSize(5.8f).FontColor(GrisClaro);
                 }
             });
+        });
+    }
+
+    /// <summary>Opción del checklist: texto y casilla que se marca con una X.</summary>
+    private static void Opcion(IContainer contenedor, string texto, bool marcada)
+    {
+        contenedor.Row(fila =>
+        {
+            fila.AutoItem().AlignMiddle().Text(texto).FontSize(6.2f).FontColor(Texto);
+            fila.ConstantItem(2);
+            fila.ConstantItem(9).Height(9).Border(0.7f).BorderColor(Gris)
+                .AlignCenter().AlignMiddle()
+                .Text(marcada ? "X" : string.Empty)
+                .FontSize(6).Bold().FontColor(Azul);
         });
     }
 

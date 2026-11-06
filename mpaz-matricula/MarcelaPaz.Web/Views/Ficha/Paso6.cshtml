@@ -191,6 +191,43 @@
         </div>
     </fieldset>
 
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Autorización de uso de imagen</legend>
+        <p class="wizard__restriccion-pregunta">
+            Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales (registro interno,
+            sitio web y redes sociales del establecimiento), sin exponer datos sensibles. Puedo revocar esta
+            autorización por escrito en cualquier momento.
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="AutorizaImagen" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="AutorizaImagen" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Autorización para el trabajo con Convivencia Escolar</legend>
+        <p class="wizard__restriccion-pregunta">
+            Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea
+            necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="AutorizaConvivencia" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="AutorizaConvivencia" type="radio" value="No" />
+                <span>No</span>
+            </label>
+        </div>
+    </fieldset>
+
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="5">Volver</a>
         <button type="submit" class="acceso__boton wizard__guardar">Guardar y continuar</button>
