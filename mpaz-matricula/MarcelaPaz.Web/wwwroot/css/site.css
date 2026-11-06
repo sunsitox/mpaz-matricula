@@ -1699,3 +1699,25 @@ select.acceso__input {
         width: min(100%, 360px);
     }
 }
+
+/* ==========================================================================
+   Texto centrado en botones y controles equivalentes
+   Los <button> lo hacen por defecto; los enlaces con forma de botón, no.
+   ========================================================================== */
+
+.acceso__boton,
+.acceso__boton-secundario,
+.admin__boton,
+.admin__salir,
+.wizard__salir {
+    text-align: center;
+}
+
+/* Enlaces usados como botón: centrado también en vertical */
+a.acceso__boton-secundario,
+a.admin__boton,
+a.wizard__salir {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
