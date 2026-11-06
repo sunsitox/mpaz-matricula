@@ -1,0 +1,99 @@
+@model MarcelaPaz.Web.Models.FiltroAlumnos
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Alumnos";
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Alumnos</h1>
+    <p class="admin__ayuda">
+        Registro único de estudiantes con su matrícula @Model.Anio. Busque por nombre o RUN
+        y combine la búsqueda con curso y estado.
+    </p>
+
+    <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
+        <div class="acceso__campo alumnos__campo-texto">
+            <label class="acceso__etiqueta" for="q">Buscar</label>
+            <input class="acceso__input" id="q" name="q" value="@Model.Texto"
+                   placeholder="Nombre o RUN, con o sin puntos" autocomplete="off" />
+        </div>
+
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="curso">Curso @Model.Anio</label>
+            <select class="acceso__input" id="curso" name="curso">
+                <option value="">Todos</option>
+                @foreach (var curso in Model.Cursos)
+                {
+                    <option value="@curso" selected="@(curso == Model.Curso ? "selected" : null)">@curso</option>
+                }
+            </select>
+        </div>
+
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="estado">Estado</label>
+            <select class="acceso__input" id="estado" name="estado">
+                <option value="">Todos</option>
+                @foreach (var estado in Model.Estados)
+                {
+                    <option value="@estado" selected="@(estado == Model.Estado ? "selected" : null)">@estado</option>
+                }
+            </select>
+        </div>
+
+        <div class="alumnos__botones">
+            <button type="submit" class="admin__boton admin__boton--primario">Filtrar</button>
+            @if (Model.TieneFiltros)
+            {
+                <a class="admin__boton" asp-controller="Alumnos" asp-action="Index">Limpiar</a>
+            }
+        </div>
+    </form>
+</div>
+
+<div class="admin__tarjeta">
+    <p class="admin__ayuda">
+        @Model.Alumnos.Count @(Model.Alumnos.Count == 1 ? "alumno" : "alumnos") en el listado.
+        La extracción de documentos por alumno está pendiente: falta definir con el colegio
+        qué documentos se pueden obtener, así que los botones quedan deshabilitados.
+    </p>
+
+    @if (Model.Alumnos.Count == 0)
+    {
+        <p class="admin__ayuda">No hay alumnos que coincidan con los filtros.</p>
+    }
+    else
+    {
+        <table class="admin__tabla">
+            <thead>
+                <tr>
+                    <th>Alumno</th>
+                    <th>RUN</th>
+                    <th>Curso @Model.Anio</th>
+                    <th>Estado</th>
+                    <th>Matrícula</th>
+                    <th>Comuna</th>
+                    <th>Documentos</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var alumno in Model.Alumnos)
+                {
+                    <tr>
+                        <td>@alumno.Nombre</td>
+                        <td>@alumno.Rut</td>
+                        <td>@(alumno.Curso ?? "—")</td>
+                        <td>@alumno.EstadoTexto</td>
+                        <td>@alumno.TipoTexto</td>
+                        <td>@(alumno.Comuna ?? "—")</td>
+                        <td>
+                            <button type="button" class="admin__boton" disabled
+                                    title="Pendiente: definir qué documentos se pueden extraer">
+                                Documentos
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

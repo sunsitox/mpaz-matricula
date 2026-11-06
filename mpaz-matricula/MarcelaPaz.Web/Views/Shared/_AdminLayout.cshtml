@@ -1,5 +1,18 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
 @{
     var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "Modo revisión (sin login)";
+
+    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
+    var puedeAlumnos = !exigirLogin || User.HasClaim("permiso", "GENERAL:LEER");
+    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeFuncionarios = !exigirLogin || User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
+
+    var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    string Clase(string nombreControlador) =>
+        string.Equals(controlador, nombreControlador, StringComparison.OrdinalIgnoreCase)
+            ? "admin__menu-enlace admin__menu-enlace--activo"
+            : "admin__menu-enlace";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -9,6 +22,7 @@
     <title>@ViewData["Title"] · Portal de Matrícula 2027</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout-admin.css" asp-append-version="true" />
     <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
 </head>
 <body class="admin">
@@ -32,12 +46,35 @@
         </div>
     </header>
 
-    <main class="admin__contenedor">
-        @if (TempData["Aviso"] is string aviso)
-        {
-            <div class="acceso__info" role="status">@aviso</div>
-        }
-        @RenderBody()
-    </main>
+    <div class="admin__cuerpo">
+        <nav class="admin__menu" aria-label="Secciones del portal">
+            <p class="admin__menu-titulo">Menú</p>
+
+            <a class="@Clase("Home")" asp-controller="Home" asp-action="Index">Panel</a>
+
+            @if (puedeAlumnos)
+            {
+                <a class="@Clase("Alumnos")" asp-controller="Alumnos" asp-action="Index">Alumnos</a>
+            }
+
+            @if (puedeMatricula)
+            {
+                <a class="@Clase("Ficha")" asp-controller="Ficha" asp-action="Buscar">Matrícula</a>
+            }
+
+            @if (puedeFuncionarios)
+            {
+                <a class="@Clase("Funcionarios")" asp-controller="Funcionarios" asp-action="Index">Funcionarios</a>
+            }
+        </nav>
+
+        <main class="admin__contenedor">
+            @if (TempData["Aviso"] is string aviso)
+            {
+                <div class="acceso__info" role="status">@aviso</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
 </body>
 </html>

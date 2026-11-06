@@ -1,0 +1,103 @@
+/* ==========================================================================
+   Layout administrativo · menú lateral y filtros de listados
+   Reutiliza los tokens de site.css
+   ========================================================================== */
+
+.admin__cuerpo {
+    display: flex;
+    align-items: stretch;
+    min-height: calc(100vh - 72px);
+}
+
+.admin__menu {
+    flex: 0 0 220px;
+    width: 220px;
+    padding: 1.5rem 0.75rem;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+}
+
+.admin__menu-titulo {
+    margin: 0 0 0.75rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+}
+
+.admin__menu-enlace {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.92rem;
+    text-decoration: none;
+}
+
+.admin__menu-enlace + .admin__menu-enlace {
+    margin-top: 0.15rem;
+}
+
+.admin__menu-enlace:hover {
+    background: var(--color-bg);
+}
+
+.admin__menu-enlace--activo {
+    background: var(--color-primary);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.admin__cuerpo .admin__contenedor {
+    flex: 1;
+    width: 100%;
+}
+
+@media (max-width: 780px) {
+    .admin__cuerpo {
+        flex-direction: column;
+    }
+
+    .admin__menu {
+        display: flex;
+        flex: none;
+        gap: 0.5rem;
+        width: 100%;
+        overflow-x: auto;
+        padding: 0.75rem;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .admin__menu-titulo {
+        display: none;
+    }
+
+    .admin__menu-enlace + .admin__menu-enlace {
+        margin-top: 0;
+    }
+}
+
+/* Listado de alumnos */
+
+.alumnos__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.alumnos__campo-texto {
+    flex: 1 1 260px;
+}
+
+.alumnos__botones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin__boton[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
