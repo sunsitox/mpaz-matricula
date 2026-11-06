@@ -200,7 +200,7 @@ public class FichaController : Controller
                 // La ficha se registra con folio recién cuando exista la sesión del
                 // funcionario que la genera (ficha_version.generada_por).
                 TempData["NotificacionTitulo"] = "Ficha guardada";
-                TempData["Notificacion"] = "Los datos quedaron registrados en la base y la ficha pasa a revisión. La Secretaría emitirá el folio al cerrar la revisión.";
+                TempData["Notificacion"] = "Los datos quedaron registrados en la base. La ficha queda a la espera del folio para su revisión por Secretaría.";
                 TempData["NotificacionTipo"] = "exito";
 
                 // Al confirmar, la ficha vuelve a la ficha del estudiante: ahí se ve el
