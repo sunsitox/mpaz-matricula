@@ -1541,3 +1541,31 @@ select.acceso__input {
         text-align: center;
     }
 }
+
+/* Paso 7 en móvil: cada dato en una sola línea, etiqueta y valor lado a lado */
+@media (max-width: 699px) {
+    .wizard__resumen-item {
+        display: grid;
+        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+        gap: 0.5rem;
+        align-items: baseline;
+        padding: 0.45rem 0.85rem;
+    }
+
+    .wizard__resumen-item dt {
+        margin: 0;
+        font-size: 0.8rem;
+    }
+
+    .wizard__resumen-item dd {
+        font-size: 0.9rem;
+    }
+
+    .wizard__revision {
+        gap: 1rem;
+    }
+
+    .wizard__confirmacion {
+        padding: 0.75rem 0.85rem;
+    }
+}

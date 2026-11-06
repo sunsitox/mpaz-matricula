@@ -20,41 +20,43 @@
 <h1 class="wizard__titulo-paso">Paso 7 · Revisar y confirmar</h1>
 <p class="wizard__ayuda">Estos son los datos del borrador. Revise y confirme.</p>
 
-@if (datos.Count == 0)
-{
-    <div class="acceso__aviso">
-        Aun no hay datos en el borrador. Vuelva a un paso anterior antes de confirmar.
-    </div>
-}
-else
-{
-    <div class="wizard__revision">
-        <dl class="wizard__resumen">
-            @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
-            {
-                <div class="wizard__resumen-item">
-                    <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
-                    <dd>@valor</dd>
-                </div>
-            }
-        </dl>
-
-        <aside class="wizard__pdf">
-            <h2 class="wizard__subtitulo">Ficha para firma</h2>
-            <div class="wizard__pdf-caja">
-                <div class="wizard__pdf-cargando" aria-hidden="true">
-                    <span class="wizard__pdf-spinner"></span>
-                    Preparando la vista previa…
-                </div>
-                <iframe class="wizard__pdf-marco"
-                        src="@Url.Action("Comprobante", "Ficha")"
-                        title="Vista previa de la ficha de matrícula"></iframe>
-            </div>
-        </aside>
-    </div>
-}
-
+@* El formulario envuelve el resumen y la vista previa: así la barra de acciones
+   queda fija al pie desde el inicio del paso, sin tener que bajar hasta el final. *@
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
+    @if (datos.Count == 0)
+    {
+        <div class="acceso__aviso">
+            Aun no hay datos en el borrador. Vuelva a un paso anterior antes de confirmar.
+        </div>
+    }
+    else
+    {
+        <div class="wizard__revision">
+            <dl class="wizard__resumen">
+                @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
+                {
+                    <div class="wizard__resumen-item">
+                        <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
+                        <dd>@valor</dd>
+                    </div>
+                }
+            </dl>
+
+            <aside class="wizard__pdf">
+                <h2 class="wizard__subtitulo">Ficha para firma</h2>
+                <div class="wizard__pdf-caja">
+                    <div class="wizard__pdf-cargando" aria-hidden="true">
+                        <span class="wizard__pdf-spinner"></span>
+                        Preparando la vista previa…
+                    </div>
+                    <iframe class="wizard__pdf-marco"
+                            src="@Url.Action("Comprobante", "Ficha")"
+                            title="Vista previa de la ficha de matrícula"></iframe>
+                </div>
+            </aside>
+        </div>
+    }
+
     <label class="wizard__confirmacion">
         <input asp-for="Confirmo_Revision" type="checkbox" required />
         <span>
