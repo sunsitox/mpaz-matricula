@@ -8,8 +8,6 @@
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="3" method="post">
 
     <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
-    <div class="wizard__rejilla">
-
     <details class="wizard__desplegable" open>
         <summary class="wizard__desplegable-resumen">
             Apoderado principal
@@ -79,8 +77,6 @@
             </div>
         </div>
     </details>
-
-    </div>
 
     <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="2">Volver</a>

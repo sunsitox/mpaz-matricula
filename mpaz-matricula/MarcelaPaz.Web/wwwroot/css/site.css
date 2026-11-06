@@ -1606,101 +1606,6 @@ select.acceso__input {
 }
 
 /* ==========================================================================
-   Ancho único y bloques emparejados: los pasos dejan de cambiar de tamaño
-   ========================================================================== */
-
-/* Todas las pantallas comparten el mismo ancho de contenido */
-.wizard__cuerpo,
-.wizard__cuerpo--amplio {
-    max-width: 1080px;
-    --wizard-ancho: 1080px;
-}
-
-/* Bloques hermanos en columnas: madre/padre, apoderados, contactos, retiros y registros */
-.wizard__rejilla {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 0.9rem;
-    align-items: start;
-    margin-bottom: 0.9rem;
-}
-
-.wizard__rejilla--dos {
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-}
-
-.wizard__rejilla > .wizard__desplegable {
-    margin-bottom: 0;
-}
-
-/* Preguntas SI/NO emparejadas: panel propio para no perder el límite */
-.wizard__rejilla > .wizard__restriccion {
-    margin: 0;
-    padding: 0.8rem 1rem 0.9rem;
-    border: 1px solid var(--color-input-border);
-    border-radius: 8px;
-    background: #FAFBFD;
-}
-
-.wizard__rejilla > .wizard__restriccion legend {
-    padding: 0 0.35rem;
-}
-
-/* Paso 7: la ficha se adapta al ancho común, sin salto respecto a los demás pasos */
-.wizard__revision {
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-    gap: 1.5rem;
-}
-
-.wizard__pdf-marco {
-    width: min(100%, calc((100vh - 13rem) * 0.707));
-}
-
-@media (max-width: 699px) {
-    .wizard__rejilla,
-    .wizard__rejilla--dos {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Paso 7: resumen en dos columnas para revisar sin bajar tanto */
-@media (min-width: 1000px) {
-    .wizard__revision {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .wizard__resumen {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .wizard__resumen-item {
-        grid-template-columns: minmax(130px, 180px) minmax(0, 1fr);
-        gap: 0.75rem;
-        border-top: 1px solid var(--color-border);
-        padding: 0.45rem 0.9rem;
-    }
-
-    .wizard__resumen-item:nth-child(-n+2) {
-        border-top: none;
-    }
-
-    .wizard__resumen-item:nth-child(even) {
-        border-left: 1px solid var(--color-border);
-    }
-
-    .wizard__pdf {
-        position: static;
-        max-width: 520px;
-        margin: 0 auto;
-    }
-
-    .wizard__pdf-marco {
-        width: min(100%, 360px);
-    }
-}
-
-/* ==========================================================================
    Texto centrado en botones y controles equivalentes
    Los <button> lo hacen por defecto; los enlaces con forma de botón, no.
    ========================================================================== */
@@ -1720,4 +1625,93 @@ a.wizard__salir {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+/* ==========================================================================
+   Patrón de formulario por secciones
+   Cada bloque es una sección con encabezado propio y los campos se ordenan
+   en dos columnas parejas sobre un mismo ritmo vertical.
+   ========================================================================== */
+
+.wizard__tarjeta {
+    --wizard-pad-x: clamp(1.25rem, 4vw, 2.5rem);
+    padding: 2rem var(--wizard-pad-x) 1.75rem;
+}
+
+/* Sección: encabezado + cuerpo, con borde y esquinas suaves */
+.wizard__desplegable {
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+}
+
+.wizard__desplegable[open] {
+    border-color: #C9D4E4;
+}
+
+.wizard__desplegable-resumen {
+    padding: 0.85rem 1.15rem;
+    background: #F7F9FC;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.wizard__desplegable[open] .wizard__desplegable-resumen {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.wizard__desplegable-cuerpo {
+    padding: 1rem 1.15rem 0.4rem;
+}
+
+/* Secciones de preguntas (SI/NO) con el mismo tratamiento */
+.wizard__tarjeta .wizard__restriccion {
+    margin: 0 0 1rem;
+    padding: 0.9rem 1.15rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+}
+
+.wizard__tarjeta .wizard__restriccion legend {
+    padding: 0 0.4rem;
+    color: var(--color-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+/* Grilla de campos: dos columnas parejas, una en pantallas pequeñas */
+.wizard__fila {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1.25rem;
+}
+
+.wizard__tarjeta .acceso__campo {
+    margin-bottom: 0.95rem;
+}
+
+.wizard__tarjeta .acceso__etiqueta {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+}
+
+.wizard__tarjeta .acceso__input {
+    height: 42px;
+    font-size: 0.95rem;
+}
+
+.wizard__ayuda {
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 699px) {
+    .wizard__fila {
+        grid-template-columns: 1fr;
+    }
+
+    .wizard__tarjeta {
+        --wizard-pad-x: 1.1rem;
+        padding: 1.35rem var(--wizard-pad-x) 1.2rem;
+    }
 }
