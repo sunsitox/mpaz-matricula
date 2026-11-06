@@ -1,0 +1,192 @@
+@model MarcelaPaz.Web.Models.PanelInicio
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
+@using System.Security.Claims
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Panel";
+
+    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "revisión";
+    var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).OrderBy(r => r).ToList();
+
+    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeFuncionarios = !exigirLogin || User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
+}
+
+@if (!exigirLogin)
+{
+    <div class="acceso__info" role="status">
+        Modo revisión: el inicio de sesión está desactivado temporalmente.
+        Para exigirlo, ponga <code>Seguridad:ExigirInicioSesion</code> en <code>true</code>.
+    </div>
+}
+
+@if (Model.Error is not null)
+{
+    <div class="acceso__alerta" role="alert">@Model.Error</div>
+}
+
+<div class="admin__tarjeta">
+    <div class="panel__encabezado">
+        <div>
+            <h1 class="admin__titulo-seccion">Panel de matrícula @Model.Anio</h1>
+            <p class="admin__ayuda">Hola, @nombre. Cifras del proceso de matrícula y de los pendientes del año.</p>
+        </div>
+        <div>
+            @if (roles.Count == 0)
+            {
+                <span class="admin__ayuda">Sin roles activos en esta sesión.</span>
+            }
+            @foreach (var rol in roles)
+            {
+                <span class="admin__chip">@rol</span>
+            }
+            <p class="panel__meta">
+                @if (Model.ActualizadoEn is DateTimeOffset actualizado)
+                {
+                    <text>Actualizado el @actualizado.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
+                    @if (!string.IsNullOrWhiteSpace(Model.Responsable))
+                    {
+                        <text> · última modificación de @Model.Responsable</text>
+                    }
+                }
+                else
+                {
+                    <text>Aún no hay expedientes registrados para @Model.Anio.</text>
+                }
+            </p>
+        </div>
+    </div>
+</div>
+
+<section class="panel__kpis" aria-label="Indicadores principales">
+    <div class="panel__kpi panel__kpi--destacado">
+        <span class="panel__etiqueta">Matrículas @Model.Anio</span>
+        <strong class="panel__valor">@Model.TotalMatriculas</strong>
+        <span class="panel__detalle">@Model.Renovaciones renovaciones · @Model.Nuevas nuevas</span>
+    </div>
+
+    <div class="panel__kpi">
+        <span class="panel__etiqueta">Cerradas</span>
+        <strong class="panel__valor">@Model.Cerradas</strong>
+        <span class="panel__detalle">@Model.Avance% del total del año</span>
+    </div>
+
+    <div class="panel__kpi">
+        <span class="panel__etiqueta">Por cerrar</span>
+        <strong class="panel__valor">@Model.Borradores</strong>
+        <span class="panel__detalle">expedientes en borrador</span>
+    </div>
+
+    <div class="panel__kpi panel__kpi--alerta">
+        <span class="panel__etiqueta">Pendientes documentales</span>
+        <strong class="panel__valor">@Model.PendientesDocumentales</strong>
+        <span class="panel__detalle">documentos por entregar o validar</span>
+    </div>
+</section>
+
+<div class="panel__columnas">
+    <div class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Avance por curso</h2>
+
+        @if (Model.Cursos.Count == 0)
+        {
+            <p class="admin__ayuda">Todavía no hay matrículas @Model.Anio registradas.</p>
+        }
+        else
+        {
+            <table class="admin__tabla">
+                <thead>
+                    <tr>
+                        <th>Curso</th>
+                        <th>Total</th>
+                        <th>Cerradas</th>
+                        <th>Avance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var curso in Model.Cursos)
+                    {
+                        <tr>
+                            <td>@curso.Curso</td>
+                            <td>@curso.Total</td>
+                            <td>@curso.Cerradas</td>
+                            <td>
+                                <div class="panel__celda-avance">
+                                    <div class="panel__barra">
+                                        <span class="panel__barra-relleno" style="width:@(curso.Avance)%"></span>
+                                    </div>
+                                    <span class="panel__pct">@curso.Avance%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Pendientes y respaldos</h2>
+        <ul class="panel__lista">
+            <li><span>Fichas con folio emitidas</span><strong>@Model.FichasConFolio</strong></li>
+            <li><span>Autorizaciones vigentes</span><strong>@Model.AutorizacionesVigentes</strong></li>
+            <li><span>Documentos y autorizaciones vencidas</span><strong>@Model.AlertasVencimiento</strong></li>
+            <li><span>Estudiantes en el registro único</span><strong>@Model.EstudiantesRegistrados</strong></li>
+            <li><span>Funcionarios activos</span><strong>@Model.FuncionariosActivos</strong></li>
+        </ul>
+    </div>
+</div>
+
+<div class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Últimos accesos</h2>
+
+    @if (Model.Accesos.Count == 0)
+    {
+        <p class="admin__ayuda">Sin actividad registrada todavía.</p>
+    }
+    else
+    {
+        <table class="admin__tabla">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                    <th>Área</th>
+                    <th>Funcionario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var acceso in Model.Accesos)
+                {
+                    <tr>
+                        <td>@acceso.Cuando.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td>@acceso.Accion</td>
+                        <td>@(acceso.Area ?? "—")</td>
+                        <td>@(acceso.Funcionario ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Acciones</h2>
+    <p class="admin__ayuda">Lo que puede hacer con su rol en este momento.</p>
+
+    <div class="panel__acciones">
+        @if (puedeMatricula)
+        {
+            <a class="admin__boton admin__boton--primario" asp-controller="Ficha" asp-action="Buscar">Buscar estudiante</a>
+            <form method="post" asp-controller="Ficha" asp-action="Nueva" class="admin__accion-inline">
+                <button type="submit" class="admin__boton">Matrícula nueva</button>
+            </form>
+        }
+
+        @if (puedeFuncionarios)
+        {
+            <a class="admin__boton" asp-controller="Funcionarios" asp-action="Index">Administrar funcionarios</a>
+        }
+    </div>
+</div>

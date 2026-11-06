@@ -22,6 +22,9 @@ builder.Services.AddDocumentos();
 // Guardado del asistente en las tablas del DDL institucional.
 builder.Services.AddScoped<RegistroFicha>();
 
+// Indicadores de la portada (panel administrativo).
+builder.Services.AddScoped<PanelIndicadores>();
+
 // Credenciales de funcionarios: ASP.NET Core Identity (hash) con los roles del DDL.
 builder.Services
     .AddIdentityCore<IdentityUser>(opciones =>

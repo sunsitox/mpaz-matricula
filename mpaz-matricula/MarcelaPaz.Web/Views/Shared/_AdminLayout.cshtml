@@ -1,0 +1,43 @@
+@{
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "Modo revisión (sin login)";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Portal de Matrícula 2027</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
+</head>
+<body class="admin">
+    <header class="admin__header">
+        <div class="admin__marca">
+            <img src="~/images/logo-mpaz.svg"
+                 alt="Logo Escuela Escritora Marcela Paz"
+                 class="acceso__logo-img"
+                 width="40" />
+            <div>
+                <div class="admin__titulo">Portal de Matrícula 2027</div>
+                <div class="admin__subtitulo">@ViewData["Title"]</div>
+            </div>
+        </div>
+
+        <div class="admin__sesion">
+            <span class="admin__usuario">@nombre</span>
+            <form asp-controller="Cuenta" asp-action="Salida" method="post">
+                <button type="submit" class="admin__salir">Cerrar sesión</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="admin__contenedor">
+        @if (TempData["Aviso"] is string aviso)
+        {
+            <div class="acceso__info" role="status">@aviso</div>
+        }
+        @RenderBody()
+    </main>
+</body>
+</html>
