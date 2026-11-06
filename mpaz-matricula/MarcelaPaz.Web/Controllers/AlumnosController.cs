@@ -1,3 +1,4 @@
+using MarcelaPaz.Domain.Entidades;
 using MarcelaPaz.Domain.Identificacion;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
@@ -9,9 +10,10 @@ using Microsoft.EntityFrameworkCore;
 namespace MarcelaPaz.Web.Controllers;
 
 /// <summary>
-/// Listado de alumnos del registro único con su matrícula del año, para consultar
-/// y filtrar. La extracción de documentos queda pendiente: el botón se muestra
-/// deshabilitado hasta acordar con el colegio qué documentos se pueden obtener.
+/// Registro de alumnos: listado con búsqueda y filtros, y la ficha de consulta
+/// de cada estudiante. La extracción de documentos queda pendiente: los botones
+/// se muestran deshabilitados hasta acordar con el colegio qué documentos se
+/// pueden obtener.
 /// </summary>
 [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
 public class AlumnosController : Controller
@@ -118,6 +120,174 @@ public class AlumnosController : Controller
         filtro.Alumnos = filas.ToList();
 
         return View(filtro);
+    }
+
+    /// <summary>Ficha de consulta del alumno: matrículas, apoderados, retiros y salud.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Detalle(int id)
+    {
+        var estudiante = await _db.Estudiantes
+            .AsNoTracking()
+            .Include(e => e.Comuna)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (estudiante is null)
+        {
+            return NotFound();
+        }
+
+        var matriculas = await _db.Matriculas
+            .AsNoTracking()
+            .Include(m => m.Curso)
+            .Where(m => m.EstudianteId == id)
+            .OrderByDescending(m => m.Anio)
+            .ToListAsync();
+
+        var vinculos = await _db.EstudiantesPersonas
+            .AsNoTracking()
+            .Include(v => v.Persona)
+            .Where(v => v.EstudianteId == id && v.VigenteHasta == null)
+            .OrderBy(v => v.Id)
+            .ToListAsync();
+
+        var idsVinculos = vinculos.Select(v => v.Id).ToList();
+
+        var restricciones = await _db.RestriccionesFamiliares
+            .AsNoTracking()
+            .Where(r => idsVinculos.Contains(r.EstudiantePersonaId) && r.VigenteHasta == null)
+            .ToListAsync();
+
+        var contactos = await _db.ContactosEmergencia
+            .AsNoTracking()
+            .Where(c => c.EstudianteId == id && c.VigenteHasta == null)
+            .OrderBy(c => c.Orden)
+            .ToListAsync();
+
+        var retiros = await _db.RetirosAutorizados
+            .AsNoTracking()
+            .Where(r => r.EstudianteId == id && r.VigenteHasta == null)
+            .OrderBy(r => r.Id)
+            .ToListAsync();
+
+        var salud = await _db.AntecedentesSalud
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.EstudianteId == id);
+
+        var situaciones = await _db.SituacionesMedicas
+            .AsNoTracking()
+            .Where(s => s.EstudianteId == id && s.VigenteHasta == null)
+            .OrderBy(s => s.Id)
+            .ToListAsync();
+
+        var perfil = new PerfilAlumno
+        {
+            Id = estudiante.Id,
+            Nombre = estudiante.NombreCompleto,
+            Rut = RutChileno.Formatear(estudiante.Identificador),
+            FechaNacimiento = estudiante.FechaNacimiento,
+            Edad = Edad(estudiante.FechaNacimiento),
+            Nacionalidad = estudiante.Nacionalidad,
+            Domicilio = estudiante.Domicilio,
+            Comuna = estudiante.Comuna?.Nombre,
+            SaleSolo = estudiante.SaleSoloFinalJornada,
+            TieneSituacionMedica = salud?.TieneSituacionMedica,
+            NecesidadesAtencion = salud?.NecesidadesAtencion,
+            Matriculas = matriculas
+                .Select(m => new PerfilAlumno.MatriculaPerfil
+                {
+                    Anio = m.Anio,
+                    Curso = m.Curso?.Nombre,
+                    Estado = m.Estado,
+                    Tipo = m.Tipo,
+                })
+                .ToList(),
+            Apoderados = vinculos
+                .Where(v => v.Persona is not null)
+                .Select(v => new PerfilAlumno.ApoderadoPerfil
+                {
+                    Nombre = NombrePersona(v.Persona!),
+                    Rut = RutChileno.Formatear(v.Persona!.Identificador),
+                    Vinculo = EtiquetaVinculo(v),
+                    Telefono = v.Persona!.Telefono,
+                    Correo = v.Persona!.Correo,
+                    TieneRestriccion = v.TieneRestriccion == true,
+                })
+                .ToList(),
+            Contactos = contactos
+                .Select(c => new PerfilAlumno.ContactoPerfil
+                {
+                    Nombre = c.Nombre,
+                    Telefono = c.Telefono,
+                    Vinculo = c.Vinculo,
+                })
+                .ToList(),
+            Retiros = retiros
+                .Select(r => new PerfilAlumno.RetiroPerfil
+                {
+                    Nombre = r.Nombre,
+                    Rut = RutChileno.Formatear(r.Identificador),
+                    Vinculo = r.Vinculo,
+                })
+                .ToList(),
+            Situaciones = situaciones
+                .Select(s => new PerfilAlumno.SituacionPerfil
+                {
+                    Tipo = s.Tipo,
+                    Descripcion = s.Descripcion,
+                    EnTratamiento = s.EnTratamiento,
+                })
+                .ToList(),
+            Restricciones = restricciones
+                .Select(r => $"{r.Tipo.ToLowerInvariant()}: {r.Descripcion}")
+                .ToList(),
+        };
+
+        var vigente = matriculas.FirstOrDefault(m => m.Anio == Anio);
+
+        if (vigente is not null)
+        {
+            perfil.CursoActual = vigente.Curso?.Nombre;
+            perfil.EstadoActual = vigente.Estado;
+        }
+
+        return View(perfil);
+    }
+
+    private static string NombrePersona(Persona persona) =>
+        string.Join(' ', new[] { persona.Nombres, persona.Apellidos }
+            .Where(parte => !string.IsNullOrWhiteSpace(parte)));
+
+    private static string EtiquetaVinculo(EstudiantePersona vinculo) => vinculo.TipoApoderado switch
+    {
+        "PRINCIPAL" => ConVinculo("Apoderado principal", vinculo.Vinculo),
+        "SECUNDARIO" => ConVinculo("Apoderado secundario", vinculo.Vinculo),
+        _ => vinculo.Parentesco switch
+        {
+            "MADRE" => "Madre",
+            "PADRE" => "Padre",
+            _ => vinculo.Vinculo ?? "Vínculo no declarado",
+        },
+    };
+
+    private static string ConVinculo(string etiqueta, string? vinculo) =>
+        string.IsNullOrWhiteSpace(vinculo) ? etiqueta : $"{etiqueta} · {vinculo}";
+
+    private static int? Edad(DateOnly nacimiento)
+    {
+        if (nacimiento == default)
+        {
+            return null;
+        }
+
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        var edad = hoy.Year - nacimiento.Year;
+
+        if (nacimiento > hoy.AddYears(-edad))
+        {
+            edad--;
+        }
+
+        return edad;
     }
 
     /// <summary>Quita las tildes para comparar nombres como los escribe el usuario.</summary>

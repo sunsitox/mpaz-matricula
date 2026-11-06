@@ -1,0 +1,259 @@
+@model MarcelaPaz.Web.Models.PerfilAlumno
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ficha del alumno";
+
+    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
+    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
+}
+
+<div class="admin__tarjeta">
+    <div class="perfil__cabecera">
+        <div>
+            <a class="alumnos__volver" asp-action="Index">← Volver al listado</a>
+            <h1 class="admin__titulo-seccion">@Model.Nombre</h1>
+            <p class="admin__ayuda">
+                RUN @Model.Rut
+                @if (Model.CursoActual is not null)
+                {
+                    <text> · @Model.CursoActual</text>
+                }
+                @if (Model.Edad is int edad)
+                {
+                    <text> · @edad años</text>
+                }
+            </p>
+            <div>
+                <span class="admin__chip">@(Model.EstadoActual ?? "Sin matrícula 2027")</span>
+                @if (Model.Restricciones.Count > 0)
+                {
+                    <span class="admin__chip admin__chip--alerta">Restricción vigente</span>
+                }
+            </div>
+        </div>
+
+        <div class="alumnos__acciones">
+            @if (puedeMatricula)
+            {
+                <a class="admin__boton admin__boton--primario"
+                   asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
+            }
+            <button type="button" class="admin__boton" disabled
+                    title="Pendiente: definir qué documentos se pueden extraer">
+                Documentos
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="perfil__grid">
+    <section class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Datos personales</h2>
+
+        <div class="perfil__dato"><span>RUN</span><strong>@Model.Rut</strong></div>
+        <div class="perfil__dato">
+            <span>Fecha de nacimiento</span>
+            <strong>@(Model.FechaNacimiento?.ToString("dd-MM-yyyy") ?? "—")</strong>
+        </div>
+        <div class="perfil__dato"><span>Edad</span><strong>@(Model.Edad?.ToString() ?? "—")</strong></div>
+        <div class="perfil__dato"><span>Nacionalidad</span><strong>@(Model.Nacionalidad ?? "—")</strong></div>
+        <div class="perfil__dato"><span>Domicilio</span><strong>@(Model.Domicilio ?? "—")</strong></div>
+        <div class="perfil__dato"><span>Comuna</span><strong>@(Model.Comuna ?? "—")</strong></div>
+        <div class="perfil__dato">
+            <span>Sale solo al finalizar la jornada</span>
+            <strong>@(Model.SaleSolo is bool saleSolo ? (saleSolo ? "Sí" : "No") : "—")</strong>
+        </div>
+    </section>
+
+    <section class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Matrículas</h2>
+
+        @if (Model.Matriculas.Count == 0)
+        {
+            <p class="admin__ayuda">Sin matrículas registradas.</p>
+        }
+        else
+        {
+            <table class="admin__tabla">
+                <thead>
+                    <tr>
+                        <th>Año</th>
+                        <th>Curso</th>
+                        <th>Matrícula</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var matricula in Model.Matriculas)
+                    {
+                        <tr>
+                            <td>@matricula.Anio</td>
+                            <td>@(matricula.Curso ?? "—")</td>
+                            <td>@(matricula.Tipo == "RENOVACION" ? "Renovación" : "Nueva")</td>
+                            <td>@matricula.Estado</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</div>
+
+<section class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Apoderados</h2>
+
+    @if (Model.Apoderados.Count == 0)
+    {
+        <p class="admin__ayuda">Sin apoderados registrados.</p>
+    }
+    else
+    {
+        <table class="admin__tabla">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>RUN</th>
+                    <th>Vínculo</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var apoderado in Model.Apoderados)
+                {
+                    <tr>
+                        <td>
+                            @apoderado.Nombre
+                            @if (apoderado.TieneRestriccion)
+                            {
+                                <span class="admin__chip admin__chip--alerta">Restricción</span>
+                            }
+                        </td>
+                        <td>@apoderado.Rut</td>
+                        <td>@apoderado.Vinculo</td>
+                        <td>@(apoderado.Telefono ?? "—")</td>
+                        <td>@(apoderado.Correo ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+<div class="perfil__grid">
+    <section class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Contactos de emergencia</h2>
+
+        @if (Model.Contactos.Count == 0)
+        {
+            <p class="admin__ayuda">Sin contactos registrados.</p>
+        }
+        else
+        {
+            <table class="admin__tabla">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Vínculo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contacto in Model.Contactos)
+                    {
+                        <tr>
+                            <td>@contacto.Nombre</td>
+                            <td>@contacto.Telefono</td>
+                            <td>@contacto.Vinculo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="admin__tarjeta">
+        <h2 class="admin__titulo-seccion">Personas autorizadas a retirar</h2>
+
+        @if (Model.Retiros.Count == 0)
+        {
+            <p class="admin__ayuda">Sin personas autorizadas registradas.</p>
+        }
+        else
+        {
+            <table class="admin__tabla">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>RUN</th>
+                        <th>Vínculo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var retiro in Model.Retiros)
+                    {
+                        <tr>
+                            <td>@retiro.Nombre</td>
+                            <td>@retiro.Rut</td>
+                            <td>@retiro.Vinculo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</div>
+
+<section class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Salud y restricciones</h2>
+
+    <div class="perfil__dato">
+        <span>¿Tiene situación médica declarada?</span>
+        <strong>@(Model.TieneSituacionMedica is bool tiene ? (tiene ? "Sí" : "No") : "—")</strong>
+    </div>
+    <div class="perfil__dato">
+        <span>Necesidades de atención</span>
+        <strong>@(Model.NecesidadesAtencion ?? "—")</strong>
+    </div>
+
+    @if (Model.Situaciones.Count > 0)
+    {
+        <table class="admin__tabla">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>En tratamiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var situacion in Model.Situaciones)
+                {
+                    <tr>
+                        <td>@situacion.Tipo</td>
+                        <td>@situacion.Descripcion</td>
+                        <td>@(situacion.EnTratamiento is bool enTratamiento ? (enTratamiento ? "Sí" : "No") : "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.Restricciones.Count > 0)
+    {
+        <div class="perfil__aviso">
+            <strong>Restricciones vigentes</strong>
+            <ul class="perfil__restricciones">
+                @foreach (var restriccion in Model.Restricciones)
+                {
+                    <li>@restriccion</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <p class="alumnos__nota">
+        La extracción de documentos de este alumno está pendiente de definir con el colegio.
+    </p>
+</section>

@@ -101,3 +101,148 @@
     opacity: 0.55;
     cursor: not-allowed;
 }
+
+.admin__boton--mini {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.82rem;
+}
+
+.alumnos__resumen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.alumnos__conteo {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+}
+
+.alumnos__conteo strong {
+    color: var(--color-primary);
+}
+
+.alumnos__limpiar,
+.alumnos__volver {
+    color: var(--color-action);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.alumnos__limpiar:hover,
+.alumnos__volver:hover {
+    text-decoration: underline;
+}
+
+.alumnos__volver {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+}
+
+.alumnos__filtros-ayuda,
+.alumnos__nota {
+    margin: 0.5rem 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+}
+
+.alumnos__vacio {
+    padding: 0.5rem 0 1rem;
+}
+
+.alumnos__tabla tbody tr:hover {
+    background: var(--color-bg);
+}
+
+.alumnos__nombre {
+    color: var(--color-action);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.alumnos__nombre:hover {
+    text-decoration: underline;
+}
+
+.alumnos__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+/* Ficha del alumno */
+
+.perfil__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.perfil__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    align-items: start;
+}
+
+.perfil__grid .admin__tarjeta + .admin__tarjeta {
+    margin-top: 0;
+}
+
+.perfil__grid + .admin__tarjeta {
+    margin-top: 1.5rem;
+}
+
+.perfil__dato {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    font-size: 0.9rem;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.perfil__dato:last-of-type {
+    border-bottom: 0;
+}
+
+.perfil__dato span {
+    color: var(--color-text-secondary);
+}
+
+.perfil__dato strong {
+    text-align: right;
+    font-weight: 600;
+}
+
+.admin__chip--alerta {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+}
+
+.perfil__aviso {
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+}
+
+.perfil__restricciones {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+@media (max-width: 900px) {
+    .perfil__grid {
+        grid-template-columns: 1fr;
+    }
+}

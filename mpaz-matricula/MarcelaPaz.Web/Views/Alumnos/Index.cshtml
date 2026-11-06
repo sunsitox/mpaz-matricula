@@ -4,11 +4,11 @@
     ViewData["Title"] = "Alumnos";
 }
 
-<div class="admin__tarjeta">
+<section class="admin__tarjeta">
     <h1 class="admin__titulo-seccion">Alumnos</h1>
     <p class="admin__ayuda">
-        Registro único de estudiantes con su matrícula @Model.Anio. Busque por nombre o RUN
-        y combine la búsqueda con curso y estado.
+        Busque por nombre o RUN y filtre por curso o estado. Haga clic en un alumno
+        para ver su ficha completa.
     </p>
 
     <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
@@ -42,28 +42,38 @@
 
         <div class="alumnos__botones">
             <button type="submit" class="admin__boton admin__boton--primario">Filtrar</button>
-            @if (Model.TieneFiltros)
-            {
-                <a class="admin__boton" asp-controller="Alumnos" asp-action="Index">Limpiar</a>
-            }
         </div>
     </form>
-</div>
 
-<div class="admin__tarjeta">
-    <p class="admin__ayuda">
-        @Model.Alumnos.Count @(Model.Alumnos.Count == 1 ? "alumno" : "alumnos") en el listado.
-        La extracción de documentos por alumno está pendiente: falta definir con el colegio
-        qué documentos se pueden obtener, así que los botones quedan deshabilitados.
-    </p>
+    <p class="alumnos__filtros-ayuda">Presione Enter para buscar. Los RUN se aceptan con o sin puntos.</p>
+</section>
+
+<section class="admin__tarjeta">
+    <div class="alumnos__resumen">
+        <p class="alumnos__conteo">
+            <strong>@Model.Alumnos.Count</strong> @(Model.Alumnos.Count == 1 ? "alumno" : "alumnos")
+            @if (Model.TieneFiltros)
+            {
+                <text>con los filtros aplicados</text>
+            }
+        </p>
+
+        @if (Model.TieneFiltros)
+        {
+            <a class="alumnos__limpiar" asp-controller="Alumnos" asp-action="Index">Limpiar filtros</a>
+        }
+    </div>
 
     @if (Model.Alumnos.Count == 0)
     {
-        <p class="admin__ayuda">No hay alumnos que coincidan con los filtros.</p>
+        <div class="alumnos__vacio">
+            <p class="admin__ayuda">No hay alumnos que coincidan con la búsqueda.</p>
+            <a class="admin__boton" asp-controller="Alumnos" asp-action="Index">Ver todos los alumnos</a>
+        </div>
     }
     else
     {
-        <table class="admin__tabla">
+        <table class="admin__tabla alumnos__tabla">
             <thead>
                 <tr>
                     <th>Alumno</th>
@@ -72,28 +82,40 @@
                     <th>Estado</th>
                     <th>Matrícula</th>
                     <th>Comuna</th>
-                    <th>Documentos</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var alumno in Model.Alumnos)
                 {
                     <tr>
-                        <td>@alumno.Nombre</td>
+                        <td>
+                            <a class="alumnos__nombre" asp-action="Detalle" asp-route-id="@alumno.Id">
+                                @alumno.Nombre
+                            </a>
+                        </td>
                         <td>@alumno.Rut</td>
                         <td>@(alumno.Curso ?? "—")</td>
                         <td>@alumno.EstadoTexto</td>
                         <td>@alumno.TipoTexto</td>
                         <td>@(alumno.Comuna ?? "—")</td>
                         <td>
-                            <button type="button" class="admin__boton" disabled
-                                    title="Pendiente: definir qué documentos se pueden extraer">
-                                Documentos
-                            </button>
+                            <div class="alumnos__acciones">
+                                <a class="admin__boton admin__boton--mini admin__boton--primario"
+                                   asp-action="Detalle" asp-route-id="@alumno.Id">Ver ficha</a>
+                                <button type="button" class="admin__boton admin__boton--mini" disabled
+                                        title="Pendiente: definir qué documentos se pueden extraer">
+                                    Documentos
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+
+        <p class="alumnos__nota">
+            La extracción de documentos por alumno está pendiente de definir con el colegio.
+        </p>
     }
-</div>
+</section>
