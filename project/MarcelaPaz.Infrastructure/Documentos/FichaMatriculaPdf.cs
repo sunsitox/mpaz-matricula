@@ -40,7 +40,10 @@ public sealed class FichaMatriculaPdf
 
                 pagina.Header().Element(contenedor => Encabezado(contenedor, ficha));
                 pagina.Content().Element(contenedor => Contenido(contenedor, ficha));
-                pagina.Footer().Element(contenedor => PieDePagina(contenedor, ficha));
+
+                // Las firmas viven en el pie: siempre quedan al final de la hoja
+                // y el cuerpo se estira para ocupar el espacio disponible.
+                pagina.Footer().Element(contenedor => Pie(contenedor, ficha));
             });
         }).GeneratePdf();
     }
@@ -145,30 +148,33 @@ public sealed class FichaMatriculaPdf
             }
         }
 
-        contenedor.Border(0.8f).BorderColor(Borde).Padding(7).Column(columna =>
+        contenedor.Column(columna =>
         {
-            columna.Item().Row(fila =>
+            // El marco se estira hasta el pie para que la ficha ocupe la hoja
+            // completa y las firmas queden siempre al final de la página.
+            columna.Item().Extend().Border(0.8f).BorderColor(Borde).Padding(6).Column(marco =>
             {
-                fila.RelativeItem().Column(izq =>
+                marco.Item().Row(fila =>
                 {
-                    foreach (var seccion in izquierda)
+                    fila.RelativeItem().Column(izq =>
                     {
-                        izq.Item().Element(bloque => Seccion(bloque, seccion));
-                    }
-                });
+                        foreach (var seccion in izquierda)
+                        {
+                            izq.Item().Element(bloque => Seccion(bloque, seccion));
+                        }
+                    });
 
-                fila.ConstantItem(8);
+                    fila.ConstantItem(8);
 
-                fila.RelativeItem().Column(der =>
-                {
-                    foreach (var seccion in derecha)
+                    fila.RelativeItem().Column(der =>
                     {
-                        der.Item().Element(bloque => Seccion(bloque, seccion));
-                    }
+                        foreach (var seccion in derecha)
+                        {
+                            der.Item().Element(bloque => Seccion(bloque, seccion));
+                        }
+                    });
                 });
             });
-
-            columna.Item().PaddingTop(8).Element(Firmas);
         });
     }
 
@@ -180,10 +186,10 @@ public sealed class FichaMatriculaPdf
                 .Background(FondoSeccion)
                 .BorderLeft(1.6f)
                 .BorderColor(Azul)
-                .PaddingVertical(2.6f)
+                .PaddingVertical(2.4f)
                 .PaddingHorizontal(5)
                 .Text(seccion.Titulo.ToUpperInvariant())
-                .FontSize(7.4f)
+                .FontSize(7.8f)
                 .Bold()
                 .FontColor(Azul);
 
@@ -210,7 +216,7 @@ public sealed class FichaMatriculaPdf
                         .PaddingVertical(2)
                         .PaddingHorizontal(4)
                         .Text(campo.Valor)
-                        .FontSize(7.8f)
+                        .FontSize(8.2f)
                         .FontColor(Texto);
                 }
             });
@@ -259,22 +265,27 @@ public sealed class FichaMatriculaPdf
         });
     }
 
-    private static void PieDePagina(IContainer contenedor, DocumentoFicha ficha)
+    private static void Pie(IContainer contenedor, DocumentoFicha ficha)
     {
-        contenedor.BorderTop(0.5f).BorderColor(Borde).PaddingTop(3).Row(fila =>
+        contenedor.Column(columna =>
         {
-            fila.RelativeItem()
-                .Text($"Escuela Escritora Marcela Paz · Ficha de matrícula {ficha.Anio} · Folio {ficha.Folio}")
-                .FontSize(6)
-                .FontColor(GrisClaro);
+            columna.Item().BorderTop(0.8f).BorderColor(Azul).PaddingTop(5).Element(Firmas);
 
-            fila.ConstantItem(90).AlignRight().Text(texto =>
+            columna.Item().PaddingTop(4).Row(fila =>
             {
-                texto.DefaultTextStyle(estilo => estilo.FontSize(6).FontColor(GrisClaro));
-                texto.Span("Página ");
-                texto.CurrentPageNumber();
-                texto.Span(" de ");
-                texto.TotalPages();
+                fila.RelativeItem()
+                    .Text($"Escuela Escritora Marcela Paz · Ficha de matrícula {ficha.Anio} · Folio {ficha.Folio}")
+                    .FontSize(6)
+                    .FontColor(GrisClaro);
+
+                fila.ConstantItem(90).AlignRight().Text(texto =>
+                {
+                    texto.DefaultTextStyle(estilo => estilo.FontSize(6).FontColor(GrisClaro));
+                    texto.Span("Página ");
+                    texto.CurrentPageNumber();
+                    texto.Span(" de ");
+                    texto.TotalPages();
+                });
             });
         });
     }
