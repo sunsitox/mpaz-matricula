@@ -7,7 +7,10 @@
 }
 <div class="envio" role="dialog" aria-modal="true" aria-labelledby="envio-titulo">
     <div class="envio__tarjeta">
-        <span class="envio__rueda" aria-hidden="true"></span>
+        <div class="envio__marca">
+            <span class="envio__rueda" aria-hidden="true"></span>
+            <span class="envio__check" aria-hidden="true"></span>
+        </div>
 
         <h1 class="envio__titulo" id="envio-titulo">Ficha guardada</h1>
 
@@ -23,7 +26,16 @@
 </div>
 
 <script>
+    // La rueda gira un momento y luego se convierte en el check de guardado.
+    window.setTimeout(function () {
+        var modal = document.querySelector('.envio');
+
+        if (modal) {
+            modal.classList.add('envio--listo');
+        }
+    }, 1100);
+
     window.setTimeout(function () {
         window.location.replace('@destino');
-    }, 2500);
+    }, 2600);
 </script>
