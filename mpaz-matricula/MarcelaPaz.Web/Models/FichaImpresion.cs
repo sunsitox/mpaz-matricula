@@ -98,6 +98,7 @@ public static class FichaImpresion
         ["PIE: participa (SI/NO/PENDIENTE)"] = "Participa PIE",
         ["PIE: diagnosticado (SI/NO)"] = "Diagnóstico PIE",
         ["PIE: apoyos o diagnóstico"] = "Apoyos o diagnóstico",
+        ["salida solo al finalizar jornada (SI/NO)"] = "Salida solo",
     };
 
     public static DocumentoFicha DesdeBorrador(

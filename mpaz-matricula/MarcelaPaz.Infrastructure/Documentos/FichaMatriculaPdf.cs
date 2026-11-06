@@ -36,7 +36,7 @@ public sealed class FichaMatriculaPdf
             {
                 pagina.Size(PageSizes.A4);
                 pagina.Margin(0.9f, Unit.Centimetre);
-                pagina.DefaultTextStyle(estilo => estilo.FontSize(7.6f).FontColor(Texto));
+                pagina.DefaultTextStyle(estilo => estilo.FontSize(7.7f).FontColor(Texto));
 
                 pagina.Header().Element(contenedor => Encabezado(contenedor, ficha));
                 pagina.Content().Element(contenedor => Contenido(contenedor, ficha));
@@ -58,70 +58,68 @@ public sealed class FichaMatriculaPdf
             {
                 if (ficha.Logo is { Length: > 0 })
                 {
-                    fila.ConstantItem(21, Unit.Millimetre).Image(ficha.Logo).FitArea();
+                    fila.ConstantItem(18, Unit.Millimetre).Image(ficha.Logo).FitArea();
                 }
 
-                fila.RelativeItem().PaddingLeft(8).AlignMiddle().Column(titulo =>
+                fila.RelativeItem().PaddingLeft(6).AlignMiddle().Column(titulo =>
                 {
                     titulo.Item()
                         .Text("ESCUELA ESCRITORA MARCELA PAZ")
                         .FontSize(12).Bold().FontColor(Azul);
                     titulo.Item()
                         .Text("San Bernardo · Región Metropolitana")
-                        .FontSize(7).FontColor(Gris);
+                        .FontSize(6.4f).FontColor(Gris);
                     titulo.Item()
-                        .PaddingTop(1)
                         .Text("Ficha de matrícula del estudiante")
-                        .FontSize(7.5f).SemiBold().FontColor(Dorado);
+                        .FontSize(7).SemiBold().FontColor(Dorado);
                 });
 
-                fila.ConstantItem(46, Unit.Millimetre).AlignMiddle().Border(0.7f)
-                    .BorderColor(Azul).Padding(4).Column(identificacion =>
+                fila.ConstantItem(44, Unit.Millimetre).AlignMiddle().Border(0.7f)
+                    .BorderColor(Azul).Padding(3).Column(identificacion =>
                     {
                         identificacion.Item()
-                            .Text("FOLIO").FontSize(6).SemiBold().FontColor(Gris);
+                            .Text("FOLIO").FontSize(5.6f).SemiBold().FontColor(Gris);
                         identificacion.Item()
-                            .Text(ficha.Folio).FontSize(8.5f).Bold().FontColor(Azul);
+                            .Text(ficha.Folio).FontSize(8).Bold().FontColor(Azul);
                         identificacion.Item()
-                            .PaddingTop(2)
-                            .Text($"Año escolar {ficha.Anio}").FontSize(6.5f).FontColor(Gris);
+                            .Text($"Año escolar {ficha.Anio}").FontSize(6).FontColor(Gris);
                         identificacion.Item()
-                            .Text($"Versión {ficha.Version}").FontSize(6.5f).FontColor(Gris);
+                            .Text($"Versión {ficha.Version}").FontSize(6).FontColor(Gris);
                     });
             });
 
-            columna.Item().PaddingTop(4).LineHorizontal(1.6f).LineColor(Dorado);
+            columna.Item().PaddingTop(3).LineHorizontal(1.6f).LineColor(Dorado);
 
             // Banda del título del documento.
-            columna.Item().PaddingTop(4).Background(Azul).PaddingVertical(4).PaddingHorizontal(8)
+            columna.Item().PaddingTop(3).Background(Azul).PaddingVertical(3).PaddingHorizontal(7)
                 .Row(banda =>
                 {
                     banda.RelativeItem()
                         .Text($"FICHA DE MATRÍCULA · AÑO ESCOLAR {ficha.Anio}")
-                        .FontSize(9.5f).Bold().FontColor(Colors.White);
+                        .FontSize(8.8f).Bold().FontColor(Colors.White);
 
                     banda.ConstantItem(70, Unit.Millimetre).AlignRight()
                         .Text($"Trámite: {ficha.TipoTramite}")
-                        .FontSize(7.5f).FontColor(Colors.White);
+                        .FontSize(6.9f).FontColor(Colors.White);
                 });
 
-            columna.Item().PaddingTop(3).Row(meta =>
+            columna.Item().PaddingTop(2).Row(meta =>
             {
                 meta.RelativeItem()
                     .Text($"Generado el {ficha.GeneradoEn:dd-MM-yyyy} a las {ficha.GeneradoEn:HH:mm}")
-                    .FontSize(6.5f).FontColor(GrisClaro);
+                    .FontSize(6).FontColor(GrisClaro);
 
                 meta.RelativeItem().AlignRight()
                     .Text("Documento para revisión y firma del apoderado")
-                    .FontSize(6.5f).FontColor(GrisClaro);
+                    .FontSize(6).FontColor(GrisClaro);
             });
 
             if (!string.IsNullOrWhiteSpace(ficha.Detalle))
             {
-                columna.Item().PaddingTop(1).Text(ficha.Detalle).FontSize(6.5f).FontColor(Gris);
+                columna.Item().Text(ficha.Detalle).FontSize(6).FontColor(Gris);
             }
 
-            columna.Item().PaddingTop(5);
+            columna.Item().PaddingTop(4);
         });
     }
 
@@ -129,30 +127,42 @@ public sealed class FichaMatriculaPdf
 
     private static void Contenido(IContainer contenedor, DocumentoFicha ficha)
     {
-        var total = ficha.Secciones.Sum(seccion => seccion.Campos.Count);
-        var izquierda = new List<SeccionFicha>();
-        var derecha = new List<SeccionFicha>();
-        var acumulado = 0;
+        // Se elige el corte que deja las dos columnas más parejas, estimando la
+        // altura de cada bloque por sus campos y el largo de los valores (los
+        // textos largos envuelven y ocupan más líneas).
+        var pesos = ficha.Secciones
+            .Select(seccion => 1.5
+                + seccion.Campos.Sum(campo => 1 + campo.Valor.Length / 38.0 + campo.Etiqueta.Length / 60.0))
+            .ToArray();
 
-        // Se reparten los bloques por cantidad de campos para equilibrar columnas.
-        foreach (var seccion in ficha.Secciones)
+        var total = pesos.Sum();
+        var corte = Math.Max(1, Math.Min(ficha.Secciones.Count - 1, 1));
+        var mejor = double.MaxValue;
+        var acumulado = 0.0;
+
+        for (var k = 1; k < ficha.Secciones.Count; k++)
         {
-            if (acumulado < total / 2)
+            acumulado += pesos[k - 1];
+            var diferencia = Math.Abs(acumulado - (total - acumulado));
+
+            if (diferencia < mejor)
             {
-                izquierda.Add(seccion);
-                acumulado += seccion.Campos.Count;
-            }
-            else
-            {
-                derecha.Add(seccion);
+                mejor = diferencia;
+                corte = k;
             }
         }
+
+        var izquierda = ficha.Secciones.Take(corte).ToList();
+        var derecha = ficha.Secciones.Skip(corte).ToList();
 
         contenedor.Column(columna =>
         {
             // El marco se estira hasta el pie para que la ficha ocupe la hoja
             // completa y las firmas queden siempre al final de la página.
-            columna.Item().Extend().Border(0.8f).BorderColor(Borde).Padding(6).Column(marco =>
+            // ScaleToFit reduce el contenido proporcionalmente sólo si no cabe en la
+            // hoja: así la ficha completa (todos los bloques y autorizaciones) queda
+            // siempre en una página A4, sin cortar datos.
+            columna.Item().Border(0.8f).BorderColor(Borde).Padding(5).ScaleToFit().Column(marco =>
             {
                 marco.Item().Row(fila =>
                 {
@@ -177,30 +187,34 @@ public sealed class FichaMatriculaPdf
 
                 if (ficha.Autorizaciones.Count > 0)
                 {
-                    marco.Item().PaddingTop(3).Column(autorizaciones =>
+                    marco.Item().PaddingTop(3).Row(fila =>
                     {
-                        foreach (var autorizacion in ficha.Autorizaciones)
+                        for (var i = 0; i < ficha.Autorizaciones.Count; i++)
                         {
-                            autorizaciones.Item().PaddingTop(2).Row(fila =>
+                            if (i > 0)
                             {
-                                fila.RelativeItem().Column(texto =>
-                                {
-                                    texto.Item().Text(autorizacion.Titulo)
-                                        .FontSize(6.9f).SemiBold().FontColor(Azul);
-                                    texto.Item().Text(autorizacion.Texto)
-                                        .FontSize(6.3f).FontColor(Gris);
-                                });
+                                fila.ConstantItem(6);
+                            }
 
-                                fila.ConstantItem(28).AlignMiddle()
-                                    .Text("Sí [  ]   No [  ]")
-                                    .FontSize(6.8f).FontColor(Texto);
+                            var autorizacion = ficha.Autorizaciones[i];
+
+                            fila.RelativeItem().Column(texto =>
+                            {
+                                texto.Item().Row(titulo =>
+                                {
+                                    titulo.RelativeItem().Text(autorizacion.Titulo)
+                                        .FontSize(6.7f).SemiBold().FontColor(Azul);
+                                    titulo.ConstantItem(34, Unit.Millimetre).AlignRight().Text("Sí [  ]   No [  ]")
+                                        .FontSize(6.2f).FontColor(Texto);
+                                });
+                                texto.Item().Text(autorizacion.Texto).FontSize(6.3f).FontColor(Gris);
                             });
                         }
-
-                        autorizaciones.Item().PaddingTop(2)
-                            .Text("La firma del apoderado/a al pie de esta ficha respalda las autorizaciones marcadas.")
-                            .FontSize(6).FontColor(GrisClaro);
                     });
+
+                    marco.Item().PaddingTop(1)
+                        .Text("La firma del apoderado/a al pie de esta ficha respalda las autorizaciones marcadas.")
+                        .FontSize(5.8f).FontColor(GrisClaro);
                 }
             });
         });
@@ -208,16 +222,16 @@ public sealed class FichaMatriculaPdf
 
     private static void Seccion(IContainer contenedor, SeccionFicha seccion)
     {
-        contenedor.PaddingBottom(4).Column(columna =>
+        contenedor.PaddingBottom(4.2f).Column(columna =>
         {
             columna.Item()
                 .Background(FondoSeccion)
                 .BorderLeft(1.6f)
                 .BorderColor(Azul)
-                .PaddingVertical(2.4f)
-                .PaddingHorizontal(5)
+                .PaddingVertical(2.3f)
+                .PaddingHorizontal(4.5f)
                 .Text(seccion.Titulo.ToUpperInvariant())
-                .FontSize(7.8f)
+                .FontSize(7.9f)
                 .Bold()
                 .FontColor(Azul);
 
@@ -225,23 +239,23 @@ public sealed class FichaMatriculaPdf
             {
                 tabla.ColumnsDefinition(columnas =>
                 {
-                    columnas.ConstantColumn(24, Unit.Millimetre);
+                    columnas.ConstantColumn(26, Unit.Millimetre);
                     columnas.RelativeColumn();
                 });
 
                 foreach (var campo in seccion.Campos)
                 {
                     tabla.Cell()
-                        .PaddingVertical(2)
+                        .PaddingVertical(2f)
                         .PaddingHorizontal(4)
                         .Background("#F7F9FC")
                         .Text(campo.Etiqueta)
-                        .FontSize(6.6f)
+                        .FontSize(6.7f)
                         .SemiBold()
                         .FontColor(Gris);
 
                     tabla.Cell()
-                        .PaddingVertical(2)
+                        .PaddingVertical(2f)
                         .PaddingHorizontal(4)
                         .Text(campo.Valor)
                         .FontSize(8.2f)
@@ -259,10 +273,10 @@ public sealed class FichaMatriculaPdf
         {
             columna.Item()
                 .Text("Declaro que los datos registrados en esta ficha son fieles a la información entregada al establecimiento.")
-                .FontSize(6.8f)
+                .FontSize(6.2f)
                 .FontColor(Gris);
 
-            columna.Item().PaddingTop(4).Row(fila =>
+            columna.Item().PaddingTop(3).Row(fila =>
             {
                 fila.RelativeItem().Element(bloque =>
                     BloqueFirma(bloque, "Apoderado/a", "Nombre completo, RUN y firma"));
@@ -275,21 +289,21 @@ public sealed class FichaMatriculaPdf
             });
 
             columna.Item()
-                .PaddingTop(4)
+                .PaddingTop(3)
                 .Text("Este documento no acredita matrícula formalizada hasta su firma y registro en Secretaría.")
-                .FontSize(6)
+                .FontSize(5.8f)
                 .FontColor(GrisClaro);
         });
     }
 
     private static void BloqueFirma(IContainer contenedor, string titulo, string ayuda)
     {
-        contenedor.Border(0.6f).BorderColor(Borde).Padding(5).Column(columna =>
+        contenedor.Border(0.6f).BorderColor(Borde).Padding(4).Column(columna =>
         {
-            columna.Item().Text(titulo).FontSize(7).SemiBold().FontColor(Azul);
-            columna.Item().PaddingTop(20).LineHorizontal(0.7f).LineColor(Gris);
-            columna.Item().PaddingTop(2).Text(ayuda).FontSize(6).FontColor(GrisClaro);
-            columna.Item().PaddingTop(10).Text("Fecha:").FontSize(6).FontColor(GrisClaro);
+            columna.Item().Text(titulo).FontSize(6.6f).SemiBold().FontColor(Azul);
+            columna.Item().PaddingTop(14).LineHorizontal(0.7f).LineColor(Gris);
+            columna.Item().PaddingTop(2).Text(ayuda).FontSize(5.8f).FontColor(GrisClaro);
+            columna.Item().PaddingTop(8).Text("Fecha:").FontSize(5.8f).FontColor(GrisClaro);
         });
     }
 
@@ -297,7 +311,7 @@ public sealed class FichaMatriculaPdf
     {
         contenedor.Column(columna =>
         {
-            columna.Item().BorderTop(0.8f).BorderColor(Azul).PaddingTop(5).Element(Firmas);
+            columna.Item().BorderTop(0.8f).BorderColor(Azul).PaddingTop(3).Element(Firmas);
 
             columna.Item().PaddingTop(4).Row(fila =>
             {
