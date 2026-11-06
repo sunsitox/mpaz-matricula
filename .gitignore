@@ -11,3 +11,20 @@ appsettings.*.local.json
 
 # Artefactos locales de publicación
 artifacts/
+
+# Material de trabajo que no se publica: capturas, mockups, scripts locales y
+# documentos personales. En el repositorio van sólo la solución, la base de datos
+# y la documentación.
+.cloud-attachments/
+.config/
+mockups/
+doc practica oficiales de duoc/
+logos-acceso.png
+logos-wizard.png
+paso2-desplegables.png
+paso2-madre-abierto.png
+scripts/servidor/
+scripts/credensiales.txt
+scripts/conectar-mpaz-server.bat
+scripts/conectar-servidor-mpaz.bat
+scripts/fill_informe_plan_trabajo.py
