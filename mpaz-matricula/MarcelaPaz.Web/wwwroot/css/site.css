@@ -1388,7 +1388,9 @@ html {
 }
 
 .wizard__tarjeta {
-    padding: 1.5rem clamp(1rem, 3vw, 2rem) 1.1rem;
+    /* El ancho de padding se reutiliza en la barra de acciones */
+    --wizard-pad-x: clamp(1rem, 3vw, 2rem);
+    padding: 1.5rem var(--wizard-pad-x) 1.1rem;
 }
 
 .wizard__titulo-paso {
@@ -1457,16 +1459,34 @@ select.acceso__input {
     gap: 1.5rem;
 }
 
-/* Las acciones del paso quedan siempre visibles al pie de la ventana */
+/* Las acciones del paso quedan siempre visibles al pie de la ventana,
+   como un pie de tarjeta con fondo propio */
 .wizard__botones {
     position: sticky;
     bottom: 0;
     z-index: 6;
-    margin-top: 0.75rem;
-    padding: 0.75rem 0 0.85rem;
-    background: var(--color-surface);
-    border-top: 1px solid var(--color-border);
-    box-shadow: 0 -10px 16px -12px rgba(12, 37, 91, .35);
+    margin: 0.9rem calc((var(--wizard-pad-x) + 1px) * -1) -1.1rem;
+    padding: 0.7rem var(--wizard-pad-x);
+    background: #F7F9FC;
+    border-top: 1px solid var(--color-input-border);
+    border-radius: 0 0 11px 11px;
+}
+
+.wizard__botones a,
+.wizard__botones button {
+    white-space: nowrap;
+}
+
+/* Degradado que une el contenido con la barra y evita el corte seco */
+.wizard__botones::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 16px;
+    background: linear-gradient(to top, #F7F9FC, rgba(247, 249, 252, 0));
+    pointer-events: none;
 }
 
 .wizard__botones .acceso__boton,
@@ -1514,30 +1534,35 @@ select.acceso__input {
         padding: 0.85rem 0.75rem 1.25rem;
     }
 
+    /* El padding lateral se comparte con la barra de acciones */
     .wizard__tarjeta {
-        padding: 1.15rem 1rem 1rem;
+        --wizard-pad-x: 1rem;
+        padding: 1.15rem var(--wizard-pad-x) 1rem;
     }
 
     .wizard__fila {
         grid-template-columns: 1fr;
     }
 
-    /* En móvil los dos botones van en una fila: la barra fija queda baja */
+    /* En móvil las acciones van en una fila, sin partir el texto */
     .wizard__botones {
         flex-direction: row;
         flex-wrap: nowrap;
         justify-content: space-between;
-        gap: 0.5rem;
-        padding: 0.6rem 0;
+        gap: 0.45rem;
+        padding: 0.6rem var(--wizard-pad-x);
+        margin-bottom: -1rem;
     }
 
     .wizard__botones .acceso__boton,
     .wizard__botones .acceso__boton-secundario {
-        flex: 1;
+        flex: 1 1 auto;
         width: auto;
         min-width: 0;
-        height: 46px;
-        padding: 0 0.75rem;
+        height: 44px;
+        padding: 0 0.6rem;
+        font-size: 0.86rem;
+        white-space: nowrap;
         text-align: center;
     }
 }
