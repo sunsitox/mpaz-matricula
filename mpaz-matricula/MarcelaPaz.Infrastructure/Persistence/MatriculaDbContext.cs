@@ -50,6 +50,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<AntecedenteSalud> AntecedentesSalud => Set<AntecedenteSalud>();
 
+    public DbSet<AntecedenteApoyo> AntecedentesApoyo => Set<AntecedenteApoyo>();
+
     public DbSet<RestriccionFamiliar> RestriccionesFamiliares => Set<RestriccionFamiliar>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -262,6 +264,17 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
             e.Property(x => x.TieneSituacionMedica).HasColumnName("tiene_situacion_medica");
             e.Property(x => x.NecesidadesAtencion).HasColumnName("necesidades_atencion");
+        });
+
+        builder.Entity<AntecedenteApoyo>(e =>
+        {
+            e.ToTable("antecedente_apoyo", "public", t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.ParticipaPie).HasColumnName("participa_pie").HasMaxLength(10).IsRequired();
+            e.Property(x => x.ApoyosInformados).HasColumnName("apoyos_informados");
+            e.Property(x => x.TieneDiagnostico).HasColumnName("tiene_diagnostico");
         });
 
         builder.Entity<RestriccionFamiliar>(e =>

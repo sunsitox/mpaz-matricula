@@ -8,3 +8,6 @@ obj/
 appsettings.*.local.json
 *.db
 *.log
+
+# Artefactos locales de publicación
+artifacts/

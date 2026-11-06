@@ -8,29 +8,28 @@ namespace MarcelaPaz.Web.Seguridad;
 /// <summary>
 /// Enlaza la tabla <c>funcionario</c> con las credenciales de Identity.
 ///
-/// Los funcionarios vienen cargados en la base (nombre, correo y rol) pero sin
-/// contraseña: aquí se les crea la cuenta la primera vez, con la contraseña
-/// inicial documentada en <c>database/datos-prueba/credenciales.txt</c>, y se
-/// guarda el id de Identity en <c>sso_sujeto</c>. Si el enlace guardado no
-/// corresponde (por ejemplo, datos de prueba), se vuelve a enlazar.
+/// Los funcionarios vienen cargados en la base (nombre, correo y rol). Se les
+/// crea una cuenta faltante sólo cuando el despliegue entrega una contraseña
+/// inicial mediante configuración protegida, y se guarda el id de Identity en
+/// <c>sso_sujeto</c>. Si el enlace guardado no corresponde, se vuelve a enlazar.
 /// </summary>
 public class CuentasFuncionario
 {
-    /// <summary>Contraseña inicial de las cuentas creadas desde la base.</summary>
-    public const string ContrasenaInicial = "Mpaz2027segura";
-
     private readonly MatriculaDbContext _db;
     private readonly UserManager<IdentityUser> _usuarios;
     private readonly ILogger<CuentasFuncionario> _log;
+    private readonly string? _contrasenaInicial;
 
     public CuentasFuncionario(
         MatriculaDbContext db,
         UserManager<IdentityUser> usuarios,
+        IConfiguration configuracion,
         ILogger<CuentasFuncionario> log)
     {
         _db = db;
         _usuarios = usuarios;
         _log = log;
+        _contrasenaInicial = configuracion["Seguridad:ContrasenaInicial"];
     }
 
     /// <summary>
@@ -58,6 +57,14 @@ public class CuentasFuncionario
 
         if (usuario is null)
         {
+            if (string.IsNullOrWhiteSpace(_contrasenaInicial))
+            {
+                _log.LogWarning(
+                    "El funcionario {Correo} no tiene cuenta y Seguridad:ContrasenaInicial no está configurada.",
+                    correo);
+                return (null, false);
+            }
+
             usuario = new IdentityUser
             {
                 UserName = correo,
@@ -65,7 +72,7 @@ public class CuentasFuncionario
                 EmailConfirmed = true,
             };
 
-            var resultado = await _usuarios.CreateAsync(usuario, ContrasenaInicial);
+            var resultado = await _usuarios.CreateAsync(usuario, _contrasenaInicial);
 
             if (!resultado.Succeeded)
             {

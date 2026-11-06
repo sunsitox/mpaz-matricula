@@ -447,6 +447,43 @@ public class RegistroFicha
             _db.SituacionesMedicas.RemoveRange(anteriores);
             _db.SituacionesMedicas.AddRange(declaradas);
         }
+
+        // PIE y apoyos: un único registro por estudiante.
+        var participaPie = Texto(datos, "PIE: participa (SI/NO/PENDIENTE)");
+        var diagnosticoPie = SiNo(Texto(datos, "PIE: diagnosticado (SI/NO)"));
+        var apoyosPie = Texto(datos, "PIE: apoyos o diagnóstico");
+
+        if (participaPie is not null || diagnosticoPie is not null || apoyosPie is not null)
+        {
+            var apoyo = await _db.AntecedentesApoyo
+                .FirstOrDefaultAsync(a => a.EstudianteId == estudiante.Id, ct);
+
+            if (apoyo is null)
+            {
+                apoyo = new AntecedenteApoyo { EstudianteId = estudiante.Id };
+                _db.AntecedentesApoyo.Add(apoyo);
+            }
+
+            if (participaPie is not null)
+            {
+                apoyo.ParticipaPie = SiNo(participaPie) switch
+                {
+                    true => "SI",
+                    false => "NO",
+                    null => "PENDIENTE",
+                };
+            }
+
+            if (diagnosticoPie is not null)
+            {
+                apoyo.TieneDiagnostico = diagnosticoPie;
+            }
+
+            if (apoyosPie is not null)
+            {
+                apoyo.ApoyosInformados = apoyosPie;
+            }
+        }
     }
 
     // ── Apoyo ────────────────────────────────────────────────────────────────

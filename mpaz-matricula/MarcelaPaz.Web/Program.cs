@@ -3,10 +3,44 @@ using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Seguridad;
 using MarcelaPaz.Web.Servicios;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var cadenaConexion = builder.Configuration.GetConnectionString("Default");
+if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(cadenaConexion))
+{
+    throw new InvalidOperationException(
+        "Producción requiere la variable ConnectionStrings__Default; no se usará una conexión implícita.");
+}
+
+var directorioClaves = builder.Configuration["DataProtection:KeysPath"];
+if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(directorioClaves))
+{
+    throw new InvalidOperationException(
+        "Producción requiere DataProtection__KeysPath para conservar cookies entre reinicios y releases.");
+}
+
+if (!string.IsNullOrWhiteSpace(directorioClaves))
+{
+    builder.Services
+        .AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(directorioClaves))
+        .SetApplicationName("MarcelaPaz.Matriculas");
+}
+
+// Cloudflare Tunnel se conecta desde el mismo servidor. Sólo se aceptan
+// encabezados reenviados del proxy local, nunca de clientes arbitrarios.
+builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
+{
+    opciones.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    opciones.KnownProxies.Add(IPAddress.Loopback);
+    opciones.KnownProxies.Add(IPAddress.IPv6Loopback);
+});
 
 // Interfaz gráfica MVC
 builder.Services.AddControllersWithViews();
@@ -14,7 +48,7 @@ builder.Services.AddControllersWithViews();
 // Base de datos: el DDL institucional vive en "public" y Identity en "auth".
 // La conexión, el proveedor de PostgreSQL y el DbContext se configuran en
 // Infrastructure; esta capa sólo entrega la cadena.
-builder.Services.AddPersistencia(builder.Configuration.GetConnectionString("Default"));
+builder.Services.AddPersistencia(cadenaConexion);
 
 // Documentos imprimibles (PDF) generados desde el formulario.
 builder.Services.AddDocumentos();
@@ -68,8 +102,8 @@ builder.Services.AddScoped<IAuthorizationHandler, PermisoAuthorizationHandler>()
 builder.Services.AddScoped<IAuditoriaAcceso, AuditoriaAcceso>();
 builder.Services.AddScoped<EscrituraAuditada>();
 
-// Reconoce a los funcionarios que ya están en la base: les crea o reenlaza la
-// cuenta de Identity (contraseña inicial en database/datos-prueba/credenciales.txt).
+// Reconoce a los funcionarios que ya están en la base. Una cuenta faltante sólo
+// se crea si se entregó Seguridad__ContrasenaInicial mediante un secreto temporal.
 builder.Services.AddScoped<CuentasFuncionario>();
 builder.Services.AddHttpContextAccessor();
 
@@ -101,6 +135,8 @@ await using (var alcance = app.Services.CreateAsyncScope())
         app.Logger.LogError(ex, "No se pudieron preparar las cuentas de los funcionarios.");
     }
 }
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {

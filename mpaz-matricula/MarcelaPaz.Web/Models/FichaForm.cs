@@ -111,4 +111,14 @@ public class FichaForm
 
     // Autorización de paracetamol de la ficha vigente (Si / No)
     public string? AutorizaParacetamol { get; set; }
+
+    // Paso 6 · Programa de Integración Escolar (PIE)
+    // ¿Participa del PIE? (Si / No / Pendiente)
+    public string? ParticipaPie { get; set; }
+
+    // ¿Cuenta con diagnóstico o documentación PIE? (Si / No)
+    public string? PieDiagnostico { get; set; }
+
+    // Apoyos informados o diagnóstico declarado
+    public string? PieApoyos { get; set; }
 }

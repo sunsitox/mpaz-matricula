@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+**/bin/
+**/obj/
+*.pdb
+appsettings.Development.json
+database/datos-prueba/
+docker/db-init/
+docker/.env

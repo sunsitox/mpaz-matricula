@@ -1,0 +1,28 @@
+[Unit]
+Description=Portal de Matrícula MPAZ
+Wants=network-online.target
+After=network-online.target postgresql.service
+RequiresMountsFor=/srv/mpaz-data
+
+[Service]
+Type=simple
+User=mpaz-matriculas
+Group=mpaz-matriculas
+WorkingDirectory=/opt/mpaz-matriculas/current
+ExecStart=/opt/mpaz-matriculas/current/MarcelaPaz.Web
+EnvironmentFile=/etc/mpaz-matriculas/mpaz-matriculas.env
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGINT
+SyslogIdentifier=mpaz-matriculas
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mpaz-matriculas/keys
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

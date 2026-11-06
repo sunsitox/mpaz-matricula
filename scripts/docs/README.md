@@ -9,6 +9,7 @@
 | [reunion-01-2026-10-21.md](reunion-01-2026-10-21.md) | 🏗 Observaciones por validar | Contexto, alcance inicial, propuesta de acceso, riesgos y preguntas para el acta |
 | [SRS_Escuela_Marcela_Paz.md](../../SRS_Escuela_Marcela_Paz.md) | ⚠️ Borrador anterior | Requisitos históricos; revisar diferencias con reunión 1 antes de implementar |
 | [systema-matricula-tasks.md](systema-matricula-tasks.md) | ⚠️ Plan anterior | Repriorizar tras el acta |
+| [checklist-portal-matricula-modulo-3.md](checklist-portal-matricula-modulo-3.md) | ✅ Estado revisado 06-11-2026 | Avance comprobado, trabajo parcial, pendientes y bloqueos del Módulo 3 |
 
 ## Diseño visual
 | Documento | Estado | Contenido |
@@ -24,7 +25,9 @@
 | `api-contract.md` | ⬜ Pendiente | Contratos REST de Estudiantes, Apoderados, Matrículas y Reportes |
 | `data-model.md` | ⬜ Pendiente | DER con tablas Estudiantes, Apoderados, EstudianteApoderado, Cursos, Matriculas, AuditoriaLogs |
 | `security.md` | ⬜ Pendiente | RBAC, Ley 19.628, políticas de contraseñas |
-| `deployment.md` | ⬜ Pendiente | Publicación, respaldos (pg_dump), disaster recovery |
+| [deployment.md](deployment.md) | ✅ Propuesta técnica local | Distribución recomendada, software requerido, PostgreSQL, Cloudflare Tunnel, seguridad, respaldos y secuencia de despliegue; no aplicada al servidor |
+| [migracion-servidor-runbook.md](migracion-servidor-runbook.md) | ✅ Preparado localmente | Procedimiento verificable de preflight, instalación, base de datos, release, validación y reversa; no ejecutado en el servidor |
+| [respuesta-ti-cloudflare.md](respuesta-ti-cloudflare.md) | ✅ Listo para el colegio | Respuestas a las 8 preguntas de TI y configuración de `matricula.empaz.cl`: Access primero, túnel `mpaz-web`, puerto 5100 y pendientes |
 
 ## Guías operativas
 | Documento | Estado |

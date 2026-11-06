@@ -1,0 +1,59 @@
+# Entrega final · Portal de Matrícula MPAZ
+# Uso:  cp .env.example .env  &&  docker compose up -d --build
+# El puerto se publica solo en loopback; la exposición pública va por Cloudflare.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mpaz_matricula
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${CLAVE_POSTGRES:-postgres_mpaz_2027}
+      TZ: America/Santiago
+    volumes:
+      - datos-db:/var/lib/postgresql/data
+      # Solo se ejecutan cuando el volumen está vacío (primer arranque).
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mpaz_matricula"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [mpaz]
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      AllowedHosts: ${ALLOWED_HOSTS:-*}
+      DataProtection__KeysPath: /keys
+      Seguridad__ExigirInicioSesion: "true"
+      Seguridad__ContrasenaInicial: ${CLAVE_INICIAL:-Mpaz2027segura}
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=${CLAVE_APP:-mpaz_app_2027};SSL Mode=Disable"
+    volumes:
+      - claves:/keys
+    ports:
+      - "127.0.0.1:${PUERTO_APP:-5101}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    networks: [mpaz]
+
+volumes:
+  datos-db:
+  claves:
+
+networks:
+  mpaz:

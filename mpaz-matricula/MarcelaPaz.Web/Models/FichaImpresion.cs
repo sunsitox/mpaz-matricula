@@ -65,6 +65,39 @@ public static class FichaImpresion
             "situación médica 02: identificación", "situación médica 02: detalle", "situación médica 02: en tratamiento",
             "situación médica 03: identificación", "situación médica 03: detalle", "situación médica 03: en tratamiento",
         }),
+        ("PIE y apoyos", new[]
+        {
+            "PIE: participa (SI/NO/PENDIENTE)", "PIE: diagnosticado (SI/NO)", "PIE: apoyos o diagnóstico",
+        }),
+    };
+
+    /// <summary>
+    /// Consentimientos que se imprimen con la ficha para que el apoderado los marque
+    /// y firme. Los textos quedan pendientes de la revisión de Dirección y Convivencia.
+    /// </summary>
+    private static readonly AutorizacionFicha[] AutorizacionesFormulario =
+    {
+        new AutorizacionFicha
+        {
+            Titulo = "Autorización de uso de imagen",
+            Texto = "Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales "
+                  + "(registro interno, sitio web y redes sociales del establecimiento), sin exponer datos sensibles. "
+                  + "Puedo revocar esta autorización por escrito en cualquier momento.",
+        },
+        new AutorizacionFicha
+        {
+            Titulo = "Autorización para el trabajo con Convivencia Escolar",
+            Texto = "Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea "
+                  + "necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.",
+        },
+    };
+
+    /// <summary>Etiquetas propias para claves cuyo nombre técnico no se lee bien.</summary>
+    private static readonly Dictionary<string, string> EtiquetasPropias = new()
+    {
+        ["PIE: participa (SI/NO/PENDIENTE)"] = "Participa PIE",
+        ["PIE: diagnosticado (SI/NO)"] = "Diagnóstico PIE",
+        ["PIE: apoyos o diagnóstico"] = "Apoyos o diagnóstico",
     };
 
     public static DocumentoFicha DesdeBorrador(
@@ -104,12 +137,18 @@ public static class FichaImpresion
             Detalle = datos.GetValueOrDefault("modo: detalle"),
             Logo = logo,
             Secciones = secciones,
+            Autorizaciones = AutorizacionesFormulario,
         };
     }
 
     /// <summary>«madre: cédula identidad» → «Cédula identidad».</summary>
     private static string Etiqueta(string clave)
     {
+        if (EtiquetasPropias.TryGetValue(clave, out var propia))
+        {
+            return propia;
+        }
+
         var texto = clave.Contains(':') ? clave[(clave.IndexOf(':') + 1)..] : clave;
         texto = texto.Replace(" (SI/NO)", string.Empty).Trim();
 

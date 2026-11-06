@@ -181,6 +181,9 @@ public class FichaController : Controller
                 GuardarCampo(datos, "situación médica 03: en tratamiento", form.Medica3_Tratamiento);
                 GuardarCampo(datos, "salida al baño (SI/NO)", form.SalidaBano);
                 GuardarCampo(datos, "autorización de paracetamol (SI/NO)", form.AutorizaParacetamol);
+                GuardarCampo(datos, "PIE: participa (SI/NO/PENDIENTE)", form.ParticipaPie);
+                GuardarCampo(datos, "PIE: diagnosticado (SI/NO)", form.PieDiagnostico);
+                GuardarCampo(datos, "PIE: apoyos o diagnóstico", form.PieApoyos);
                 break;
 
             case 7:
@@ -679,6 +682,28 @@ public class FichaController : Controller
             }
 
             numeroSituacion++;
+        }
+
+        // Paso 6 · PIE y apoyos.
+        var apoyo = await _db.AntecedentesApoyo
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.EstudianteId == estudiante.Id);
+
+        if (apoyo is not null)
+        {
+            agregados += PonerSiFalta(datos, "PIE: participa (SI/NO/PENDIENTE)", apoyo.ParticipaPie switch
+            {
+                "SI" => "Si",
+                "NO" => "No",
+                _ => "Pendiente",
+            });
+
+            if (apoyo.TieneDiagnostico is bool tieneDiagnostico)
+            {
+                agregados += PonerSiFalta(datos, "PIE: diagnosticado (SI/NO)", tieneDiagnostico ? "Si" : "No");
+            }
+
+            agregados += PonerSiFalta(datos, "PIE: apoyos o diagnóstico", apoyo.ApoyosInformados);
         }
 
         return agregados > 0;
