@@ -108,6 +108,133 @@
     }
 </section>
 
+<section class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Documentos del expediente</h2>
+
+    @if (!Model.PuedeVerDocumentos)
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de los documentos del expediente.</p>
+    }
+    else
+    {
+        <p class="admin__ayuda">
+            Cada documento queda como recibido, pendiente o no aplica; ninguno bloquea la matrícula.
+            Formatos PDF, JPG o PNG, hasta 15 MB.
+        </p>
+
+        @if (Model.Documentos.Count == 0)
+        {
+            <p class="admin__ayuda">La matrícula del año no tiene requisitos documentales registrados.</p>
+        }
+        else
+        {
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Documentos requeridos para la matrícula del año, su estado y archivo.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Documento</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Archivo</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var documento in Model.Documentos)
+                        {
+                            <tr>
+                                <td>@documento.Etiqueta</td>
+                                <td>
+                                    @(documento.Estado switch
+                                    {
+                                        "RECIBIDO" => "Recibido",
+                                        "NO_APLICA" => "No aplica",
+                                        _ => "Pendiente",
+                                    })
+                                </td>
+                                <td>
+                                    @if (documento.DocumentoId is int archivoId)
+                                    {
+                                        <a asp-action="DescargarDocumento" asp-route-id="@Model.Id"
+                                           asp-route-documentoId="@archivoId">@(documento.NombreArchivo ?? "Descargar")</a>
+                                        @if (documento.SubidoEn is DateTimeOffset subido)
+                                        {
+                                            <span class="admin__ayuda"> · @subido.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="admin__ayuda">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (Model.PuedeSubirDocumentos)
+                                    {
+                                        <div class="admin__acciones">
+                                            <form method="post" asp-action="SubirDocumento" asp-route-id="@Model.Id"
+                                                  enctype="multipart/form-data">
+                                                <input type="hidden" name="requisitoId" value="@documento.RequisitoId" />
+                                                <label class="sr-only" for="archivo-@documento.RequisitoId">
+                                                    Archivo para @documento.Etiqueta
+                                                </label>
+                                                <input class="acceso__input" id="archivo-@documento.RequisitoId" name="archivo"
+                                                       type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+                                                <button type="submit" class="admin__boton">
+                                                    @(documento.DocumentoId is null ? "Subir" : "Reemplazar")
+                                                </button>
+                                            </form>
+                                            @if (documento.Estado != "NO_APLICA")
+                                            {
+                                                <form method="post" asp-action="MarcarDocumento" asp-route-id="@Model.Id">
+                                                    <input type="hidden" name="requisitoId" value="@documento.RequisitoId" />
+                                                    <input type="hidden" name="estado" value="NO_APLICA" />
+                                                    <button type="submit" class="admin__boton">No aplica</button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.PuedeSubirDocumentos && Model.MatriculaId is int matriculaFirmada
+             && Model.EstadoActual is "FICHA_GENERADA" or "FIRMADA")
+        {
+            <h3 class="admin__titulo-seccion">Escaneo de la ficha firmada</h3>
+            <p class="admin__ayuda">
+                Adjunte el PDF o la foto de la ficha firmada por el apoderado. Queda asociada a la matrícula y
+                reemplaza al escaneo anterior sin borrarlo.
+            </p>
+            @if (Model.FichaFirmadaDocumentoId is int escaneoId)
+            {
+                <p class="admin__ayuda">
+                    Escaneo adjunto:
+                    <a asp-action="DescargarDocumento" asp-route-id="@Model.Id"
+                       asp-route-documentoId="@escaneoId">@(Model.FichaFirmadaNombre ?? "Descargar")</a>
+                    @if (Model.FichaFirmadaSubidaEn is DateTimeOffset escaneoEn)
+                    {
+                        <span> · @escaneoEn.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                    }
+                </p>
+            }
+            <form method="post" asp-action="SubirFichaFirmada" asp-route-id="@Model.Id"
+                  enctype="multipart/form-data">
+                <input type="hidden" name="matriculaId" value="@matriculaFirmada" />
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="ficha-firmada">Archivo de la ficha firmada</label>
+                    <input class="acceso__input" id="ficha-firmada" name="archivo" type="file"
+                           accept=".pdf,.jpg,.jpeg,.png" required />
+                </div>
+                <button type="submit" class="admin__boton">Subir ficha firmada</button>
+            </form>
+        }
+    }
+</section>
+
 <div class="perfil__grid">
     <section class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Datos personales</h2>

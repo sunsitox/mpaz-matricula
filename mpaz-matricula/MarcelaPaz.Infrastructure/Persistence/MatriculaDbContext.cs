@@ -66,6 +66,10 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<AutorizacionAlcance> AutorizacionesAlcance => Set<AutorizacionAlcance>();
 
+    public DbSet<Documento> Documentos => Set<Documento>();
+
+    public DbSet<RequisitoDocumental> RequisitosDocumentales => Set<RequisitoDocumental>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -325,6 +329,43 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.PdfDocumentoId).HasColumnName("pdf_documento_id");
             e.Property(x => x.FechaFirma).HasColumnName("fecha_firma");
             e.Property(x => x.FirmantePersonaId).HasColumnName("firmante_persona_id");
+        });
+
+        builder.Entity<Documento>(e =>
+        {
+            e.ToTable("documento", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.MatriculaId).HasColumnName("matricula_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(30).IsRequired();
+            e.Property(x => x.Sensibilidad).HasColumnName("sensibilidad").HasMaxLength(10).IsRequired();
+            e.Property(x => x.NombreOriginal).HasColumnName("nombre_original").HasMaxLength(255).IsRequired();
+            e.Property(x => x.MimeType).HasColumnName("mime_type").HasMaxLength(100).IsRequired();
+            e.Property(x => x.TamanoBytes).HasColumnName("tamano_bytes");
+            e.Property(x => x.RutaAlmacenamiento).HasColumnName("ruta_almacenamiento").IsRequired();
+            e.Property(x => x.HashSha256).HasColumnName("hash_sha256").HasMaxLength(64).IsRequired();
+            e.Property(x => x.EstadoAnalisis).HasColumnName("estado_analisis").HasMaxLength(10).IsRequired();
+            e.Property(x => x.Activo).HasColumnName("activo");
+            e.Property(x => x.ReemplazaId).HasColumnName("reemplaza_id");
+            e.Property(x => x.SubidoPor).HasColumnName("subido_por");
+            e.Property(x => x.SubidoEn).HasColumnName("subido_en");
+        });
+
+        builder.Entity<RequisitoDocumental>(e =>
+        {
+            e.ToTable("requisito_documental", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.MatriculaId).HasColumnName("matricula_id");
+            e.Property(x => x.TipoDocumento).HasColumnName("tipo_documento").HasMaxLength(30).IsRequired();
+            e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(10).IsRequired();
+            e.Property(x => x.DocumentoId).HasColumnName("documento_id");
+            e.Property(x => x.Observacion).HasColumnName("observacion");
+            e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
+            e.Property(x => x.RegistradoEn).HasColumnName("registrado_en");
+            e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+            e.Property(x => x.Version).HasColumnName("version");
         });
 
         builder.Entity<PlantillaAutorizacion>(e =>

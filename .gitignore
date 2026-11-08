@@ -12,8 +12,9 @@ appsettings.*.local.json
 .env.*
 mpaz-matricula/database/datos-prueba/credenciales.txt
 
-# Artefactos locales de publicación
+# Artefactos locales de publicación y archivos subidos al expediente
 artifacts/
+mpaz-matricula/MarcelaPaz.Web/App_Data/
 
 # Material de trabajo que no se publica: capturas, mockups, scripts locales y
 # documentos personales. En el repositorio van sólo la solución, la base de datos

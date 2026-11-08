@@ -1002,7 +1002,8 @@ public class RegistroFicha
             return "La matrícula no tiene una ficha vigente: genere la ficha antes de registrar la firma.";
         }
 
-        ficha.FechaFirma = fechaFirma;
+        // La ficha cerrada es inmutable (trigger del DDL): la fecha de la firma
+        // queda en el evento de auditoría y el estado de la matrícula.
         matricula.Estado = "FIRMADA";
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
 

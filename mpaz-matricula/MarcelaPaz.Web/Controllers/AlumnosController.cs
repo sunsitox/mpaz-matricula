@@ -27,19 +27,22 @@ public class AlumnosController : Controller
     private readonly IAuditoriaAcceso _auditoria;
     private readonly AnioEscolar _anios;
     private readonly EscrituraAuditada _escritura;
+    private readonly ExpedienteDocumentos _documentos;
 
     public AlumnosController(
         MatriculaDbContext db,
         RegistroFicha registro,
         IAuditoriaAcceso auditoria,
         AnioEscolar anios,
-        EscrituraAuditada escritura)
+        EscrituraAuditada escritura,
+        ExpedienteDocumentos documentos)
     {
         _db = db;
         _registro = registro;
         _auditoria = auditoria;
         _anios = anios;
         _escritura = escritura;
+        _documentos = documentos;
     }
 
     /// <summary>¿La sesión tiene el permiso de área indicado?</summary>
@@ -215,6 +218,8 @@ public class AlumnosController : Controller
         var puedeRetiro = Puede("RETIRO");
         var puedeSalud = Puede("SALUD");
         var puedeAutorizaciones = Puede("AUTORIZACIONES");
+        var puedeDocumentos = Puede("DOCUMENTOS");
+        var puedeSubirDocumentos = User.HasClaim("permiso", "DOCUMENTOS:CREAR");
 
         var vinculos = puedeFamilia
             ? await _db.EstudiantesPersonas
@@ -281,6 +286,36 @@ public class AlumnosController : Controller
                 .OrderBy(a => a.Tipo)
                 .ToListAsync()
             : new List<Autorizacion>();
+
+        // MAT-06/07/09: requisitos de la matrícula del año. Sin DOCUMENTOS:LEER no
+        // se consultan ni se proyectan.
+        var requisitos = vigente is not null && puedeDocumentos
+            ? await _db.RequisitosDocumentales
+                .AsNoTracking()
+                .Where(r => r.MatriculaId == vigente.Id)
+                .OrderBy(r => r.TipoDocumento)
+                .ToListAsync()
+            : new List<RequisitoDocumental>();
+
+        var idsDocumentos = requisitos
+            .Where(r => r.DocumentoId is not null)
+            .Select(r => r.DocumentoId!.Value)
+            .ToList();
+
+        var documentos = idsDocumentos.Count == 0
+            ? new List<Documento>()
+            : await _db.Documentos
+                .AsNoTracking()
+                .Where(d => idsDocumentos.Contains(d.Id))
+                .ToListAsync();
+
+        var fichaFirmada = vigente is not null && puedeDocumentos
+            ? await _db.Documentos
+                .AsNoTracking()
+                .Where(d => d.MatriculaId == vigente.Id && d.Tipo == "FICHA_FIRMADA" && d.Activo)
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefaultAsync()
+            : null;
 
         var perfil = new PerfilAlumno
         {
@@ -355,6 +390,25 @@ public class AlumnosController : Controller
             PuedeVerRetiro = puedeRetiro,
             PuedeVerSalud = puedeSalud,
             PuedeVerAutorizaciones = puedeAutorizaciones,
+            PuedeVerDocumentos = puedeDocumentos,
+            PuedeSubirDocumentos = puedeSubirDocumentos,
+            FichaFirmadaDocumentoId = fichaFirmada?.Id,
+            FichaFirmadaNombre = fichaFirmada?.NombreOriginal,
+            FichaFirmadaSubidaEn = fichaFirmada?.SubidoEn,
+            Documentos = requisitos
+                .Select(r => new PerfilAlumno.DocumentoPerfil
+                {
+                    RequisitoId = r.Id,
+                    Tipo = r.TipoDocumento,
+                    Etiqueta = EtiquetaDocumento(r.TipoDocumento),
+                    Estado = r.Estado,
+                    DocumentoId = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.Id,
+                    NombreArchivo = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.NombreOriginal,
+                    SubidoEn = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.SubidoEn,
+                    Sensibilidad = SensibilidadDocumento(r.TipoDocumento),
+                    Observacion = r.Observacion,
+                })
+                .ToList(),
         };
 
         // MAT-13: la consulta del expediente deja rastro con las áreas efectivamente leídas.
@@ -377,6 +431,11 @@ public class AlumnosController : Controller
         if (puedeAutorizaciones)
         {
             areas.Add("AUTORIZACIONES");
+        }
+
+        if (puedeDocumentos)
+        {
+            areas.Add("DOCUMENTOS");
         }
 
         await _auditoria.RegistrarAsync(
@@ -480,6 +539,386 @@ public class AlumnosController : Controller
 
         return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
     }
+
+    /// <summary>Sube o reemplaza el archivo de un requisito documental (MAT-06/07).</summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:CREAR")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(16 * 1024 * 1024)]
+    public async Task<IActionResult> SubirDocumento(int id, int requisitoId, IFormFile? archivo)
+    {
+        var requisito = await _db.RequisitosDocumentales.FirstOrDefaultAsync(r => r.Id == requisitoId);
+
+        if (requisito is null)
+        {
+            return NotFound();
+        }
+
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == requisito.MatriculaId);
+
+        if (matricula is null || matricula.EstudianteId != id)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var idFuncionario)
+            ? idFuncionario
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para subir documentos.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var error = ExpedienteDocumentos.Validar(archivo);
+
+        if (error is not null)
+        {
+            TempData["Aviso"] = error;
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        ResultadoArchivo? guardado = null;
+        var documentoId = 0;
+
+        try
+        {
+            await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+            {
+                guardado = await _documentos.GuardarAsync(archivo!, id, ct);
+
+                var documento = new Documento
+                {
+                    EstudianteId = id,
+                    MatriculaId = requisito.MatriculaId,
+                    Tipo = requisito.TipoDocumento,
+                    Sensibilidad = SensibilidadDocumento(requisito.TipoDocumento),
+                    NombreOriginal = guardado.Nombre,
+                    MimeType = guardado.Mime,
+                    TamanoBytes = guardado.Tamano,
+                    RutaAlmacenamiento = guardado.Ruta,
+                    HashSha256 = guardado.Hash,
+                    SubidoPor = funcionarioId.Value,
+                    SubidoEn = DateTimeOffset.UtcNow,
+                    ReemplazaId = requisito.DocumentoId,
+                };
+
+                if (requisito.DocumentoId is int anterior)
+                {
+                    var previo = await _db.Documentos.FirstOrDefaultAsync(d => d.Id == anterior, ct);
+
+                    if (previo is not null)
+                    {
+                        previo.Activo = false;
+                    }
+                }
+
+                _db.Documentos.Add(documento);
+                await _db.SaveChangesAsync(ct);
+
+                documentoId = documento.Id;
+                requisito.DocumentoId = documento.Id;
+                requisito.Estado = "RECIBIDO";
+                requisito.RegistradoPor = funcionarioId.Value;
+                requisito.UpdatedAt = DateTimeOffset.UtcNow;
+                await _db.SaveChangesAsync(ct);
+            }, HttpContext.RequestAborted);
+        }
+        catch (ArchivoInvalidoException ex)
+        {
+            if (guardado is not null)
+            {
+                _documentos.Eliminar(guardado.Ruta);
+            }
+
+            TempData["Aviso"] = ex.Message;
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+        catch (Exception ex) when (ex is DbUpdateException or IOException)
+        {
+            if (guardado is not null)
+            {
+                _documentos.Eliminar(guardado.Ruta);
+            }
+
+            TempData["Aviso"] = "No se pudo guardar el documento. Intente nuevamente.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "DOCUMENTOS",
+            "documento",
+            detalle: $"{{\"evento\":\"subir_documento\",\"tipo\":\"{requisito.TipoDocumento}\"}}",
+            estudianteId: id,
+            recursoId: documentoId);
+
+        TempData["Notificacion"] = $"Documento «{EtiquetaDocumento(requisito.TipoDocumento)}» recibido.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>Marca un requisito como no aplica o lo devuelve a pendiente (MAT-07).</summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:EDITAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarcarDocumento(int id, int requisitoId, string estado)
+    {
+        if (estado is not ("NO_APLICA" or "PENDIENTE"))
+        {
+            TempData["Aviso"] = "Estado documental no válido.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var requisito = await _db.RequisitosDocumentales.FirstOrDefaultAsync(r => r.Id == requisitoId);
+
+        if (requisito is null)
+        {
+            return NotFound();
+        }
+
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == requisito.MatriculaId);
+
+        if (matricula is null || matricula.EstudianteId != id)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var idFuncionario)
+            ? idFuncionario
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para actualizar el expediente.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            requisito.Estado = estado;
+            requisito.DocumentoId = null;
+            requisito.RegistradoPor = funcionarioId.Value;
+            requisito.UpdatedAt = DateTimeOffset.UtcNow;
+            await _db.SaveChangesAsync(ct);
+        }, HttpContext.RequestAborted);
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "DOCUMENTOS",
+            "requisito_documental",
+            detalle: $"{{\"evento\":\"estado_documento\",\"estado\":\"{estado}\"}}",
+            estudianteId: id,
+            recursoId: requisito.Id);
+
+        TempData["Notificacion"] = $"«{EtiquetaDocumento(requisito.TipoDocumento)}» quedó {(estado == "NO_APLICA" ? "como no aplica" : "pendiente")}.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>Descarga un documento del expediente sólo si la sesión puede ver su área.</summary>
+    [HttpGet]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:LEER")]
+    public async Task<IActionResult> DescargarDocumento(int id, int documentoId)
+    {
+        var documento = await _db.Documentos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == documentoId && d.EstudianteId == id && d.Activo);
+
+        if (documento is null)
+        {
+            return NotFound();
+        }
+
+        if (!PuedeVerSensibilidad(documento.Sensibilidad))
+        {
+            await _auditoria.RegistrarAsync(
+                "DENEGADO",
+                documento.Sensibilidad,
+                "documento",
+                estudianteId: id,
+                recursoId: documento.Id);
+
+            return Forbid();
+        }
+
+        var ruta = _documentos.RutaFisica(documento.RutaAlmacenamiento);
+
+        if (ruta is null)
+        {
+            TempData["Aviso"] = "El archivo no está disponible en el servidor.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        await _auditoria.RegistrarAsync(
+            "DESCARGAR",
+            "DOCUMENTOS",
+            "documento",
+            detalle: $"{{\"tipo\":\"{documento.Tipo}\",\"sensibilidad\":\"{documento.Sensibilidad}\"}}",
+            estudianteId: id,
+            recursoId: documento.Id);
+
+        return PhysicalFile(ruta, documento.MimeType, documento.NombreOriginal);
+    }
+
+    /// <summary>Adjunta el escaneo de la ficha firmada a la versión vigente (MAT-09).</summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:CREAR")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(16 * 1024 * 1024)]
+    public async Task<IActionResult> SubirFichaFirmada(int id, int matriculaId, IFormFile? archivo)
+    {
+        var matricula = await _db.Matriculas
+            .FirstOrDefaultAsync(m => m.Id == matriculaId && m.EstudianteId == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var ficha = await _db.FichaVersiones
+            .FirstOrDefaultAsync(v => v.MatriculaId == matriculaId && v.Estado == "VIGENTE");
+
+        if (ficha is null)
+        {
+            TempData["Aviso"] = "Genere la ficha antes de subir el escaneo firmado.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var idFuncionario)
+            ? idFuncionario
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para subir el escaneo.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var error = ExpedienteDocumentos.Validar(archivo);
+
+        if (error is not null)
+        {
+            TempData["Aviso"] = error;
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        ResultadoArchivo? guardado = null;
+        var documentoId = 0;
+
+        try
+        {
+            await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+            {
+                guardado = await _documentos.GuardarAsync(archivo!, id, ct);
+
+                // La ficha cerrada no se edita (trigger del DDL): el escaneo queda
+                // como documento de la matrícula y reemplaza al anterior.
+                var anterior = await _db.Documentos
+                    .Where(d => d.MatriculaId == matriculaId && d.Tipo == "FICHA_FIRMADA" && d.Activo)
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefaultAsync(ct);
+
+                var documento = new Documento
+                {
+                    EstudianteId = id,
+                    MatriculaId = matriculaId,
+                    Tipo = "FICHA_FIRMADA",
+                    Sensibilidad = "GENERAL",
+                    NombreOriginal = guardado.Nombre,
+                    MimeType = guardado.Mime,
+                    TamanoBytes = guardado.Tamano,
+                    RutaAlmacenamiento = guardado.Ruta,
+                    HashSha256 = guardado.Hash,
+                    SubidoPor = funcionarioId.Value,
+                    SubidoEn = DateTimeOffset.UtcNow,
+                    ReemplazaId = anterior?.Id,
+                };
+
+                if (anterior is not null)
+                {
+                    anterior.Activo = false;
+                }
+
+                _db.Documentos.Add(documento);
+                await _db.SaveChangesAsync(ct);
+
+                documentoId = documento.Id;
+
+                if (matricula.Estado == "FICHA_GENERADA")
+                {
+                    matricula.Estado = "FIRMADA";
+                }
+
+                matricula.UpdatedAt = DateTimeOffset.UtcNow;
+                await _db.SaveChangesAsync(ct);
+            }, HttpContext.RequestAborted);
+        }
+        catch (ArchivoInvalidoException ex)
+        {
+            if (guardado is not null)
+            {
+                _documentos.Eliminar(guardado.Ruta);
+            }
+
+            TempData["Aviso"] = ex.Message;
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+        catch (Exception ex) when (ex is DbUpdateException or IOException)
+        {
+            if (guardado is not null)
+            {
+                _documentos.Eliminar(guardado.Ruta);
+            }
+
+            TempData["Aviso"] = "No se pudo guardar el escaneo. Intente nuevamente.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "DOCUMENTOS",
+            "documento",
+            detalle: "{\"evento\":\"subir_ficha_firmada\"}",
+            estudianteId: id,
+            recursoId: documentoId);
+
+        TempData["Notificacion"] = "Escaneo de la ficha firmada adjuntado a la versión vigente.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    private bool PuedeVerSensibilidad(string sensibilidad) => sensibilidad switch
+    {
+        "SALUD" => Puede("SALUD"),
+        "PIE" => Puede("PIE"),
+        "JUDICIAL" => Puede("JUDICIAL"),
+        _ => true,
+    };
+
+    private static string SensibilidadDocumento(string tipo) => tipo switch
+    {
+        "ORDEN_MEDICA" or "RESPALDO_SALUD" => "SALUD",
+        "CERTIFICADO_PIE" => "PIE",
+        "DOCUMENTO_JUDICIAL" => "JUDICIAL",
+        _ => "GENERAL",
+    };
+
+    private static string EtiquetaDocumento(string tipo) => tipo switch
+    {
+        "CEDULA_IDENTIDAD" => "Cédula de identidad",
+        "CERTIFICADO_NACIMIENTO" => "Certificado de nacimiento",
+        "PODER_TERCERO" => "Poder de tercero",
+        "ORDEN_MEDICA" => "Orden médica",
+        "RESPALDO_SALUD" => "Respaldo de salud",
+        "CERTIFICADO_PIE" => "Certificado PIE",
+        "DOCUMENTO_JUDICIAL" => "Documento judicial",
+        "FICHA_FIRMADA" => "Ficha firmada",
+        "FICHA_PDF" => "Ficha en PDF",
+        _ => "Otro documento",
+    };
 
     private static string EtiquetaAutorizacion(string tipo) => tipo switch
     {

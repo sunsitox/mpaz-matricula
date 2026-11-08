@@ -63,6 +63,9 @@ public class PerfilAlumno
     /// <summary>Autorizaciones vigentes, ya formateadas para mostrar.</summary>
     public List<string> Autorizaciones { get; set; } = new();
 
+    /// <summary>Requisitos documentales de la matrícula del año (MAT-06/07/09).</summary>
+    public List<DocumentoPerfil> Documentos { get; set; } = new();
+
     // Qué bloques puede ver esta sesión. El servidor no consulta ni proyecta los
     // datos de un área sin su permiso; la vista usa estas banderas para explicar
     // la ausencia en lugar de mostrar una lista vacía (S-02).
@@ -73,6 +76,17 @@ public class PerfilAlumno
     public bool PuedeVerSalud { get; set; }
 
     public bool PuedeVerAutorizaciones { get; set; }
+
+    public bool PuedeVerDocumentos { get; set; }
+
+    public bool PuedeSubirDocumentos { get; set; }
+
+    /// <summary>Escaneo vigente de la ficha firmada (MAT-09), si existe.</summary>
+    public int? FichaFirmadaDocumentoId { get; set; }
+
+    public string? FichaFirmadaNombre { get; set; }
+
+    public DateTimeOffset? FichaFirmadaSubidaEn { get; set; }
 
     public class MatriculaPerfil
     {
@@ -125,5 +139,27 @@ public class PerfilAlumno
         public string Descripcion { get; set; } = string.Empty;
 
         public bool? EnTratamiento { get; set; }
+    }
+
+    public class DocumentoPerfil
+    {
+        public int RequisitoId { get; set; }
+
+        public string Tipo { get; set; } = string.Empty;
+
+        public string Etiqueta { get; set; } = string.Empty;
+
+        public string Estado { get; set; } = "PENDIENTE";
+
+        public int? DocumentoId { get; set; }
+
+        public string? NombreArchivo { get; set; }
+
+        public DateTimeOffset? SubidoEn { get; set; }
+
+        /// <summary>GENERAL, SALUD, PIE o JUDICIAL.</summary>
+        public string Sensibilidad { get; set; } = "GENERAL";
+
+        public string? Observacion { get; set; }
     }
 }

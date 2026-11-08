@@ -77,6 +77,9 @@ builder.Services.AddScoped<PanelIndicadores>();
 // Año escolar con matrícula activa: configuración, nunca año calendario.
 builder.Services.AddScoped<AnioEscolar>();
 
+// Expediente documental: archivos fuera de wwwroot, con hash y validación real.
+builder.Services.AddScoped<ExpedienteDocumentos>();
+
 // Credenciales de funcionarios: ASP.NET Core Identity (hash) con los roles del DDL.
 builder.Services
     .AddIdentityCore<IdentityUser>(opciones =>
