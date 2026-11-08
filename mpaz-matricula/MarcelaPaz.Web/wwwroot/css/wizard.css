@@ -1,0 +1,500 @@
+/* ==========================================================================
+   Asistente de la ficha: encabezado, stepper, pasos y ajustes para móvil.
+   ========================================================================== */
+/* ==========================================================================
+   Wizard de la ficha de matrícula (mockup 02 · ficha-pasos-apoderado)
+   ========================================================================== */
+
+.wizard {
+    background: var(--color-bg);
+    min-height: 100vh;
+}
+
+.wizard__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--color-primary);
+    border-bottom: 4px solid var(--color-accent);
+    padding: 1.25rem 2rem;
+}
+
+.wizard__marca {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.wizard__logo {
+    width: 56px;
+    height: 56px;
+    flex: none;
+    user-select: none;
+}
+
+.wizard__titulo {
+    color: #FFFFFF;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.wizard__subtitulo {
+    color: var(--color-panel-soft);
+    font-size: 0.85rem;
+}
+
+.wizard__aviso-header {
+    flex-basis: 100%;
+    border-radius: 6px;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+}
+
+/* Stepper centrado: número arriba, texto debajo (sin líneas conectoras) */
+.wizard__pasos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1rem 2.5rem;
+    padding: 1.5rem 2rem 0;
+}
+
+.wizard__paso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    text-align: center;
+}
+
+.wizard__paso-numero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--color-input-border);
+    border-radius: 50%;
+    color: var(--color-text-muted, #ADBACB);
+    font-size: 0.8rem;
+    flex: none;
+}
+
+.wizard__paso-texto {
+        color: var(--color-text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+
+.wizard__paso--activo .wizard__paso-numero {
+    border: none;
+    background: var(--color-primary);
+    color: #FFFFFF;
+    /* anillo dorado institucional */
+    box-shadow: 0 0 0 3px rgba(215, 166, 44, 0.35);
+}
+
+.wizard__paso--activo .wizard__paso-texto {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.wizard__paso--hecho .wizard__paso-texto {
+    color: var(--color-text);
+}
+
+.wizard__paso--hecho .wizard__paso-numero {
+    border: none;
+    background: var(--color-accent);
+    color: var(--color-primary);
+}
+
+/* Cuerpo y tarjeta del paso */
+.wizard__cuerpo {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 2.5rem;
+}
+
+/* Paso 7: la ficha imprimible se muestra a tamaño real (A4 ≈ 794 px de ancho) */
+.wizard__cuerpo--amplio {
+    max-width: 1240px;
+}
+
+.wizard__tarjeta {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 2rem clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.wizard__titulo-paso {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+}
+
+/* Regla dorada bajo el título del paso, como en el panel de login */
+.wizard__titulo-paso::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 4px;
+    margin-top: 0.5rem;
+    background: var(--color-accent);
+}
+
+.wizard__ayuda {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin: 0 0 2rem;
+}
+
+.wizard__fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.wizard__textarea {
+    height: auto;
+    min-height: 88px;
+    resize: vertical;
+}
+
+/* El select hereda el estilo del input; la flecha queda nativa dentro de la caja */
+select.acceso__input {
+    appearance: none;
+    padding-right: 2.25rem;
+    background-image: linear-gradient(45deg, transparent 50%, #3D4C60 50%),
+                      linear-gradient(135deg, #3D4C60 50%, transparent 50%);
+    background-position: calc(100% - 18px) 19px, calc(100% - 12px) 19px;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+/* Bloques desplegables del paso 2: madre y padre, dos apartes independientes */
+.wizard__desplegable {
+    border: 1px solid var(--color-input-border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.wizard__desplegable[open] {
+    border-color: var(--color-accent);
+}
+
+.wizard__desplegable-resumen {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--color-bg);
+    list-style: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 700;
+    user-select: none;
+}
+
+.wizard__desplegable-resumen::-webkit-details-marker {
+    display: none;
+}
+
+.wizard__desplegable-flecha {
+    transition: transform 0.15s ease;
+    color: var(--color-accent);
+}
+
+.wizard__desplegable[open] .wizard__desplegable-flecha {
+    transform: rotate(180deg);
+}
+
+.wizard__desplegable-cuerpo {
+    padding: 1.5rem 1.25rem 0.25rem;
+}
+
+.wizard__desplegable-cuerpo .acceso__campo:last-child {
+    margin-bottom: 0;
+}
+
+/* Restricción (SI/NO) dentro del bloque de la madre */
+.wizard__restriccion {
+    border: none;
+    padding: 0 0 1.5rem;
+    margin: 0;
+}
+
+.wizard__restriccion legend {
+    padding: 0;
+}
+
+.wizard__restriccion-pregunta {
+    color: var(--color-text);
+    font-size: 0.95rem;
+    margin: 0 0 0.75rem;
+}
+
+.wizard__radios {
+    display: flex;
+    gap: 2rem;
+}
+
+.acceso__radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.acceso__radio input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-action);
+}
+
+/* La etiqueta completa es el objetivo real del puntero: se le da el alto
+   mínimo de 24 px que pide WCAG 2.2 · 2.5.8. */
+.acceso__radio {
+    min-height: 24px;
+    padding-block: 0.1rem;
+}
+
+.wizard__botones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.wizard__botones .acceso__boton {
+    display: inline-block;
+    width: auto;
+    min-width: 200px;
+    height: 48px;
+    margin: 0;
+}
+
+.acceso__boton-secundario {
+    display: inline-block;
+    background: var(--color-surface);
+    border: 1px solid var(--color-input-border);
+    border-radius: 8px;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 400;
+    padding: 0.75rem 1.75rem;
+    text-decoration: none;
+}
+
+.acceso__boton-secundario:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--color-bg);
+}
+
+/* Resumen del paso 4 */
+.wizard__resumen {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin: 0 0 2rem;
+}
+
+.wizard__resumen-item {
+    display: grid;
+    grid-template-columns: minmax(180px, 280px) 1fr;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+}
+
+.wizard__resumen-item + .wizard__resumen-item {
+    border-top: 1px solid var(--color-border);
+}
+
+.wizard__resumen-item dt {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.wizard__resumen-item dd {
+    font-size: 0.95rem;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Aviso permanente de guardado (mockup 02) */
+.wizard__nota-guardado {
+    background: var(--color-warning-bg);
+    border-radius: 8px;
+    color: var(--color-warning-text);
+    font-size: 0.9rem;
+    margin-top: 1.25rem;
+    padding: 0.9rem 1.25rem;
+}
+
+.wizard__nota-guardado-detalle {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+}
+
+@media (min-width: 700px) {
+    .wizard__fila {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .wizard__pasos {
+        gap: 2rem 2.5rem;
+    }
+}
+
+/* Escritorio: distribucion de dos paneles como en el mockup */
+@media (min-width: 900px) {
+    .acceso__grid {
+        grid-template-columns: minmax(420px, 560px) 1fr;
+    }
+}
+
+/* ==========================================================================
+   Pantallas pequeñas (móvil)
+   Prioridad: texto grande, una acción por pantalla y stepper compacto
+   ========================================================================== */
+@media (max-width: 699px) {
+    /* Acceso: panel izquierdo más apretado */
+    .acceso__panel {
+        padding: 2rem 1.5rem 0;
+    }
+
+    .acceso__panel-texto {
+        padding-top: 1.5rem;
+    }
+
+    .acceso__form-area {
+        padding: 2rem 1.25rem;
+    }
+
+    /* Banda inferior pegada a los bordes según el padding chico */
+    .acceso__panel-pie {
+        margin: auto -1.5rem 0;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Wizard: encabezado */
+    .wizard__header {
+        padding: 1rem 1.25rem;
+    }
+
+    /* Stepper compacto: círculo arriba, etiqueta centrada abajo */
+    .wizard__pasos {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.5rem;
+        padding: 1.25rem 1rem 0;
+    }
+
+    .wizard__paso {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        text-align: center;
+    }
+
+    .wizard__paso-texto {
+        font-size: 0.875rem;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    /* Wizard: cuerpo y botones a todo el ancho */
+    .wizard__cuerpo {
+        padding: 1.25rem 1rem 2rem;
+    }
+
+    .wizard__tarjeta {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .wizard__botones {
+        flex-direction: column;
+    }
+
+    .wizard__botones .acceso__boton,
+    .wizard__botones .acceso__boton-secundario {
+        width: 100%;
+        min-width: 0;
+        text-align: center;
+    }
+
+    /* Resumen del paso 4: etiqueta sobre dato */
+    .wizard__resumen-item {
+        display: block;
+        padding: 0.75rem 1rem;
+    }
+
+    .wizard__resumen-item dt {
+        margin-bottom: 0.3rem;
+    }
+
+    .wizard__resumen-item dd {
+        margin: 0;
+    }
+
+    /* Error */
+    .error__card {
+        margin: 1rem;
+        padding: 1.75rem 1.25rem;
+    }
+}
+
+
+/* Título de la página dentro del contenido: el encabezado sólo dice el sistema */
+.wizard__contexto {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 0;
+}
+
+.wizard__contexto--amplio {
+    max-width: 1240px;
+}
+
+.wizard__titulo-pagina {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.wizard__ayuda-pagina {
+    margin: 0.35rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+}
+
+.wizard__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.wizard__anio {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    color: #FFFFFF;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}

@@ -1,11 +1,19 @@
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
+@inject MarcelaPaz.Web.Servicios.AnioEscolar AniosEscolares
 @{
-    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "Modo revisión (sin login)";
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "sin sesión";
 
-    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
-    var puedeAlumnos = !exigirLogin || User.HasClaim("permiso", "GENERAL:LEER");
-    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
-    var puedeFuncionarios = !exigirLogin || User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
+    // El menú se dibuja sólo con lo que la sesión puede hacer: la bandera de
+    // revisión no participa, para que la interfaz no anuncie permisos que el
+    // servidor no concede (S-01).
+    var puedeAlumnos = User.HasClaim("permiso", "GENERAL:LEER");
+    var puedeMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeFuncionarios = User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
+    var puedeConfigurarAnio = User.IsInRole("SECRETARIA") || User.IsInRole("DIRECCION");
+
+    // Regla de la interfaz: el encabezado dice qué sistema es; el título de la
+    // página dice qué se está haciendo y se muestra dentro del contenido.
+    var seccion = ViewData["Title"] as string ?? "Panel";
+    var anioActivo = await AniosEscolares.ActivoAsync();
 
     var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
 
@@ -13,32 +21,55 @@
         string.Equals(controlador, nombreControlador, StringComparison.OrdinalIgnoreCase)
             ? "admin__menu-enlace admin__menu-enlace--activo"
             : "admin__menu-enlace";
+
+    string? Actual(string nombreControlador) =>
+        string.Equals(controlador, nombreControlador, StringComparison.OrdinalIgnoreCase)
+            ? "page"
+            : null;
 }
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · Portal de Matrícula 2027</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <title>@seccion · Portal Marcela Paz</title>
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acceso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/wizard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/formulario.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/envio.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/layout-admin.css" asp-append-version="true" />
     <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
 </head>
 <body class="admin">
+    <a class="saltar-contenido" href="#contenido-principal">Saltar al contenido</a>
+
     <header class="admin__header">
         <div class="admin__marca">
             <img src="~/images/logo-mpaz.svg"
                  alt="Logo Escuela Escritora Marcela Paz"
                  class="acceso__logo-img"
                  width="40" />
-            <div>
-                <div class="admin__titulo">Portal de Matrícula 2027</div>
-                <div class="admin__subtitulo">@ViewData["Title"]</div>
-            </div>
+            <div class="admin__titulo">Portal Marcela Paz</div>
         </div>
 
         <div class="admin__sesion">
+            @if (anioActivo is int anio)
+            {
+                @if (puedeConfigurarAnio)
+                {
+                    <a class="admin__anio" asp-controller="Configuracion" asp-action="AnioEscolar"
+                       title="Cambiar el año escolar de matrícula">Año escolar @anio</a>
+                }
+                else
+                {
+                    <span class="admin__anio">Año escolar @anio</span>
+                }
+            }
+
             <span class="admin__usuario">@nombre</span>
             <form asp-controller="Cuenta" asp-action="Salida" method="post">
                 <button type="submit" class="admin__salir">Cerrar sesión</button>
@@ -50,25 +81,30 @@
         <nav class="admin__menu" aria-label="Secciones del portal">
             <p class="admin__menu-titulo">Menú</p>
 
-            <a class="@Clase("Home")" asp-controller="Home" asp-action="Index">Panel</a>
-
-            @if (puedeAlumnos)
-            {
-                <a class="@Clase("Alumnos")" asp-controller="Alumnos" asp-action="Index">Alumnos</a>
-            }
+            <a class="@Clase("Home")" aria-current="@Actual("Home")"
+               asp-controller="Home" asp-action="Index">Panel</a>
 
             @if (puedeMatricula)
             {
-                <a class="@Clase("Ficha")" asp-controller="Ficha" asp-action="Buscar">Matrícula</a>
+                <a class="@Clase("Ficha")" aria-current="@Actual("Ficha")"
+                   asp-controller="Ficha" asp-action="Buscar">Matrícula</a>
+            }
+
+            @if (puedeAlumnos)
+            {
+                <a class="@Clase("Alumnos")" aria-current="@Actual("Alumnos")"
+                   asp-controller="Alumnos" asp-action="Index">Estudiantes</a>
             }
 
             @if (puedeFuncionarios)
             {
-                <a class="@Clase("Funcionarios")" asp-controller="Funcionarios" asp-action="Index">Funcionarios</a>
+                <p class="admin__menu-titulo admin__menu-titulo--secundario">Administración</p>
+                <a class="@Clase("Funcionarios")" aria-current="@Actual("Funcionarios")"
+                   asp-controller="Funcionarios" asp-action="Index">Funcionarios</a>
             }
         </nav>
 
-        <main class="admin__contenedor">
+        <main id="contenido-principal" tabindex="-1" class="admin__contenedor">
             @if (TempData["Aviso"] is string aviso)
             {
                 <div class="acceso__info" role="status">@aviso</div>

@@ -1,0 +1,170 @@
+{
+  "fecha": "2026-11-07T04:11:39.341Z",
+  "base": "http://127.0.0.1:5196",
+  "axe": [
+    {
+      "pagina": "Paso 1",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 2",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 3",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 4",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 5",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 6",
+      "violaciones": []
+    },
+    {
+      "pagina": "Paso 7",
+      "violaciones": []
+    },
+    {
+      "pagina": "Enviada con folio",
+      "violaciones": []
+    }
+  ],
+  "flujo": [
+    {
+      "paso": 1,
+      "url": "/Ficha/Paso/2",
+      "errores": []
+    },
+    {
+      "paso": 2,
+      "url": "/Ficha/Paso/3",
+      "errores": []
+    },
+    {
+      "paso": 3,
+      "url": "/Ficha/Paso/4",
+      "errores": []
+    },
+    {
+      "paso": 4,
+      "url": "/Ficha/Paso/5",
+      "errores": []
+    },
+    {
+      "paso": 5,
+      "url": "/Ficha/Paso/6",
+      "errores": []
+    },
+    {
+      "paso": 6,
+      "url": "/Ficha/Paso/7",
+      "errores": []
+    },
+    {
+      "paso": 7,
+      "url": "/Ficha/Enviada/11",
+      "errores": []
+    }
+  ],
+  "lighthouse": [
+    {
+      "ruta": "/Alumnos",
+      "urlFinal": "http://127.0.0.1:5196/Alumnos",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Alumnos/Detalle/11",
+      "urlFinal": "http://127.0.0.1:5196/Alumnos/Detalle/11",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Home/Index",
+      "urlFinal": "http://127.0.0.1:5196/Home/Index",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/1",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/1",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/2",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/2",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/3",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/3",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/4",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/4",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/5",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/5",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/6",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/6",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Paso/7",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Paso/7",
+      "score": 1,
+      "fallos": []
+    },
+    {
+      "ruta": "/Ficha/Enviada/11",
+      "urlFinal": "http://127.0.0.1:5196/Ficha/Enviada/11",
+      "score": 1,
+      "fallos": []
+    }
+  ],
+  "login": true,
+  "foco": "envio-titulo",
+  "copiarFolio": {
+    "boton": true,
+    "anuncio": "Folio copiado al portapapeles.",
+    "coincide": true
+  },
+  "sinRedireccion": true,
+  "correccion": {
+    "selector": ".envio__detalle",
+    "anterior": "#6B7A90",
+    "nuevo": "#5A6B80",
+    "axeAntes": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "targets": [
+          [
+            ".envio__detalle"
+          ]
+        ]
+      }
+    ],
+    "lighthouseAntes": 0.96
+  },
+  "axeVersion": "4.14.0",
+  "lighthouseVersion": "12.8.2"
+}

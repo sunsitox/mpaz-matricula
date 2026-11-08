@@ -2,15 +2,15 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 5 · Retiro del estudiante</h1>
+<h2 class="wizard__titulo-paso">Paso 5 · Retiro del estudiante</h2>
 <p class="wizard__ayuda">
     Salida al finalizar la jornada y personas autorizadas a retirar, en bloques desplegables.
-    Por ahora nada es obligatorio.
+    Indique si el estudiante sale solo y, si no, al menos una persona autorizada para retirarlo.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="5" method="post">
 
-    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+    <partial name="_ResumenValidacion" />
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Salida al finalizar la jornada (SI/NO)</legend>
@@ -27,6 +27,7 @@
                 <span>No</span>
             </label>
         </div>
+        <span asp-validation-for="SalidaSolo" class="acceso__error"></span>
     </fieldset>
 
     <p class="wizard__restriccion-pregunta">Durante la jornada, el estudiante solo puede ser retirado por:</p>
@@ -46,6 +47,7 @@
                 <div class="acceso__campo">
                     <label asp-for="Retiro1_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
                     <input asp-for="Retiro1_Vinculo" class="acceso__input" placeholder="Ej: madre" autocomplete="off" />
+                    <span asp-validation-for="Retiro1_Vinculo" class="acceso__error"></span>
                 </div>
             </div>
         </div>
@@ -66,6 +68,7 @@
                 <div class="acceso__campo">
                     <label asp-for="Retiro2_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
                     <input asp-for="Retiro2_Vinculo" class="acceso__input" autocomplete="off" />
+                    <span asp-validation-for="Retiro2_Vinculo" class="acceso__error"></span>
                 </div>
             </div>
         </div>
@@ -86,6 +89,7 @@
                 <div class="acceso__campo">
                     <label asp-for="Retiro3_Vinculo" class="acceso__etiqueta">Vínculo con el estudiante</label>
                     <input asp-for="Retiro3_Vinculo" class="acceso__input" autocomplete="off" />
+                    <span asp-validation-for="Retiro3_Vinculo" class="acceso__error"></span>
                 </div>
             </div>
         </div>

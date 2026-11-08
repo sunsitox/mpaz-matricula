@@ -13,7 +13,7 @@
     </p>
 
     <form asp-action="Crear" method="post">
-        <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+        <partial name="_ResumenValidacion" />
 
         <div class="acceso__campo">
             <label asp-for="Nombre" class="acceso__etiqueta"></label>

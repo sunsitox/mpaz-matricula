@@ -10,20 +10,26 @@
         "curso: nivel", "curso: letra", "año escolar",
         "nombres", "apellido paterno", "apellido materno", "cédula de identidad",
         "fecha nacimiento", "nacionalidad", "domicilio", "comuna",
-        "madre: nombre y apellido", "madre: cédula de identidad", "madre: teléfono",
-        "madre: escolaridad", "madre: domicilio", "madre: correo electrónico",
+        "madre: nombre apellido", "madre: cédula identidad", "madre: teléfono",
+        "madre: escolaridad", "madre: domicilio", "madre: correo",
         "restricción madre (SI/NO)",
-        "padre: nombre y apellido", "padre: cédula de identidad", "padre: teléfono",
-        "padre: escolaridad", "padre: domicilio", "padre: correo electrónico",
+        "padre: nombre apellido", "padre: cédula identidad", "padre: teléfono",
+        "padre: escolaridad", "padre: domicilio", "padre: correo",
     };
 }
-<h1 class="wizard__titulo-paso">Paso 7 · Revisar y confirmar</h1>
-<p class="wizard__ayuda">Estos son los datos del borrador. Revise y confirme.</p>
+<h2 class="wizard__titulo-paso">Paso 7 · Revisar y confirmar</h2>
+<p class="wizard__ayuda">
+    Estos son los datos del borrador. Al guardar y finalizar se genera la ficha definitiva con
+    folio institucional y una copia congelada de estos datos; la vista previa de abajo es un borrador
+    sin folio hasta ese momento.
+</p>
 
 @* El formulario envuelve el resumen y la vista previa: así la barra de acciones
    queda fija al pie desde el inicio del paso, sin tener que bajar hasta el final. *@
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post"
       data-ux-envio="Guardando la ficha…">
+    <partial name="_ResumenValidacion" />
+
     @if (datos.Count == 0)
     {
         <div class="acceso__aviso">
@@ -66,7 +72,7 @@
         </span>
     </label>
 
-    <div class="wizard__botones">
+    <div class="wizard__botones wizard__botones--paso7">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="6">Volver</a>
         @if (datos.Count > 0)
         {

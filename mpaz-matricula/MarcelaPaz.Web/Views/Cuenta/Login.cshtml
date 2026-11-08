@@ -8,8 +8,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · Portal de Matrícula 2027</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <title>Acceso · Portal Marcela Paz</title>
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acceso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/wizard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/formulario.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/envio.css" asp-append-version="true" />
     <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
 </head>
 <body class="acceso">
@@ -22,7 +28,7 @@
                  width="112" />
 
             <div class="acceso__panel-texto">
-                <h1 class="acceso__titulo">Portal de<br />Matrícula 2027</h1>
+                <h1 class="acceso__titulo">Portal<br />Marcela Paz</h1>
                 <div class="acceso__regla" aria-hidden="true"></div>
                 <p class="acceso__panel-parrafo">
                     Acceso exclusivo para funcionarios de la escuela.
@@ -44,10 +50,15 @@
                 <h2 class="acceso__subtitulo">Iniciar sesión</h2>
                 <p class="acceso__ayuda-titulo">Ingrese con su correo institucional y contraseña.</p>
 
+                @if (TempData["Aviso"] is string aviso)
+                {
+                    <div class="acceso__info" role="status">@aviso</div>
+                }
+
                 <form asp-controller="Cuenta" asp-action="Login" method="post">
                     <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
 
-                    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+                    <partial name="_ResumenValidacion" />
 
                     <div class="acceso__campo">
                         <label asp-for="Correo" class="acceso__etiqueta"></label>

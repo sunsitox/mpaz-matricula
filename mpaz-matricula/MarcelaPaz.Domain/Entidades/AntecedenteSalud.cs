@@ -14,4 +14,9 @@ public class AntecedenteSalud
 
     /// <summary>Necesidades de atención declaradas en la ficha (por ejemplo, salidas al baño).</summary>
     public string? NecesidadesAtencion { get; set; }
+
+    /// <summary>Persona a quien avisar ante una urgencia sanitaria.</summary>
+    public string? ContactoSanitarioNombre { get; set; }
+
+    public string? ContactoSanitarioTelefono { get; set; }
 }

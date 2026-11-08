@@ -1,0 +1,114 @@
+@model IReadOnlyList<MarcelaPaz.Web.Servicios.AnioEscolarOpcion>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Configuración";
+}
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Año escolar de matrícula</h1>
+    <p class="admin__ayuda">
+        El módulo de Matrícula genera expedientes, fichas y folios con el año activo.
+        Al cambiarlo, todo lo nuevo sale con el año nuevo; las fichas ya generadas conservan
+        el año con que se emitieron. No se calcula desde el calendario: en enero y febrero
+        todavía se matricula el año que ya comenzó.
+    </p>
+    <p class="admin__ayuda">
+        Si un año tiene fecha de apertura, el portal empieza a usarlo solo cuando esa fecha
+        llega, sin esperar a que se active a mano. Para volver a un año anterior hay que
+        corregir primero la apertura del año posterior.
+    </p>
+
+    @if (TempData["Aviso"] is string aviso)
+    {
+        <div class="acceso__alerta" role="alert">@aviso</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <p class="admin__ayuda">Todavía no hay años escolares registrados. Agregue el primero abajo.</p>
+    }
+    else
+    {
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Años escolares registrados y cuál está activo para matrícula.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Año</th>
+                        <th scope="col">Periodo de matrícula</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var opcion in Model)
+                    {
+                        <tr>
+                            <td>@opcion.Anio</td>
+                            <td>
+                                @if (opcion.Apertura is DateOnly apertura)
+                                {
+                                    <text>desde @apertura.ToString("dd-MM-yyyy")</text>
+                                    @if (opcion.Cierre is DateOnly cierre)
+                                    {
+                                        <text> hasta @cierre.ToString("dd-MM-yyyy")</text>
+                                    }
+                                }
+                                else
+                                {
+                                    <text>sin fechas definidas</text>
+                                }
+                            </td>
+                            <td>
+                                @if (opcion.Activo)
+                                {
+                                    <span class="admin__chip admin__chip--alerta">Matrícula activa</span>
+                                }
+                                else
+                                {
+                                    <span class="admin__chip">Histórico</span>
+                                }
+                            </td>
+                            <td>
+                                @if (opcion.Activo)
+                                {
+                                    <span class="admin__ayuda">En uso</span>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-action="Activar">
+                                        <input type="hidden" name="anio" value="@opcion.Anio" />
+                                        <button type="submit" class="admin__boton">Activar @opcion.Anio</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="admin__tarjeta">        <h2 class="admin__titulo-seccion">Agregar un año</h2>
+    <p class="admin__ayuda">
+        Registre el año siguiente cuando el colegio lo decida. Las fechas del periodo son
+        opcionales; si se define la apertura, ese año se usará solo desde esa fecha.
+    </p>
+
+    <form method="post" asp-action="Agregar" class="configuracion__form">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="nuevo-anio">Año escolar</label>
+            <input class="acceso__input" id="nuevo-anio" name="anio" type="number"
+                   min="2000" max="2100" step="1" required />
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="apertura">Apertura del periodo</label>
+            <input class="acceso__input" id="apertura" name="apertura" type="date" />
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="cierre">Cierre del periodo</label>
+            <input class="acceso__input" id="cierre" name="cierre" type="date" />
+        </div>
+        <button type="submit" class="admin__boton admin__boton--primario">Registrar año</button>
+    </form>
+</div>

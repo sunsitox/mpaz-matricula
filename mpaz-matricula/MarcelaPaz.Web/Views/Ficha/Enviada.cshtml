@@ -4,38 +4,58 @@
     ViewData["Title"] = "Ficha guardada";
 
     var destino = Url.Action("Detalle", "Alumnos", new { id = Model });
+    var folio = ViewData["Folio"] as string;
+    var version = ViewData["Version"];
 }
-<div class="envio" role="dialog" aria-modal="true" aria-labelledby="envio-titulo">
+
+@*
+    Confirmación de guardado.
+    - Es una página completa, no un diálogo: se quitaron role="dialog" y
+      aria-modal="true", que prometían una trampa de foco inexistente.
+    - Ya no redirige sola: el folio es el dato que el apoderado debe anotar y
+      debe permanecer en pantalla el tiempo que necesite (WCAG 2.2 · 2.2.1).
+    - El foco se coloca en el título al cargar (ux.js, data-ux-foco).
+*@
+<section class="envio" aria-labelledby="envio-titulo">
     <div class="envio__tarjeta">
         <div class="envio__marca">
             <span class="envio__rueda" aria-hidden="true"></span>
             <span class="envio__check" aria-hidden="true"></span>
         </div>
 
-        <h1 class="envio__titulo" id="envio-titulo">Ficha guardada</h1>
+        <h1 class="envio__titulo" id="envio-titulo" tabindex="-1" data-ux-foco>Ficha guardada</h1>
 
         <p class="envio__texto">
-            Los datos quedaron registrados en la base. La ficha queda a la espera del folio
-            para su revisión por Secretaría.
+            @if (!string.IsNullOrWhiteSpace(folio))
+            {
+                <text>
+                    La ficha quedó generada con el folio <strong>@folio</strong> (versión @version).
+                    Queda a la espera de la firma del apoderado y de su revisión por Secretaría.
+                </text>
+            }
+            else
+            {
+                <text>Los datos quedaron registrados en la base, a la espera de generar la ficha.</text>
+            }
         </p>
 
-        <p class="envio__detalle" role="status">Te llevamos a la ficha del estudiante…</p>
-
-        <a class="acceso__boton envio__boton" href="@destino">Ir a la ficha ahora</a>
-    </div>
-</div>
-
-<script>
-    // La rueda gira un momento y luego se convierte en el check de guardado.
-    window.setTimeout(function () {
-        var modal = document.querySelector('.envio');
-
-        if (modal) {
-            modal.classList.add('envio--listo');
+        @if (!string.IsNullOrWhiteSpace(folio))
+        {
+            <div class="envio__folio">
+                <button type="button"
+                        class="acceso__boton-secundario"
+                        data-ux-copiar="@folio"
+                        data-ux-copiar-ok="Folio copiado al portapapeles.">
+                    Copiar el folio
+                </button>
+                <span class="sr-only" role="status" data-ux-copiar-aviso></span>
+            </div>
         }
-    }, 1100);
 
-    window.setTimeout(function () {
-        window.location.replace('@destino');
-    }, 2600);
-</script>
+        <p class="envio__detalle">
+            Anote el folio antes de continuar: lo necesitará para cualquier consulta sobre esta matrícula.
+        </p>
+
+        <a class="acceso__boton envio__boton" href="@destino">Continuar a la ficha del estudiante</a>
+    </div>
+</section>

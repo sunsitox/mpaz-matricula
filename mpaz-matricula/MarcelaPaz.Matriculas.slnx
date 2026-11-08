@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/MarcelaPaz.Tests/MarcelaPaz.Tests.csproj" />
+  </Folder>
   <Project Path="MarcelaPaz.Application/MarcelaPaz.Application.csproj" />
   <Project Path="MarcelaPaz.Domain/MarcelaPaz.Domain.csproj" />
   <Project Path="MarcelaPaz.Infrastructure/MarcelaPaz.Infrastructure.csproj" />

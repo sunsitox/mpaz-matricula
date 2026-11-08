@@ -28,4 +28,9 @@ public class MatriculaAnual
 
     /// <summary>Última modificación, para el indicador de actualización del panel (<c>updated_at</c>).</summary>
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>Datos de la confirmación oficial (MAT-04); la base exige ambos cuando el estado es CONFIRMADA.</summary>
+    public DateTimeOffset? ConfirmadaEn { get; set; }
+
+    public int? ConfirmadaPor { get; set; }
 }

@@ -15,7 +15,7 @@ public static class DependencyInjection
     /// Cadena usada cuando no hay configuración. Permite que la aplicación parta
     /// y muestre el login; los accesos a datos fallarán hasta definir la conexión.
     /// </summary>
-    public const string CadenaPorDefecto = "Host=localhost;Port=5432;Database=mpaz;Username=mpaz_app";
+    public const string CadenaPorDefecto = "Host=localhost;Port=5432;Database=mpaz;Username=mpaz_app;Search Path=mpaz_matricula,public";
 
     public static IServiceCollection AddPersistencia(this IServiceCollection servicios, string? cadena)
     {

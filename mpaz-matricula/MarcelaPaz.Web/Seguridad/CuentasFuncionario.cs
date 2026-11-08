@@ -2,6 +2,7 @@ using MarcelaPaz.Domain.Entidades;
 using MarcelaPaz.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace MarcelaPaz.Web.Seguridad;
 
@@ -18,16 +19,19 @@ public class CuentasFuncionario
     private readonly MatriculaDbContext _db;
     private readonly UserManager<IdentityUser> _usuarios;
     private readonly ILogger<CuentasFuncionario> _log;
+    private readonly IHostEnvironment _entorno;
     private readonly string? _contrasenaInicial;
 
     public CuentasFuncionario(
         MatriculaDbContext db,
         UserManager<IdentityUser> usuarios,
         IConfiguration configuracion,
+        IHostEnvironment entorno,
         ILogger<CuentasFuncionario> log)
     {
         _db = db;
         _usuarios = usuarios;
+        _entorno = entorno;
         _log = log;
         _contrasenaInicial = configuracion["Seguridad:ContrasenaInicial"];
     }
@@ -57,6 +61,17 @@ public class CuentasFuncionario
 
         if (usuario is null)
         {
+            // Producción no siembra cuentas con una contraseña compartida: cada
+            // funcionario se crea desde Administración → Funcionarios (S-09).
+            if (!_entorno.IsDevelopment())
+            {
+                _log.LogWarning(
+                    "El funcionario {Correo} no tiene cuenta. En producción se crea desde Administración → Funcionarios.",
+                    correo);
+
+                return (null, false);
+            }
+
             if (string.IsNullOrWhiteSpace(_contrasenaInicial))
             {
                 _log.LogWarning(

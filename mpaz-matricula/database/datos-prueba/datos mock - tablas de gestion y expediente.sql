@@ -1,3 +1,5 @@
+SET search_path TO mpaz_matricula, public;
+
 -- =====================================================================
 -- Datos de prueba (parte 2) · Portal de Matrícula 2027
 -- Escuela Escritora Marcela Paz · base local mpaz-matricula
@@ -383,8 +385,22 @@ select
     m.id,
     1,
     'VIGENTE',
-    jsonb_build_object('anio', 2026, 'origen', 'datos mock.sql',
-                       'nota', 'copia congelada ficticia de la ficha'),
+    jsonb_build_object(
+        'campos', jsonb_build_object(
+            'nombres', e.nombres,
+            'apellido paterno', e.apellido_paterno,
+            'apellido materno', coalesce(e.apellido_materno, ''),
+            'cédula de identidad', e.identificador,
+            'fecha nacimiento', to_char(e.fecha_nacimiento, 'YYYY-MM-DD'),
+            'nacionalidad', e.nacionalidad,
+            'domicilio', e.domicilio,
+            'comuna', coalesce(cm.nombre, ''),
+            'año escolar', m.anio::text,
+            'curso: nivel', coalesce(cu.nombre, ''),
+            'curso: letra', ''
+        ),
+        'generado_en', now()
+    ),
     (select id from funcionario where correo = 'mteresa.lagos@mpaz.cl'),
     dp.id,
     mad.persona_id,
@@ -401,6 +417,8 @@ select
     'Validación ficticia: original físico revisado contra el escaneo.'
 from matricula_anual m
 join estudiante e on e.id = m.estudiante_id
+left join comuna cm on cm.id = e.comuna_id
+left join curso cu on cu.id = m.curso_id
 left join documento dp on dp.estudiante_id = e.id and dp.tipo = 'FICHA_PDF'
                       and dp.matricula_id = m.id
 left join documento dd on dd.estudiante_id = e.id and dd.tipo = 'FICHA_FIRMADA'
@@ -409,6 +427,47 @@ left join estudiante_persona mad on mad.estudiante_id = e.id
      and mad.parentesco = 'MADRE' and mad.vigente_hasta is null
 where m.anio = 2026 and m.estado = 'FIRMADA'
   and not exists (select 1 from ficha_version fv where fv.matricula_id = m.id);
+
+-- Ficha 2027 generada: permite probar folio, PDF desde snapshot y el paso
+-- BORRADOR → FICHA_GENERADA → CONFIRMADA sin ejecutar el asistente.
+insert into ficha_version (matricula_id, numero_version, estado, datos_snapshot, generada_por)
+select
+    m.id,
+    1,
+    'VIGENTE',
+    jsonb_build_object(
+        'campos', jsonb_build_object(
+            'nombres', e.nombres,
+            'apellido paterno', e.apellido_paterno,
+            'apellido materno', coalesce(e.apellido_materno, ''),
+            'cédula de identidad', e.identificador,
+            'fecha nacimiento', to_char(e.fecha_nacimiento, 'YYYY-MM-DD'),
+            'nacionalidad', e.nacionalidad,
+            'domicilio', e.domicilio,
+            'comuna', coalesce(cm.nombre, ''),
+            'año escolar', m.anio::text,
+            'curso: nivel', coalesce(cu.nombre, ''),
+            'curso: letra', ''
+        ),
+        'generado_en', now()
+    ),
+    (select id from funcionario where correo = 'mteresa.lagos@mpaz.cl')
+from matricula_anual m
+join estudiante e on e.id = m.estudiante_id
+left join comuna cm on cm.id = e.comuna_id
+left join curso cu on cu.id = m.curso_id
+where m.anio = 2027
+  and e.identificador = normalizar_rut('24.455.667-1')
+  and not exists (select 1 from ficha_version fv where fv.matricula_id = m.id);
+
+update matricula_anual m
+set estado = 'FICHA_GENERADA'
+from estudiante e
+where e.id = m.estudiante_id
+  and m.anio = 2027
+  and e.identificador = normalizar_rut('24.455.667-1')
+  and m.estado = 'BORRADOR'
+  and exists (select 1 from ficha_version fv where fv.matricula_id = m.id);
 
 -- ---------------------------------------------------------------------
 -- 5. AUTORIZACIONES: imagen y convivencia para todos, con un caso

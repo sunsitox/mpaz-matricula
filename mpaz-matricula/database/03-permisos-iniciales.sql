@@ -1,13 +1,13 @@
 -- =====================================================================
 -- MPAZ Web · Matrícula 2027 — Matriz inicial de permisos
 --
--- Carga una sola vez, después del DDL (MPAZ_Matricula_2027_DDL.sql).
+-- Carga una sola vez, después del DDL (01-ddl-institucional.sql).
 -- Traduce la sección 10 de los requerimientos a las áreas y acciones del
 -- esquema (rol_permiso). Es una propuesta: debe validarse con Dirección
 -- antes de operar con datos reales.
 --
 -- Ejecutar:
---   psql -U <usuario> -d <base> -f permisos-iniciales.sql
+--   psql -U <usuario> -d <base> -f 03-permisos-iniciales.sql
 -- =====================================================================
 
 BEGIN;
@@ -66,13 +66,18 @@ JOIN (VALUES
     ('EQUIPO_PIE', 'DOCUMENTOS',    'LEER'),
 
     -- TENS: contactos, salud pertinente y medicación.
+    -- GENERAL:LEER sólo abre el listado de alumnos (nombre, curso, estado); los
+    -- bloques sensibles exigen su propia área, así que no amplía lo que ve.
+    ('TENS', 'GENERAL',             'LEER'),
     ('TENS', 'FAMILIA',             'LEER'),
     ('TENS', 'SALUD',               'LEER'),
     ('TENS', 'MEDICACION',          'LEER'),
     ('TENS', 'MEDICACION',          'CREAR'),
     ('TENS', 'DOCUMENTOS',          'LEER'),
 
-    -- DOCENTE: solo datos mínimos.
+    -- DOCENTE: sólo datos mínimos. GENERAL:LEER abre la consulta con identificación,
+    -- curso y estado; sin FAMILIA/SALUD/RETIRO/PIE el servidor no le entrega el
+    -- resto del expediente (S-02).
     ('DOCENTE', 'GENERAL',          'LEER'),
 
     -- ADMIN_TI: cuentas y auditoría, sin lectura clínica ni judicial.

@@ -1,0 +1,139 @@
+/* ==========================================================================
+   Tokens, base y utilidades compartidas.
+   Orden de carga: base → acceso → wizard → admin → ux → formulario → envio.
+   ========================================================================== */
+/* ==========================================================================
+   Sistema de Matrículas · tokens y est base
+   Fuente: scripts/docs/design-system.md (extraída de los mockups v2)
+   ========================================================================== */
+
+:root {
+    --color-primary: #0C255B;          /* azul marino institucional: panel de login */
+    --color-primary-strong: #081A44;   /* azul marino más oscuro: banda inferior del panel */
+    --color-action: #1A3D85;           /* azul marino intermedio: botones primarios */
+    --color-accent: #D7A62C;           /* dorado de marca: emblema */
+    --color-bg: #F6F8FB;               /* fondo general */
+    --color-surface: #FFFFFF;
+    --color-border: #E4EAF2;
+    --color-input-border: #C9D4E2;
+    --color-placeholder: #66788C;       /* ≥ 4,5:1 sobre blanco: WCAG 1.4.3 */
+    --color-warning-bg: #FDF3DC;       /* aviso de intentos */
+    --color-warning-text: #7A5610;
+    --color-danger: #B23B3B;
+    --color-danger-bg: #FBEAEA;
+    --color-text: #1C2B3A;
+    --color-text-secondary: #5A6B80;   /* 5,45:1 sobre blanco: WCAG 1.4.3 */
+    --color-text-panel: #C7D5E8;       /* texto secundario sobre azul */
+    --color-panel-soft: #9DB4D3;
+    --color-panel-muted: #7A93B5;
+}
+
+/* Sólo para lectores de pantalla: mantiene el texto en el árbol de
+   accesibilidad sin mostrarlo (WCAG 1.3.1). */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Enlace de salto: aparece sólo al recibir foco con teclado (WCAG 2.4.1). */
+.saltar-contenido {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 10000;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: #FFFFFF;
+    font-weight: 600;
+    text-decoration: none;
+    transition: top 0.15s ease;
+}
+
+.saltar-contenido:focus {
+    top: 1rem;
+    color: #FFFFFF;
+}
+
+/* Contenedor de tablas: permite desplazamiento horizontal sin romper el
+   layout en pantallas pequeñas (WCAG 1.4.10 Reflow). */
+.tabla-envoltura {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Si la tabla desborda, el contenedor recibe foco y se recorre con las
+   flechas del teclado (WCAG 2.1.1 · axe scrollable-region-focusable). */
+.tabla-envoltura:focus-visible {
+    outline: 3px solid var(--color-action);
+    outline-offset: 2px;
+}
+
+/* Resumen de validación: recibe el foco del programa, así que necesita un
+   indicador propio además del contorno global (WCAG 2.4.7). */
+.acceso__alerta--errores:focus {
+    outline: 3px solid var(--color-action);
+    outline-offset: 2px;
+}
+
+/* Encabezados internos de un paso largo (paso 6). */
+.wizard__seccion-titulo {
+    margin: 2rem 0 0.75rem;
+    color: var(--color-text);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Grupo de radios con leyenda propia, sin el borde por defecto del fieldset. */
+.wizard__grupo-radio {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+/* Cierre de rol: texto visible en lugar de una «×» sin contexto. */
+.admin__chip .admin__chip-cerrar {
+    padding: 0.05rem 0.4rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: none;
+    color: var(--color-action);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.admin__chip .admin__chip-cerrar:hover {
+    border-color: var(--color-input-border);
+    text-decoration: underline;
+}
+
+.envio__folio {
+    margin: 0 0 1rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+}
+
+body {
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+

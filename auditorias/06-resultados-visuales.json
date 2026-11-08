@@ -1,0 +1,434 @@
+{
+  "fecha": "2026-11-07T05:33:50.555Z",
+  "medidas": [
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "login",
+      "desborde": 0
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "panel",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 2612
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "alumnos",
+      "desborde": 0,
+      "fuera": [
+        "table.admin__tabla.alumnos__tabla [57→767]",
+        "thead [57→767]",
+        "tr [57→767]",
+        "th [351→489]",
+        "a.alumnos__orden [361→413]",
+        "th [489→585]"
+      ],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 1,
+      "solapa": null,
+      "altoPagina": 2158
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "detalle",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 4086
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "paso1",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 64,
+        "ultimoVisible": 1196,
+        "espacioReserva": "96px"
+      },
+      "altoPagina": 1257
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "paso6",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 64,
+        "ultimoVisible": 2742,
+        "espacioReserva": "96px"
+      },
+      "altoPagina": 2987
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "paso7",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 115,
+        "ultimoVisible": 4555,
+        "espacioReserva": "136px"
+      },
+      "altoPagina": 4823
+    },
+    {
+      "ancho": 360,
+      "etiqueta": "movil",
+      "pagina": "enviada",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 970
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "login",
+      "desborde": 0
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "panel",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 2149
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "alumnos",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 1,
+      "solapa": null,
+      "altoPagina": 1756
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "detalle",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 2982
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "paso1",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 75,
+        "ultimoVisible": 879,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 939
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "paso6",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 75,
+        "ultimoVisible": 2047,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 2291
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "paso7",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 137,
+        "ultimoVisible": 3699,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 3927
+    },
+    {
+      "ancho": 768,
+      "etiqueta": "tablet",
+      "pagina": "enviada",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 900
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "login",
+      "desborde": 0
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "panel",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 2227
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "alumnos",
+      "desborde": 0,
+      "fuera": [
+        "table.admin__tabla.alumnos__tabla [57→767]",
+        "thead [57→767]",
+        "tr [57→767]",
+        "th [585→694]",
+        "a.alumnos__orden [595→656]",
+        "th.alumnos__col-accion [694→767]"
+      ],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 1,
+      "solapa": null,
+      "altoPagina": 1938
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "detalle",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 3214
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "paso1",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 64,
+        "ultimoVisible": 1009,
+        "espacioReserva": "96px"
+      },
+      "altoPagina": 1052
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "paso6",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 64,
+        "ultimoVisible": 2275,
+        "espacioReserva": "96px"
+      },
+      "altoPagina": 2503
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "paso7",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 64,
+        "ultimoVisible": 3583,
+        "espacioReserva": "136px"
+      },
+      "altoPagina": 3832
+    },
+    {
+      "ancho": 640,
+      "etiqueta": "zoom200",
+      "pagina": "enviada",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 955
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "login",
+      "desborde": 0
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "panel",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 1552
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "alumnos",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 10,
+      "chicos": [
+        "a.alumnos__nombre 205x20",
+        "a.alumnos__nombre 203x20",
+        "a.alumnos__nombre 243x20",
+        "a.alumnos__nombre 206x20",
+        "a.alumnos__nombre 188x20"
+      ],
+      "letraPequena": 1,
+      "solapa": null,
+      "altoPagina": 1100
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "detalle",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 2258
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "paso1",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 75,
+        "ultimoVisible": 845,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 905
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "paso6",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 75,
+        "ultimoVisible": 1973,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 2217
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "paso7",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": {
+        "altoBarra": 75,
+        "ultimoVisible": 3285,
+        "espacioReserva": "104px"
+      },
+      "altoPagina": 3513
+    },
+    {
+      "ancho": 1280,
+      "etiqueta": "escritorio",
+      "pagina": "enviada",
+      "desborde": 0,
+      "fuera": [],
+      "pequenos": 0,
+      "chicos": [],
+      "letraPequena": 0,
+      "solapa": null,
+      "altoPagina": 900
+    }
+  ],
+  "capturas": []
+}

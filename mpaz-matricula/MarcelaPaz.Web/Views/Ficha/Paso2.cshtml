@@ -2,7 +2,7 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 2 · Datos de contacto: madre y padre</h1>
+<h2 class="wizard__titulo-paso">Paso 2 · Datos de contacto: madre y padre</h2>
 <p class="wizard__ayuda">
     Madre y padre son dos bloques aparte, desplegables.
     Por ahora puede avanzar sin completar nada; los campos obligatorios se definirán con el colegio.
@@ -10,7 +10,7 @@
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="2" method="post">
 
-    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+    <partial name="_ResumenValidacion" />
 
     <!-- Bloque desplegable: datos de la madre -->
     <details class="wizard__desplegable" open>

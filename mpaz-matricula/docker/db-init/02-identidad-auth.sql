@@ -1,3 +1,7 @@
+-- El historial de migraciones y las tablas de Identity quedan en el esquema del
+-- portal. La migracion inicial aun crea "auth" y EsquemaDedicado lo mueve aqui.
+SET search_path TO mpaz_matricula, public;
+
 CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
     "MigrationId" character varying(150) NOT NULL,
     "ProductVersion" character varying(32) NOT NULL,
@@ -175,6 +179,116 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261104042752_IdentidadInicial') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
     VALUES ('20261104042752_IdentidadInicial', '10.0.13');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261107022143_EsquemaDedicado') THEN
+        IF NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'mpaz_matricula') THEN
+            CREATE SCHEMA mpaz_matricula;
+        END IF;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261107022143_EsquemaDedicado') THEN
+    DO $$
+    DECLARE
+        objeto record;
+    BEGIN
+        FOR objeto IN
+            SELECT n.nspname AS esquema, c.relname AS nombre
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind IN ('r', 'p')
+              AND n.nspname IN ('public', 'auth')
+              AND NOT EXISTS (
+                  SELECT 1 FROM pg_depend d
+                  WHERE d.objid = c.oid AND d.deptype = 'e')
+            ORDER BY c.relname
+        LOOP
+            EXECUTE format('ALTER TABLE %I.%I SET SCHEMA mpaz_matricula',
+                           objeto.esquema, objeto.nombre);
+        END LOOP;
+
+        FOR objeto IN
+            SELECT n.nspname AS esquema, c.relname AS nombre
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind = 'S'
+              AND n.nspname IN ('public', 'auth')
+              AND NOT EXISTS (
+                  SELECT 1 FROM pg_depend d
+                  WHERE d.objid = c.oid AND d.deptype = 'e')
+        LOOP
+            EXECUTE format('ALTER SEQUENCE %I.%I SET SCHEMA mpaz_matricula',
+                           objeto.esquema, objeto.nombre);
+        END LOOP;
+
+        FOR objeto IN
+            SELECT n.nspname AS esquema, c.relname AS nombre, c.relkind
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind IN ('v', 'm')
+              AND n.nspname IN ('public', 'auth')
+        LOOP
+            EXECUTE format('ALTER %s %I.%I SET SCHEMA mpaz_matricula',
+                           CASE WHEN objeto.relkind = 'm' THEN 'MATERIALIZED VIEW' ELSE 'VIEW' END,
+                           objeto.esquema, objeto.nombre);
+        END LOOP;
+
+        FOR objeto IN
+            SELECT n.nspname AS esquema,
+                   p.proname AS nombre,
+                   pg_get_function_identity_arguments(p.oid) AS argumentos
+            FROM pg_proc p
+            JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname IN ('public', 'auth')
+              AND NOT EXISTS (
+                  SELECT 1 FROM pg_depend d
+                  WHERE d.objid = p.oid AND d.deptype = 'e')
+        LOOP
+            EXECUTE format('ALTER FUNCTION %I.%I(%s) SET SCHEMA mpaz_matricula',
+                           objeto.esquema, objeto.nombre, objeto.argumentos);
+        END LOOP;
+    END $$;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261107022143_EsquemaDedicado') THEN
+    DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'auth')
+           AND NOT EXISTS (
+               SELECT 1 FROM pg_class c
+               JOIN pg_namespace n ON n.oid = c.relnamespace
+               WHERE n.nspname = 'auth')
+           AND NOT EXISTS (
+               SELECT 1 FROM pg_proc p
+               JOIN pg_namespace n ON n.oid = p.pronamespace
+               WHERE n.nspname = 'auth')
+           AND NOT EXISTS (
+               SELECT 1 FROM pg_type t
+               JOIN pg_namespace n ON n.oid = t.typnamespace
+               WHERE n.nspname = 'auth') THEN
+            DROP SCHEMA auth;
+        END IF;
+    END $$;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261107022143_EsquemaDedicado') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261107022143_EsquemaDedicado', '10.0.13');
     END IF;
 END $EF$;
 COMMIT;

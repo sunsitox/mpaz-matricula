@@ -1,0 +1,84 @@
+@model MarcelaPaz.Web.Models.CambioContrasenaForm
+@{
+    Layout = null;
+    ViewData["Title"] = "Cambiar contraseña";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cambiar contraseña · Portal Marcela Paz</title>
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acceso.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ux.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
+</head>
+<body class="acceso">
+    <div class="acceso__grid">
+        <aside class="acceso__panel">
+            <img src="~/images/logo-mpaz.svg"
+                 alt="Logo Escuela Escritora Marcela Paz"
+                 class="acceso__logo-img"
+                 width="112" />
+
+            <div class="acceso__panel-texto">
+                <h1 class="acceso__titulo">Portal<br />Marcela Paz</h1>
+                <div class="acceso__regla" aria-hidden="true"></div>
+                <p class="acceso__panel-parrafo">
+                    Su cuenta todavía usa la contraseña inicial compartida.
+                    Defina una contraseña propia antes de continuar.
+                </p>
+                <ol class="acceso__pasos">
+                    <li>Use al menos 10 caracteres, con mayúscula, minúscula y número.</li>
+                    <li>No reutilice la contraseña inicial ni una clave de otra persona.</li>
+                </ol>
+            </div>
+
+            <footer class="acceso__panel-pie">
+                Ley 21.719: protección de datos personales
+            </footer>
+        </aside>
+
+        <main class="acceso__form-area">
+            <div class="acceso__card">
+                <h2 class="acceso__subtitulo">Cambiar contraseña</h2>
+                <p class="acceso__ayuda-titulo">
+                    Este paso es obligatorio la primera vez que ingresa con la contraseña inicial.
+                </p>
+
+                <form asp-controller="Cuenta" asp-action="CambiarContrasena" method="post">
+                    <partial name="_ResumenValidacion" />
+
+                    <div class="acceso__campo">
+                        <label asp-for="Actual" class="acceso__etiqueta"></label>
+                        <input asp-for="Actual" class="acceso__input" autocomplete="current-password" />
+                        <span asp-validation-for="Actual" class="acceso__error"></span>
+                    </div>
+
+                    <div class="acceso__campo">
+                        <label asp-for="Nueva" class="acceso__etiqueta"></label>
+                        <input asp-for="Nueva" class="acceso__input" autocomplete="new-password" />
+                        <span asp-validation-for="Nueva" class="acceso__error"></span>
+                    </div>
+
+                    <div class="acceso__campo">
+                        <label asp-for="Confirmar" class="acceso__etiqueta"></label>
+                        <input asp-for="Confirmar" class="acceso__input" autocomplete="new-password" />
+                        <span asp-validation-for="Confirmar" class="acceso__error"></span>
+                    </div>
+
+                    <button type="submit" class="acceso__boton">Cambiar contraseña</button>
+                </form>
+
+                <form asp-controller="Cuenta" asp-action="Salida" method="post" class="acceso__salir-form">
+                    <button type="submit" class="acceso__enlace">Cerrar sesión</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="~/js/ux.js" asp-append-version="true" defer></script>
+</body>
+</html>

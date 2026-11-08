@@ -9,25 +9,44 @@ namespace MarcelaPaz.Web.Controllers;
 [Authorize]
 public class HomeController : Controller
 {
-    /// <summary>Año escolar que se está matriculando (mismo que usa el asistente).</summary>
-    private const int AnioPanel = 2027;
-
     private readonly PanelIndicadores _panel;
+    private readonly AnioEscolar _anios;
 
-    public HomeController(PanelIndicadores panel) => _panel = panel;
-
-    public async Task<IActionResult> Index()
+    public HomeController(PanelIndicadores panel, AnioEscolar anios)
     {
+        _panel = panel;
+        _anios = anios;
+    }
+
+    /// <summary>
+    /// Panel de gestión. Sin año en la URL muestra el año con matrícula activa;
+    /// con <c>?anio=</c> permite revisar un año anterior.
+    /// </summary>
+    public async Task<IActionResult> Index(int? anio)
+    {
+        var anioConsulta = await _anios.ResolverAsync(anio);
+
+        ViewData["Anios"] = await _anios.ListarAsync();
+
+        if (anioConsulta is null)
+        {
+            return View(new PanelInicio
+            {
+                Anio = 0,
+                Error = "No hay un año escolar con matrícula activa. Secretaría o Dirección debe definirlo en Configuración → Año escolar.",
+            });
+        }
+
         try
         {
-            return View(await _panel.CargarAsync(AnioPanel));
+            return View(await _panel.CargarAsync(anioConsulta.Value));
         }
         catch (Exception ex) when (ex is DbException or InvalidOperationException)
         {
             // Sin base el portal sigue abriendo: el panel muestra el aviso y ceros.
             return View(new PanelInicio
             {
-                Anio = AnioPanel,
+                Anio = anioConsulta.Value,
                 Error = "No se pudieron leer los indicadores: revise la conexión con la base de datos.",
             });
         }

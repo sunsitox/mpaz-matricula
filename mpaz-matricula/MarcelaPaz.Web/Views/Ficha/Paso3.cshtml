@@ -2,12 +2,12 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 3 · Apoderado principal y secundario</h1>
+<h2 class="wizard__titulo-paso">Paso 3 · Apoderado principal y secundario</h2>
 <p class="wizard__ayuda">Por ahora puede avanzar sin completar los datos de los apoderados.</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="3" method="post">
 
-    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+    <partial name="_ResumenValidacion" />
     <details class="wizard__desplegable" open>
         <summary class="wizard__desplegable-resumen">
             Apoderado principal

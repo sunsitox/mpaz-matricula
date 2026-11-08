@@ -1,8 +1,6 @@
 using MarcelaPaz.Domain.Identificacion;
 using MarcelaPaz.Infrastructure.Documentos;
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace MarcelaPaz.Web.Models;
 
@@ -61,6 +59,8 @@ public static class FichaImpresion
         ("Antecedentes médicos", new[]
         {
             "situación médica (SI/NO)",
+            "alergias",
+            "contacto sanitario: nombre", "contacto sanitario: teléfono",
             "situación médica 01: identificación", "situación médica 01: detalle", "situación médica 01: en tratamiento",
             "situación médica 02: identificación", "situación médica 02: detalle", "situación médica 02: en tratamiento",
             "situación médica 03: identificación", "situación médica 03: detalle", "situación médica 03: en tratamiento",
@@ -70,6 +70,16 @@ public static class FichaImpresion
             "PIE: participa (SI/NO/PENDIENTE)", "PIE: diagnosticado (SI/NO)", "PIE: apoyos o diagnóstico",
         }),
     };
+
+    /// <summary>Textos de las autorizaciones mientras Dirección aprueba los definitivos.</summary>
+    public const string TextoImagen =
+        "Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales "
+        + "(registro interno, sitio web y redes sociales del establecimiento), sin exponer datos sensibles. "
+        + "Puedo revocar esta autorización por escrito en cualquier momento.";
+
+    public const string TextoConvivencia =
+        "Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea "
+        + "necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.";
 
     private const string ClaveImagen = "autorización de uso de imagen (SI/NO)";
 
@@ -85,16 +95,13 @@ public static class FichaImpresion
         new AutorizacionFicha
         {
             Titulo = "Autorización de uso de imagen",
-            Texto = "Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales "
-                  + "(registro interno, sitio web y redes sociales del establecimiento), sin exponer datos sensibles. "
-                  + "Puedo revocar esta autorización por escrito en cualquier momento.",
+            Texto = TextoImagen,
             Respuesta = RespuestaSiNo(datos, ClaveImagen),
         },
         new AutorizacionFicha
         {
             Titulo = "Autorización para el trabajo con Convivencia Escolar",
-            Texto = "Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea "
-                  + "necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.",
+            Texto = TextoConvivencia,
             Respuesta = RespuestaSiNo(datos, ClaveConvivencia),
         },
     ];
@@ -121,6 +128,9 @@ public static class FichaImpresion
         ["PIE: diagnosticado (SI/NO)"] = "Diagnóstico PIE",
         ["PIE: apoyos o diagnóstico"] = "Apoyos o diagnóstico",
         ["salida solo al finalizar jornada (SI/NO)"] = "Salida solo",
+        ["alergias"] = "Alergias",
+        ["contacto sanitario: nombre"] = "Contacto sanitario",
+        ["contacto sanitario: teléfono"] = "Teléfono del contacto sanitario",
     };
 
     public static DocumentoFicha DesdeBorrador(
@@ -128,7 +138,8 @@ public static class FichaImpresion
         int anio,
         DateTime generadoEn,
         byte[]? logo = null,
-        string version = "borrador (sin registrar)")
+        string version = "",
+        string? folio = null)
     {
         var secciones = new List<SeccionFicha>();
 
@@ -152,7 +163,9 @@ public static class FichaImpresion
 
         return new DocumentoFicha
         {
-            Folio = Folio(datos, anio, generadoEn),
+            // Sin folio registrado el documento sigue siendo un borrador: no se
+            // inventa un número que después no exista en la base.
+            Folio = folio ?? string.Empty,
             Anio = anio,
             TipoTramite = datos.GetValueOrDefault("modo") ?? "Matrícula",
             Version = version,
@@ -178,15 +191,4 @@ public static class FichaImpresion
         return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto);
     }
 
-    /// <summary>
-    /// Folio estable a partir del contenido: mientras el borrador no se registre,
-    /// el mismo expediente conserva su folio al reimprimir.
-    /// </summary>
-    private static string Folio(IReadOnlyDictionary<string, string> datos, int anio, DateTime generadoEn)
-    {
-        var semilla = string.Join('|', datos.OrderBy(par => par.Key).Select(par => $"{par.Key}={par.Value}"));
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(semilla)));
-
-        return $"{anio}-{generadoEn:yyyyMMdd}-{hash[..4]}";
-    }
 }

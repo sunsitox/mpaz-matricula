@@ -1,0 +1,373 @@
+{
+  "fecha": "2026-11-07T04:29:41.557Z",
+  "teclado": [
+    {
+      "paso": 1,
+      "tabulaciones": 10,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "SUMMARY#:::Curso y año\n            ▾",
+        "SELECT#Curso_Nivel:Curso_Nivel::— Seleccione —\n                        NT1\n                        NT2",
+        "SELECT#Curso_Letra:Curso_Letra::— Seleccione —\n                        A\n                        B\n   ",
+        "INPUT#Curso_Anio:Curso_Anio::"
+      ]
+    },
+    {
+      "paso": 2,
+      "tabulaciones": 14,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "SUMMARY#:::Datos de la madre\n            ▾",
+        "INPUT#Madre_Nombre_Apellido:Madre_Nombre_Apellido::",
+        "INPUT#Madre_Cedula_Identidad:Madre_Cedula_Identidad::",
+        "INPUT#Madre_Telefono:Madre_Telefono::"
+      ]
+    },
+    {
+      "paso": 3,
+      "tabulaciones": 12,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "SUMMARY#:::Apoderado principal\n            ▾",
+        "INPUT#Principal_Nombre_Apellido:Principal_Nombre_Apellido::",
+        "INPUT#Principal_Cedula_Identidad:Principal_Cedula_Identidad::",
+        "INPUT#Principal_Telefono:Principal_Telefono::"
+      ]
+    },
+    {
+      "paso": 4,
+      "tabulaciones": 10,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "SUMMARY#:::Registro 01 · Contacto de emergencia\n            ▾",
+        "INPUT#Contacto1_Identificacion:Contacto1_Identificacion::",
+        "INPUT#Contacto1_Telefono:Contacto1_Telefono::",
+        "INPUT#Contacto1_Vinculo:Contacto1_Vinculo::"
+      ]
+    },
+    {
+      "paso": 5,
+      "tabulaciones": 11,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "INPUT#SalidaSolo:SalidaSolo::",
+        "SUMMARY#:::Registro 01 · Persona autorizada a retirar\n            ▾",
+        "INPUT#Retiro1_Rut:Retiro1_Rut::",
+        "INPUT#Retiro1_Vinculo:Retiro1_Vinculo::"
+      ]
+    },
+    {
+      "paso": 6,
+      "tabulaciones": 22,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "INPUT#ParticipaPie:ParticipaPie::",
+        "INPUT#PieDiagnostico:PieDiagnostico::",
+        "INPUT#PieApoyos:PieApoyos::",
+        "INPUT#TieneSituacionMedica:TieneSituacionMedica::"
+      ]
+    },
+    {
+      "paso": 7,
+      "tabulaciones": 6,
+      "cicloCompleto": true,
+      "submitAlcanzado": true,
+      "focoInvisible": [],
+      "ordena": [
+        "A#::#contenido-principal:Saltar al contenido de la ficha",
+        "A#::/:Salir de la ficha",
+        "INPUT#Confirmo_Revision:Confirmo_Revision::",
+        "A#::/Ficha/Paso/6:Volver",
+        "BUTTON#:::Guardar y finalizar",
+        "BODY#:::Saltar al contenido de la ficha\n\n    \n    \n        \n            \n     "
+      ]
+    }
+  ],
+  "errores": [
+    {
+      "paso": 1,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Ingrese la comuna del domicilio.",
+        "Ingrese los nombres del estudiante.",
+        "Ingrese el domicilio del estudiante.",
+        "Falta el año escolar.",
+        "Seleccione la letra del curso.",
+        "Seleccione el curso al que postula el estudiante.",
+        "Ingrese el apellido paterno del estudiante.",
+        "Ingrese el RUN o número IPE/IPA del estudiante.",
+        "Ingrese la fecha de nacimiento del estudiante."
+      ],
+      "sinCampo": [],
+      "campos": [
+        {
+          "campo": "Comuna",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Nombres",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Domicilio",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Curso_Anio",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Curso_Letra",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Curso_Nivel",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Apellido_Paterno",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Cedula_Identidad",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Fecha_Nacimiento",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        }
+      ],
+      "url": "/Ficha/Guardar/1"
+    },
+    {
+      "paso": 2,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Complete al menos los datos de la madre o los del padre."
+      ],
+      "sinCampo": [
+        "Complete al menos los datos de la madre o los del padre."
+      ],
+      "campos": [],
+      "url": "/Ficha/Guardar/2"
+    },
+    {
+      "paso": 3,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Indique el vínculo del apoderado principal.",
+        "Indique el teléfono del apoderado principal.",
+        "Indique el nombre del apoderado principal.",
+        "Indique el RUN del apoderado principal."
+      ],
+      "sinCampo": [],
+      "campos": [
+        {
+          "campo": "Principal_Vinculo",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Principal_Telefono",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Principal_Nombre_Apellido",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Principal_Cedula_Identidad",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        }
+      ],
+      "url": "/Ficha/Guardar/3"
+    },
+    {
+      "paso": 4,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Registre al menos un contacto de emergencia."
+      ],
+      "sinCampo": [
+        "Registre al menos un contacto de emergencia."
+      ],
+      "campos": [],
+      "url": "/Ficha/Guardar/4"
+    },
+    {
+      "paso": 5,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Indique si el estudiante puede salir solo al finalizar la jornada."
+      ],
+      "sinCampo": [],
+      "campos": [
+        {
+          "campo": "SalidaSolo",
+          "controles": 2,
+          "marcados": 2,
+          "descripcionApuntaAError": true
+        }
+      ],
+      "url": "/Ficha/Guardar/5"
+    },
+    {
+      "paso": 6,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Indique las alergias o escriba «Ninguna».",
+        "Indique si el estudiante participa del PIE.",
+        "Responda la autorización de uso de imagen.",
+        "Responda la autorización de Convivencia Escolar.",
+        "Indique si el estudiante tiene alguna situación médica.",
+        "Indique la persona a quien avisar ante una urgencia sanitaria.",
+        "Indique el teléfono del contacto sanitario."
+      ],
+      "sinCampo": [],
+      "campos": [
+        {
+          "campo": "Alergias",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "ParticipaPie",
+          "controles": 3,
+          "marcados": 3,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "AutorizaImagen",
+          "controles": 2,
+          "marcados": 2,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "AutorizaConvivencia",
+          "controles": 2,
+          "marcados": 2,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "TieneSituacionMedica",
+          "controles": 2,
+          "marcados": 2,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Contacto_Sanitario_Nombre",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        },
+        {
+          "campo": "Contacto_Sanitario_Telefono",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        }
+      ],
+      "url": "/Ficha/Guardar/6"
+    },
+    {
+      "paso": 7,
+      "status": 200,
+      "resumen": true,
+      "focoEnResumen": true,
+      "mensajes": [
+        "Para guardar la ficha, marque la confirmación de que revisó todos los datos."
+      ],
+      "sinCampo": [],
+      "campos": [
+        {
+          "campo": "Confirmo_Revision",
+          "controles": 1,
+          "marcados": 1,
+          "descripcionApuntaAError": true
+        }
+      ],
+      "url": "/Ficha/Guardar/7"
+    }
+  ],
+  "css": {
+    "360": true,
+    "699": true,
+    "700": true,
+    "768": true,
+    "780": true,
+    "781": true,
+    "899": true,
+    "900": true,
+    "901": true,
+    "1024": true,
+    "1280": true
+  },
+  "nvda": "No ejecutado: sin acceso a salida hablada de NVDA.",
+  "saltarContenido": {
+    "enlace": "Saltar al contenido de la ficha",
+    "focoTrasActivar": "contenido-principal",
+    "url": "/Ficha/Paso/1"
+  }
+}

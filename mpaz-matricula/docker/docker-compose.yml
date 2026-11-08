@@ -9,7 +9,8 @@ services:
     environment:
       POSTGRES_DB: mpaz_matricula
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${CLAVE_POSTGRES:-postgres_mpaz_2027}
+      # Sin valor por defecto: el compose se detiene si falta .env.
+      POSTGRES_PASSWORD: ${CLAVE_POSTGRES:?Defina CLAVE_POSTGRES en .env}
       TZ: America/Santiago
     volumes:
       - datos-db:/var/lib/postgresql/data
@@ -34,11 +35,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      AllowedHosts: ${ALLOWED_HOSTS:-*}
+      # Obligatorio: el dominio público del portal (S-08). Producción no arranca
+      # con AllowedHosts comodín.
+      AllowedHosts: "${ALLOWED_HOSTS:?Defina ALLOWED_HOSTS en .env con el dominio del portal}"
       DataProtection__KeysPath: /keys
       Seguridad__ExigirInicioSesion: "true"
-      Seguridad__ContrasenaInicial: ${CLAVE_INICIAL:-Mpaz2027segura}
-      ConnectionStrings__Default: "Host=db;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=${CLAVE_APP:-mpaz_app_2027};SSL Mode=Disable"
+      # Sólo si hay funcionarios sin cuenta Identity y se entrega una clave
+      # temporal; se retira después del primer arranque.
+      Seguridad__ContrasenaInicial: ${CLAVE_INICIAL:-}
+      ConnectionStrings__Default: "Host=db;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=${CLAVE_APP:?Defina CLAVE_APP en .env};SSL Mode=Disable;Search Path=mpaz_matricula,public"
     volumes:
       - claves:/keys
     ports:

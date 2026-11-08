@@ -45,8 +45,13 @@
     box-shadow: inset 3px 0 0 var(--color-accent);
 }
 
+/* La fecha de acceso se mantiene en una línea; la tabla se desplaza si no cabe. */
+.panel__fecha {
+    white-space: nowrap;
+}
+
 .panel__etiqueta {
-    font-size: .73rem;
+    font-size: .75rem;
     font-weight: 600;
     letter-spacing: .05em;
     text-transform: uppercase;
@@ -138,4 +143,14 @@
     flex-wrap: wrap;
     gap: .6rem;
     margin-top: .75rem;
+}
+
+/* Selector de año escolar del panel */
+.panel__anio {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
 }

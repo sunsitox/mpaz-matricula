@@ -95,11 +95,16 @@ public sealed class PermisoAuthorizationHandler : AuthorizationHandler<PermisoRe
 {
     private readonly IAuditoriaAcceso _auditoria;
     private readonly IHttpContextAccessor _contexto;
+    private readonly VigilanteSesion _vigilante;
 
-    public PermisoAuthorizationHandler(IAuditoriaAcceso auditoria, IHttpContextAccessor contexto)
+    public PermisoAuthorizationHandler(
+        IAuditoriaAcceso auditoria,
+        IHttpContextAccessor contexto,
+        VigilanteSesion vigilante)
     {
         _auditoria = auditoria;
         _contexto = contexto;
+        _vigilante = vigilante;
     }
 
     protected override async Task HandleRequirementAsync(
@@ -108,12 +113,25 @@ public sealed class PermisoAuthorizationHandler : AuthorizationHandler<PermisoRe
     {
         var esperado = $"{requisito.Area}:{requisito.Accion}";
 
-        if (contexto.User.HasClaim("permiso", esperado))
+        if (!contexto.User.HasClaim("permiso", esperado))
         {
-            contexto.Succeed(requisito);
+            await DenegarAsync(requisito, esperado, "permiso ausente");
             return;
         }
 
+        // El permiso del claim se emitió al iniciar sesión: antes de conceder nada
+        // se confirma que el funcionario sigue activo y con los mismos permisos.
+        if (!await _vigilante.SigueVigenteAsync(contexto.User))
+        {
+            await DenegarAsync(requisito, esperado, "sesión revocada");
+            return;
+        }
+
+        contexto.Succeed(requisito);
+    }
+
+    private async Task DenegarAsync(PermisoRequirement requisito, string esperado, string motivo)
+    {
         var http = _contexto.HttpContext;
         var ruta = (http?.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText
                    ?? http?.Request.Path.ToString()
@@ -123,7 +141,7 @@ public sealed class PermisoAuthorizationHandler : AuthorizationHandler<PermisoRe
             accion: "DENEGADO",
             area: requisito.Area,
             recurso: Truncar(ruta, 63),
-            detalle: $"{{\"permiso_requerido\":\"{esperado}\"}}");
+            detalle: $"{{\"permiso_requerido\":\"{esperado}\",\"motivo\":\"{motivo}\"}}");
     }
 
     private static string Truncar(string valor, int largo) =>

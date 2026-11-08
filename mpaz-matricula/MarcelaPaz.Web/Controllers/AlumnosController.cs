@@ -3,6 +3,10 @@ using MarcelaPaz.Domain.Identificacion;
 using MarcelaPaz.Infrastructure.Persistence;
 using MarcelaPaz.Web.Models;
 using MarcelaPaz.Web.Seguridad;
+using MarcelaPaz.Web.Servicios;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,15 +22,40 @@ namespace MarcelaPaz.Web.Controllers;
 [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
 public class AlumnosController : Controller
 {
-    private const int Anio = 2027;
-
     private readonly MatriculaDbContext _db;
+    private readonly RegistroFicha _registro;
+    private readonly IAuditoriaAcceso _auditoria;
+    private readonly AnioEscolar _anios;
 
-    public AlumnosController(MatriculaDbContext db) => _db = db;
+    public AlumnosController(
+        MatriculaDbContext db,
+        RegistroFicha registro,
+        IAuditoriaAcceso auditoria,
+        AnioEscolar anios)
+    {
+        _db = db;
+        _registro = registro;
+        _auditoria = auditoria;
+        _anios = anios;
+    }
+
+    /// <summary>¿La sesión tiene el permiso de área indicado?</summary>
+    private bool Puede(string area) => User.HasClaim("permiso", $"{area}:LEER");
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir)
+    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir, int? anio)
     {
+        var anios = await _anios.ListarAsync();
+        var anioConsulta = await _anios.ResolverAsync(anio);
+
+        if (anioConsulta is null)
+        {
+            TempData["Aviso"] =
+                "No hay un año escolar con matrícula activa. Secretaría o Dirección debe definirlo en Configuración → Año escolar.";
+
+            return View(new FiltroAlumnos { Anios = anios.Select(opcion => opcion.Anio).ToList() });
+        }
+
         var estudiantes = await _db.Estudiantes
             .AsNoTracking()
             .Include(e => e.Comuna)
@@ -36,7 +65,7 @@ public class AlumnosController : Controller
 
         var matriculas = await _db.Matriculas
             .AsNoTracking()
-            .Where(m => m.Anio == Anio)
+            .Where(m => m.Anio == anioConsulta)
             .Select(m => new
             {
                 m.EstudianteId,
@@ -76,7 +105,8 @@ public class AlumnosController : Controller
 
         var filtro = new FiltroAlumnos
         {
-            Anio = Anio,
+            Anio = anioConsulta.Value,
+            Anios = anios.Select(opcion => opcion.Anio).ToList(),
             Texto = q?.Trim(),
             Curso = string.IsNullOrWhiteSpace(curso) ? null : curso,
             Estado = string.IsNullOrWhiteSpace(estado) ? null : estado,
@@ -127,13 +157,37 @@ public class AlumnosController : Controller
 
         filtro.Alumnos = Ordenar(filas, filtro.Orden, filtro.Direccion == "desc").ToList();
 
+        // MAT-13: una búsqueda permite barrer el padrón. Se registra el término
+        // en hash (no el RUN consultado) junto con el número de resultados.
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var huella = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(q.Trim().ToUpperInvariant())))[..12];
+
+            await _auditoria.RegistrarAsync(
+                "BUSCAR",
+                "GENERAL",
+                "alumnos_busqueda",
+                detalle: $"{{\"termino\":\"{huella}\",\"resultados\":{filtro.Alumnos.Count}}}");
+        }
+
         return View(filtro);
     }
 
     /// <summary>Ficha de consulta del alumno: matrículas, apoderados, retiros y salud.</summary>
     [HttpGet]
-    public async Task<IActionResult> Detalle(int id)
+    public async Task<IActionResult> Detalle(int id, int? anio)
     {
+        var anioConsulta = await _anios.ResolverAsync(anio);
+
+        if (anioConsulta is null)
+        {
+            TempData["Aviso"] =
+                "No hay un año escolar con matrícula activa. Secretaría o Dirección debe definirlo en Configuración → Año escolar.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         var estudiante = await _db.Estudiantes
             .AsNoTracking()
             .Include(e => e.Comuna)
@@ -151,44 +205,83 @@ public class AlumnosController : Controller
             .OrderByDescending(m => m.Anio)
             .ToListAsync();
 
-        var vinculos = await _db.EstudiantesPersonas
-            .AsNoTracking()
-            .Include(v => v.Persona)
-            .Where(v => v.EstudianteId == id && v.VigenteHasta == null)
-            .OrderBy(v => v.Id)
-            .ToListAsync();
+        // Permisos por área (S-02): la consulta de alumnos se abre con
+        // GENERAL:LEER, pero cada bloque sensible exige su propio permiso y, si
+        // falta, ni se consulta ni se proyecta.
+        var puedeFamilia = Puede("FAMILIA");
+        var puedeRetiro = Puede("RETIRO");
+        var puedeSalud = Puede("SALUD");
+        var puedeAutorizaciones = Puede("AUTORIZACIONES");
+
+        var vinculos = puedeFamilia
+            ? await _db.EstudiantesPersonas
+                .AsNoTracking()
+                .Include(v => v.Persona)
+                .Where(v => v.EstudianteId == id && v.VigenteHasta == null)
+                .OrderBy(v => v.Id)
+                .ToListAsync()
+            : new List<EstudiantePersona>();
 
         var idsVinculos = vinculos.Select(v => v.Id).ToList();
 
-        var restricciones = await _db.RestriccionesFamiliares
-            .AsNoTracking()
-            .Where(r => idsVinculos.Contains(r.EstudiantePersonaId) && r.VigenteHasta == null)
-            .ToListAsync();
+        var restricciones = puedeFamilia
+            ? await _db.RestriccionesFamiliares
+                .AsNoTracking()
+                .Where(r => idsVinculos.Contains(r.EstudiantePersonaId) && r.VigenteHasta == null)
+                .ToListAsync()
+            : new List<RestriccionFamiliar>();
 
-        var contactos = await _db.ContactosEmergencia
-            .AsNoTracking()
-            .Where(c => c.EstudianteId == id && c.VigenteHasta == null)
-            .OrderBy(c => c.Orden)
-            .ToListAsync();
+        var contactos = puedeFamilia
+            ? await _db.ContactosEmergencia
+                .AsNoTracking()
+                .Where(c => c.EstudianteId == id && c.VigenteHasta == null)
+                .OrderBy(c => c.Orden)
+                .ToListAsync()
+            : new List<ContactoEmergencia>();
 
-        var retiros = await _db.RetirosAutorizados
-            .AsNoTracking()
-            .Where(r => r.EstudianteId == id && r.VigenteHasta == null)
-            .OrderBy(r => r.Id)
-            .ToListAsync();
+        var retiros = puedeRetiro
+            ? await _db.RetirosAutorizados
+                .AsNoTracking()
+                .Where(r => r.EstudianteId == id && r.VigenteHasta == null)
+                .OrderBy(r => r.Id)
+                .ToListAsync()
+            : new List<RetiroAutorizado>();
 
-        var salud = await _db.AntecedentesSalud
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.EstudianteId == id);
+        var salud = puedeSalud
+            ? await _db.AntecedentesSalud
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.EstudianteId == id)
+            : null;
 
-        var situaciones = await _db.SituacionesMedicas
-            .AsNoTracking()
-            .Where(s => s.EstudianteId == id && s.VigenteHasta == null)
-            .OrderBy(s => s.Id)
-            .ToListAsync();
+        var situaciones = puedeSalud
+            ? await _db.SituacionesMedicas
+                .AsNoTracking()
+                .Where(s => s.EstudianteId == id && s.VigenteHasta == null)
+                .OrderBy(s => s.Id)
+                .ToListAsync()
+            : new List<SituacionMedica>();
+
+        var vigente = matriculas.FirstOrDefault(m => m.Anio == anioConsulta);
+
+        var ficha = vigente is null
+            ? null
+            : await _db.FichaVersiones
+                .AsNoTracking()
+                .Where(v => v.MatriculaId == vigente.Id && v.Estado == "VIGENTE")
+                .OrderByDescending(v => v.NumeroVersion)
+                .FirstOrDefaultAsync();
+
+        var autorizaciones = puedeAutorizaciones
+            ? await _db.Autorizaciones
+                .AsNoTracking()
+                .Where(a => a.EstudianteId == id && a.VigenteHasta == null)
+                .OrderBy(a => a.Tipo)
+                .ToListAsync()
+            : new List<Autorizacion>();
 
         var perfil = new PerfilAlumno
         {
+            Anio = anioConsulta.Value,
             Id = estudiante.Id,
             Nombre = estudiante.NombreCompleto,
             Rut = RutChileno.Formatear(estudiante.Identificador),
@@ -248,9 +341,47 @@ public class AlumnosController : Controller
             Restricciones = restricciones
                 .Select(r => $"{r.Tipo.ToLowerInvariant()}: {r.Descripcion}")
                 .ToList(),
+            FolioFicha = ficha?.Folio,
+            VersionFicha = ficha?.NumeroVersion,
+            MatriculaId = vigente?.Id,
+            PuedeConfirmar = vigente?.Estado is "FICHA_GENERADA" or "FIRMADA",
+            Autorizaciones = autorizaciones
+                .Select(a => $"{EtiquetaAutorizacion(a.Tipo)}: {(a.Estado == "OTORGADA" ? "autorizada" : "rechazada")}")
+                .ToList(),
+            PuedeVerFamilia = puedeFamilia,
+            PuedeVerRetiro = puedeRetiro,
+            PuedeVerSalud = puedeSalud,
+            PuedeVerAutorizaciones = puedeAutorizaciones,
         };
 
-        var vigente = matriculas.FirstOrDefault(m => m.Anio == Anio);
+        // MAT-13: la consulta del expediente deja rastro con las áreas efectivamente leídas.
+        var areas = new List<string> { "GENERAL" };
+        if (puedeFamilia)
+        {
+            areas.Add("FAMILIA");
+        }
+
+        if (puedeRetiro)
+        {
+            areas.Add("RETIRO");
+        }
+
+        if (puedeSalud)
+        {
+            areas.Add("SALUD");
+        }
+
+        if (puedeAutorizaciones)
+        {
+            areas.Add("AUTORIZACIONES");
+        }
+
+        await _auditoria.RegistrarAsync(
+            "LEER",
+            "GENERAL",
+            "alumnos_detalle",
+            detalle: $"{{\"areas\":[{string.Join(",", areas.Select(area => $"\"{area}\""))}]}}",
+            estudianteId: id);
 
         if (vigente is not null)
         {
@@ -260,6 +391,86 @@ public class AlumnosController : Controller
 
         return View(perfil);
     }
+
+    /// <summary>
+    /// Confirma la matrícula según el procedimiento oficial (MAT-04): sólo desde
+    /// FICHA_GENERADA o FIRMADA y con una ficha vigente.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Confirmar(int id)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para confirmar la matrícula.";
+            return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+        }
+
+        var error = await _registro.ConfirmarAsync(id, funcionarioId.Value);
+
+        if (error is null)
+        {
+            TempData["Notificacion"] = "Matrícula confirmada según el procedimiento oficial.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+    }
+
+    /// <summary>
+    /// Registra la recepción de la ficha firmada por el apoderado (transición
+    /// FICHA_GENERADA → FIRMADA). El escaneo se incorpora en la Etapa II.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegistrarFirma(int id, string? fecha)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var dia = DateOnly.TryParse(fecha, out var valor)
+            ? valor
+            : DateOnly.FromDateTime(DateTime.Today);
+
+        var error = await _registro.RegistrarFirmaAsync(id, dia);
+
+        TempData[error is null ? "Notificacion" : "Aviso"] =
+            error ?? "Ficha firmada registrada. Queda pendiente la confirmación de Secretaría.";
+
+        return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+    }
+
+    private static string EtiquetaAutorizacion(string tipo) => tipo switch
+    {
+        "IMAGEN" => "Uso de imagen",
+        "CONVIVENCIA" => "Convivencia Escolar",
+        "MEDICACION" => "Medicación",
+        _ => tipo,
+    };
 
     /// <summary>
     /// Ordena el listado por la columna elegida. Los valores vacíos se mandan al

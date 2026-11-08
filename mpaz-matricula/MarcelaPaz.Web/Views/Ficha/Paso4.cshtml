@@ -2,13 +2,15 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 4 · Contactos de emergencia</h1>
+<h2 class="wizard__titulo-paso">Paso 4 · Contactos de emergencia</h2>
 <p class="wizard__ayuda">
     Hasta dos contactos, en bloques desplegables.
     Por ahora ninguno es obligatorio.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="4" method="post">
+
+    <partial name="_ResumenValidacion" />
 
     <details class="wizard__desplegable" open>
         <summary class="wizard__desplegable-resumen">

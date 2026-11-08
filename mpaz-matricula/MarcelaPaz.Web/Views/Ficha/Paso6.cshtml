@@ -2,13 +2,19 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 6 · Datos médicos y PIE</h1>
+<h2 class="wizard__titulo-paso">Paso 6 · Datos médicos y PIE</h2>
 <p class="wizard__ayuda">
     Información médica y de apoyo PIE relevante para la atención escolar, con cada situación en un bloque desplegable.
-    Por ahora nada es obligatorio.
+    Las alergias, el contacto sanitario, el PIE y las autorizaciones son obligatorios.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="6" method="post">
+
+    <partial name="_ResumenValidacion" />
+
+    @* Tres subsecciones con encabezado para no mezclar apoyos, salud y
+       consentimientos en una sola lectura (WCAG 1.3.1 · 2.4.6). *@
+    <h2 class="wizard__seccion-titulo">Apoyos PIE</h2>
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Programa de Integración Escolar (PIE)</legend>
@@ -44,6 +50,8 @@
         </div>
     </fieldset>
 
+    <h2 class="wizard__seccion-titulo">Salud y datos médicos</h2>
+
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Situación médica (SI/NO)</legend>
         <p class="wizard__restriccion-pregunta">
@@ -58,6 +66,27 @@
                 <input asp-for="TieneSituacionMedica" type="radio" value="No" />
                 <span>No</span>
             </label>
+        </div>
+    </fieldset>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Alergias y contacto sanitario</legend>
+        <div class="acceso__campo">
+            <label asp-for="Alergias" class="acceso__etiqueta">Alergias declaradas *</label>
+            <input asp-for="Alergias" class="acceso__input" placeholder="Ej: penicilina, frutos secos. Si no tiene, escriba «Ninguna»" autocomplete="off" aria-required="true" />
+            <span asp-validation-for="Alergias" class="acceso__error"></span>
+        </div>
+        <div class="wizard__fila">
+            <div class="acceso__campo">
+                <label asp-for="Contacto_Sanitario_Nombre" class="acceso__etiqueta">Persona a avisar en una urgencia *</label>
+                <input asp-for="Contacto_Sanitario_Nombre" class="acceso__input" placeholder="Ej: María Pérez" autocomplete="off" aria-required="true" />
+                <span asp-validation-for="Contacto_Sanitario_Nombre" class="acceso__error"></span>
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="Contacto_Sanitario_Telefono" class="acceso__etiqueta">Teléfono del contacto *</label>
+                <input asp-for="Contacto_Sanitario_Telefono" type="tel" class="acceso__input" placeholder="Ej: +56 9 6123 4567" autocomplete="off" aria-required="true" />
+                <span asp-validation-for="Contacto_Sanitario_Telefono" class="acceso__error"></span>
+            </div>
         </div>
     </fieldset>
 
@@ -77,8 +106,8 @@
                     <input asp-for="Medica1_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <div class="acceso__campo">
-                <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <fieldset class="acceso__campo wizard__grupo-radio">
+                <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
                         <input asp-for="Medica1_Tratamiento" type="radio" value="Si" />
@@ -89,7 +118,7 @@
                         <span>No</span>
                     </label>
                 </div>
-            </div>
+            </fieldset>
         </div>
     </details>
 
@@ -109,8 +138,8 @@
                     <input asp-for="Medica2_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <div class="acceso__campo">
-                <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <fieldset class="acceso__campo wizard__grupo-radio">
+                <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
                         <input asp-for="Medica2_Tratamiento" type="radio" value="Si" />
@@ -121,7 +150,7 @@
                         <span>No</span>
                     </label>
                 </div>
-            </div>
+            </fieldset>
         </div>
     </details>
 
@@ -141,8 +170,8 @@
                     <input asp-for="Medica3_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <div class="acceso__campo">
-                <span class="acceso__etiqueta">¿En tratamiento?</span>
+            <fieldset class="acceso__campo wizard__grupo-radio">
+                <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
                         <input asp-for="Medica3_Tratamiento" type="radio" value="Si" />
@@ -153,7 +182,7 @@
                         <span>No</span>
                     </label>
                 </div>
-            </div>
+            </fieldset>
         </div>
     </details>
 
@@ -173,6 +202,8 @@
             </label>
         </div>
     </fieldset>
+
+    <h2 class="wizard__seccion-titulo">Autorizaciones del apoderado</h2>
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Uso de paracetamol (SI/NO)</legend>

@@ -1,24 +1,19 @@
 @model MarcelaPaz.Web.Models.PanelInicio
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
 @using System.Security.Claims
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Panel";
 
-    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
-    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "revisión";
+    var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "sin sesión";
     var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).OrderBy(r => r).ToList();
 
-    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
-    var puedeFuncionarios = !exigirLogin || User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
-}
+    // La interfaz deriva la visibilidad sólo de los permisos de la sesión: no
+    // puede prometer una acción que el servidor vaya a denegar (S-01).
+    var puedeMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeFuncionarios = User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
 
-@if (!exigirLogin)
-{
-    <div class="acceso__info" role="status">
-        Modo revisión: el inicio de sesión está desactivado temporalmente.
-        Para exigirlo, ponga <code>Seguridad:ExigirInicioSesion</code> en <code>true</code>.
-    </div>
+    var anios = ViewData["Anios"] as IReadOnlyList<MarcelaPaz.Web.Servicios.AnioEscolarOpcion>
+        ?? Array.Empty<MarcelaPaz.Web.Servicios.AnioEscolarOpcion>();
 }
 
 @if (Model.Error is not null)
@@ -29,10 +24,24 @@
 <div class="admin__tarjeta">
     <div class="panel__encabezado">
         <div>
-            <h1 class="admin__titulo-seccion">Panel de matrícula @Model.Anio</h1>
+            <h1 class="admin__titulo-seccion">@(Model.Anio > 0 ? $"Panel de matrícula {Model.Anio}" : "Panel de matrícula")</h1>
             <p class="admin__ayuda">Hola, @nombre. Cifras del proceso de matrícula y de los pendientes del año.</p>
         </div>
         <div>
+            @if (anios.Count > 0)
+            {
+                <form method="get" asp-controller="Home" asp-action="Index" class="panel__anio">
+                    <label class="acceso__etiqueta" for="anio">Año escolar</label>
+                    <select class="acceso__input" id="anio" name="anio">
+                        @foreach (var opcion in anios)
+                        {
+                            <option value="@opcion.Anio" selected="@(opcion.Anio == Model.Anio ? "selected" : null)">@opcion.Anio</option>
+                        }
+                    </select>
+                    <button type="submit" class="admin__boton">Ver</button>
+                </form>
+            }
+
             @if (roles.Count == 0)
             {
                 <span class="admin__ayuda">Sin roles activos en esta sesión.</span>
@@ -95,15 +104,17 @@
         }
         else
         {
-            <table class="admin__tabla">
-                <thead>
-                    <tr>
-                        <th>Curso</th>
-                        <th>Total</th>
-                        <th>Cerradas</th>
-                        <th>Avance</th>
-                    </tr>
-                </thead>
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Avance de matrícula por curso.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Curso</th>
+                            <th scope="col">Total</th>
+                            <th scope="col">Cerradas</th>
+                            <th scope="col">Avance</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var curso in Model.Cursos)
                     {
@@ -122,7 +133,8 @@
                         </tr>
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
         }
     </div>
 
@@ -147,28 +159,31 @@
     }
     else
     {
-        <table class="admin__tabla">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Acción</th>
-                    <th>Área</th>
-                    <th>Funcionario</th>
-                </tr>
-            </thead>
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Últimos accesos registrados en el portal.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Acción</th>
+                        <th scope="col">Área</th>
+                        <th scope="col">Funcionario</th>
+                    </tr>
+                </thead>
             <tbody>
                 @foreach (var acceso in Model.Accesos)
                 {
                     <tr>
-                        <td>@acceso.Cuando.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        <td class="panel__fecha">@acceso.Cuando.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                         <td>@acceso.Accion</td>
                         <td>@(acceso.Area ?? "—")</td>
                         <td>@(acceso.Funcionario ?? "—")</td>
                     </tr>
                 }
             </tbody>
-        </table>
-    }
+            </table>
+            </div>
+        }
 </div>
 
 <div class="admin__tarjeta">

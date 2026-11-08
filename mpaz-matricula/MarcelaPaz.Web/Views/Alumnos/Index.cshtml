@@ -1,11 +1,12 @@
 @model MarcelaPaz.Web.Models.FiltroAlumnos
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Alumnos";
+    ViewData["Title"] = "Estudiantes";
 
     Func<string, string> enlaceOrden = columna => Url.Action("Index", new
     {
         q = Model.Texto,
+        anio = Model.Anio > 0 ? Model.Anio : (int?)null,
         curso = Model.Curso,
         estado = Model.Estado,
         orden = columna,
@@ -17,20 +18,40 @@
 
     Func<string, string> claseOrden = columna =>
         Model.Orden == columna ? "alumnos__orden alumnos__orden--activo" : "alumnos__orden";
+
+    // aria-sort comunica la columna y el sentido del orden (WCAG 1.3.1 · ARIA APG).
+    Func<string, string> ariaSort = columna =>
+        Model.Orden != columna ? "none" : Model.Direccion == "desc" ? "descending" : "ascending";
 }
 
 <section class="admin__tarjeta">
     <div class="alumnos__encabezado">
         <div>
-            <h1 class="admin__titulo-seccion">Alumnos</h1>
+            <h1 class="admin__titulo-seccion">Estudiantes</h1>
             <p class="admin__ayuda">
-                Busque por nombre o RUN, filtre por curso o estado y ordene por cualquier columna.
+                Busque por nombre o RUN, filtre por año, curso o estado y ordene por cualquier columna.
             </p>
         </div>
-        <span class="alumnos__insignia">@Model.Anio</span>
+        @if (Model.Anio > 0)
+        {
+            <span class="alumnos__insignia">Año escolar @Model.Anio</span>
+        }
     </div>
 
     <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
+        @if (Model.Anios.Count > 0)
+        {
+            <div class="acceso__campo">
+                <label class="acceso__etiqueta" for="anio">Año escolar</label>
+                <select class="acceso__input" id="anio" name="anio">
+                    @foreach (var anio in Model.Anios)
+                    {
+                        <option value="@anio" selected="@(anio == Model.Anio ? "selected" : null)">@anio</option>
+                    }
+                </select>
+            </div>
+        }
+
         <div class="acceso__campo alumnos__campo-texto">
             <label class="acceso__etiqueta" for="q">Buscar</label>
             <input class="acceso__input" id="q" name="q" value="@Model.Texto"
@@ -77,7 +98,8 @@
 
         @if (Model.TieneFiltros)
         {
-            <a class="alumnos__limpiar" asp-controller="Alumnos" asp-action="Index">Limpiar filtros</a>
+            <a class="alumnos__limpiar" asp-controller="Alumnos" asp-action="Index"
+               asp-route-anio="@Model.Anio">Limpiar filtros</a>
         }
     </div>
 
@@ -90,41 +112,45 @@
     }
     else
     {
-        <div class="alumnos__tabla-envoltura">
+        <div class="alumnos__tabla-envoltura" tabindex="0">
             <table class="admin__tabla alumnos__tabla">
+                <caption class="sr-only">
+                    Estudiantes registrados en el año escolar @Model.Anio, con RUN, curso, estado, tipo de matrícula y comuna.
+                    Cada encabezado ordena la tabla.
+                </caption>
                 <thead>
                     <tr>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("nombre")">
                             <a class="@claseOrden("nombre")" href="@enlaceOrden("nombre")">
-                                Alumno <span class="alumnos__flecha">@flecha("nombre")</span>
+                                Alumno <span class="alumnos__flecha" aria-hidden="true">@flecha("nombre")</span>
                             </a>
                         </th>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("rut")">
                             <a class="@claseOrden("rut")" href="@enlaceOrden("rut")">
-                                RUN <span class="alumnos__flecha">@flecha("rut")</span>
+                                RUN <span class="alumnos__flecha" aria-hidden="true">@flecha("rut")</span>
                             </a>
                         </th>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("curso")">
                             <a class="@claseOrden("curso")" href="@enlaceOrden("curso")">
-                                Curso @Model.Anio <span class="alumnos__flecha">@flecha("curso")</span>
+                                Curso @Model.Anio <span class="alumnos__flecha" aria-hidden="true">@flecha("curso")</span>
                             </a>
                         </th>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("estado")">
                             <a class="@claseOrden("estado")" href="@enlaceOrden("estado")">
-                                Estado <span class="alumnos__flecha">@flecha("estado")</span>
+                                Estado <span class="alumnos__flecha" aria-hidden="true">@flecha("estado")</span>
                             </a>
                         </th>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("tipo")">
                             <a class="@claseOrden("tipo")" href="@enlaceOrden("tipo")">
-                                Matrícula <span class="alumnos__flecha">@flecha("tipo")</span>
+                                Matrícula <span class="alumnos__flecha" aria-hidden="true">@flecha("tipo")</span>
                             </a>
                         </th>
-                        <th>
+                        <th scope="col" aria-sort="@ariaSort("comuna")">
                             <a class="@claseOrden("comuna")" href="@enlaceOrden("comuna")">
-                                Comuna <span class="alumnos__flecha">@flecha("comuna")</span>
+                                Comuna <span class="alumnos__flecha" aria-hidden="true">@flecha("comuna")</span>
                             </a>
                         </th>
-                        <th class="alumnos__col-accion">Ficha</th>
+                        <th scope="col" class="alumnos__col-accion">Ficha</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -132,7 +158,8 @@
                     {
                         <tr>
                             <td>
-                                <a class="alumnos__nombre" asp-action="Detalle" asp-route-id="@alumno.Id">
+                                <a class="alumnos__nombre" asp-action="Detalle" asp-route-id="@alumno.Id"
+                                   asp-route-anio="@Model.Anio">
                                     @alumno.Nombre
                                 </a>
                             </td>
@@ -144,7 +171,8 @@
                             <td class="alumnos__dato">@alumno.TipoTexto</td>
                             <td class="alumnos__dato">@(alumno.Comuna ?? "—")</td>
                             <td class="alumnos__col-accion">
-                                <a class="alumnos__ver" asp-action="Detalle" asp-route-id="@alumno.Id">
+                                <a class="alumnos__ver" asp-action="Detalle" asp-route-id="@alumno.Id"
+                                   asp-route-anio="@Model.Anio">
                                     Ver ficha
                                 </a>
                             </td>

@@ -1,0 +1,26 @@
+@*
+    Resumen de errores accesible.
+    WCAG 2.2: 3.3.1 Identificación de errores · 4.1.3 Mensajes de estado
+    ISO/IEC 40500 (WCAG 2.0) · ARIA: role="alert" + foco programático.
+
+    Se dibuja sólo cuando hay errores: un contenedor role="alert" vacío se
+    anunciaría igual y ensuciaría la lectura. Al cargar la página, ux.js mueve
+    el foco aquí y vincula cada mensaje con su campo mediante aria-describedby.
+*@
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="acceso__alerta acceso__alerta--errores"
+         role="alert"
+         tabindex="-1"
+         data-ux-resumen-errores>
+        <ul>
+            @foreach (var entrada in ViewData.ModelState)
+            {
+                foreach (var error in entrada.Value.Errors)
+                {
+                    <li data-ux-error-campo="@entrada.Key">@error.ErrorMessage</li>
+                }
+            }
+        </ul>
+    </div>
+}

@@ -2,15 +2,15 @@
 @{
     Layout = "_WizardLayout";
 }
-<h1 class="wizard__titulo-paso">Paso 1 · Datos del apoderado</h1>
+<h2 class="wizard__titulo-paso">Paso 1 · Datos del apoderado</h2>
 <p class="wizard__ayuda">
     Primero el curso al que postula, luego la identificación y el domicilio.
-    Los campos obligatorios y sus textos se definirán con el colegio.
+    Los campos marcados con * son obligatorios. El estudiante puede identificarse con RUN o con IPE/IPA.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="1" method="post">
 
-    <div asp-validation-summary="ModelOnly" class="acceso__alerta"></div>
+    <partial name="_ResumenValidacion" />
 
     <details class="wizard__desplegable" open>
         <summary class="wizard__desplegable-resumen">
@@ -20,7 +20,7 @@
         <div class="wizard__desplegable-cuerpo">
             <div class="wizard__fila">
                 <div class="acceso__campo">
-                    <label asp-for="Curso_Nivel" class="acceso__etiqueta">Curso</label>
+                    <label asp-for="Curso_Nivel" class="acceso__etiqueta">Curso *</label>
                     <select asp-for="Curso_Nivel" class="acceso__input">
                         <option value="">— Seleccione —</option>
                         <option>NT1</option>
@@ -34,9 +34,10 @@
                         <option>7º básico</option>
                         <option>8º básico</option>
                     </select>
+                    <span asp-validation-for="Curso_Nivel" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Curso_Letra" class="acceso__etiqueta">Letra</label>
+                    <label asp-for="Curso_Letra" class="acceso__etiqueta">Letra *</label>
                     <select asp-for="Curso_Letra" class="acceso__input">
                         <option value="">— Seleccione —</option>
                         <option>A</option>
@@ -44,6 +45,7 @@
                         <option>C</option>
                         <option>D</option>
                     </select>
+                    <span asp-validation-for="Curso_Letra" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
                     <label asp-for="Curso_Anio" class="acceso__etiqueta">Año escolar</label>
@@ -61,31 +63,45 @@
         <div class="wizard__desplegable-cuerpo">
             <div class="wizard__fila">
                 <div class="acceso__campo">
-                    <label asp-for="Nombres" class="acceso__etiqueta">Nombres</label>
-                    <input asp-for="Nombres" class="acceso__input" placeholder="Ej: María" autocomplete="off" />
+                    <label asp-for="Nombres" class="acceso__etiqueta">Nombres *</label>
+                    <input asp-for="Nombres" class="acceso__input" placeholder="Ej: María" autocomplete="off" aria-required="true" />
+                    <span asp-validation-for="Nombres" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Apellido_Paterno" class="acceso__etiqueta">Apellido Paterno</label>
-                    <input asp-for="Apellido_Paterno" class="acceso__input" placeholder="Ej: Pérez Soto" autocomplete="off" />
+                    <label asp-for="Apellido_Paterno" class="acceso__etiqueta">Apellido Paterno *</label>
+                    <input asp-for="Apellido_Paterno" class="acceso__input" placeholder="Ej: Pérez" autocomplete="off" aria-required="true" />
+                    <span asp-validation-for="Apellido_Paterno" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
                     <label asp-for="Apellido_Materno" class="acceso__etiqueta">Apellido Materno</label>
-                    <input asp-for="Apellido_Materno" class="acceso__input" placeholder="Ej: Pérez Soto" autocomplete="off" />
+                    <input asp-for="Apellido_Materno" class="acceso__input" placeholder="Ej: Soto" autocomplete="off" />
+                    <span asp-validation-for="Apellido_Materno" class="acceso__error"></span>
                 </div>
             </div>
             <div class="wizard__fila">
                 <div class="acceso__campo">
-                    <label asp-for="Cedula_Identidad" class="acceso__etiqueta">Cédula de identidad</label>
-                    <input asp-for="Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                    <label asp-for="Tipo_Identificador" class="acceso__etiqueta">Tipo de documento *</label>
+                    <select asp-for="Tipo_Identificador" class="acceso__input" aria-required="true">
+                        <option value="RUN">RUN (cédula nacional)</option>
+                        <option value="IPE">IPE (identificación provisoria)</option>
+                        <option value="IPA">IPA (identificación provisoria)</option>
+                    </select>
+                    <span asp-validation-for="Tipo_Identificador" class="acceso__error"></span>
+                </div>
+                <div class="acceso__campo">
+                    <label asp-for="Cedula_Identidad" class="acceso__etiqueta">RUN o número IPE/IPA *</label>
+                    <input asp-for="Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPE-1234" autocomplete="off" aria-required="true" />
                     <span asp-validation-for="Cedula_Identidad" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Fecha_Nacimiento" class="acceso__etiqueta">Fecha nacimiento</label>
-                    <input asp-for="Fecha_Nacimiento" type="date" class="acceso__input" autocomplete="off" />
+                    <label asp-for="Fecha_Nacimiento" class="acceso__etiqueta">Fecha nacimiento *</label>
+                    <input asp-for="Fecha_Nacimiento" type="date" class="acceso__input" autocomplete="off" aria-required="true" />
+                    <span asp-validation-for="Fecha_Nacimiento" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Nacionalidad" class="acceso__etiqueta">Nacionalidad</label>
-                    <input asp-for="Nacionalidad" class="acceso__input" placeholder="Ej: Chilena" autocomplete="off" />
+                    <label asp-for="Nacionalidad" class="acceso__etiqueta">Nacionalidad *</label>
+                    <input asp-for="Nacionalidad" class="acceso__input" placeholder="Ej: Chilena" autocomplete="off" aria-required="true" />
+                    <span asp-validation-for="Nacionalidad" class="acceso__error"></span>
                 </div>
             </div>
         </div>
@@ -98,12 +114,14 @@
         </summary>
         <div class="wizard__desplegable-cuerpo">
             <div class="acceso__campo">
-                <label asp-for="Domicilio" class="acceso__etiqueta">Domicilio (calle – nº – villa o población)</label>
-                <input asp-for="Domicilio" class="acceso__input" placeholder="Ej: Los Aromos 1234, Villa Los Aromos" autocomplete="off" />
+                <label asp-for="Domicilio" class="acceso__etiqueta">Domicilio (calle – nº – villa o población) *</label>
+                <input asp-for="Domicilio" class="acceso__input" placeholder="Ej: Los Aromos 1234, Villa Los Aromos" autocomplete="off" aria-required="true" />
+                <span asp-validation-for="Domicilio" class="acceso__error"></span>
             </div>
             <div class="acceso__campo">
-                <label asp-for="Comuna" class="acceso__etiqueta">Comuna</label>
-                <input asp-for="Comuna" class="acceso__input" placeholder="Ej: San Bernardo" autocomplete="off" />
+                <label asp-for="Comuna" class="acceso__etiqueta">Comuna *</label>
+                <input asp-for="Comuna" class="acceso__input" placeholder="Ej: San Bernardo" autocomplete="off" aria-required="true" />
+                <span asp-validation-for="Comuna" class="acceso__error"></span>
             </div>
         </div>
     </details>

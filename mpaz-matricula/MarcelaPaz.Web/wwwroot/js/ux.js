@@ -103,6 +103,15 @@
             return;
         }
 
+        // Acciones irreversibles: confirmar antes de bloquear el formulario,
+        // para que cancelar no deje el botón girando.
+        const confirmacion = evento.submitter && evento.submitter.dataset.uxConfirmar;
+
+        if (confirmacion && !window.confirm(confirmacion)) {
+            evento.preventDefault();
+            return;
+        }
+
         formulario.dataset.enviando = 'si';
         formulario.setAttribute('aria-busy', 'true');
 
@@ -200,6 +209,116 @@
             boton.addEventListener('click', cerrar);
         }
 
-        window.setTimeout(cerrar, 12000);
+        // Cierre diferido, en pausa mientras se lee o se recorre con teclado
+        // (WCAG 2.2.1 · contenido con límite de tiempo).
+        let temporizadorCierre = null;
+
+        const programar = () => {
+            window.clearTimeout(temporizadorCierre);
+            temporizadorCierre = window.setTimeout(cerrar, 12000);
+        };
+
+        const pausar = () => window.clearTimeout(temporizadorCierre);
+
+        programar();
+        aviso.addEventListener('mouseenter', pausar);
+        aviso.addEventListener('mouseleave', programar);
+        aviso.addEventListener('focusin', pausar);
+        aviso.addEventListener('focusout', programar);
+    });
+
+    // Errores de validación: vínculo con el campo y foco en el resumen.
+    const resumen = document.querySelector('[data-ux-resumen-errores]');
+
+    if (resumen) {
+        document.querySelectorAll('.field-validation-error[data-valmsg-for]').forEach((mensaje, indice) => {
+            const nombre = mensaje.getAttribute('data-valmsg-for');
+            const campo = document.querySelector('[name="' + nombre + '"]');
+
+            if (!campo) {
+                return;
+            }
+
+            if (!mensaje.id) {
+                mensaje.id = 'error-campo-' + indice;
+            }
+
+            campo.setAttribute('aria-invalid', 'true');
+
+            const descritos = (campo.getAttribute('aria-describedby') || '')
+                .split(/\s+/)
+                .filter(Boolean);
+
+            if (!descritos.includes(mensaje.id)) {
+                descritos.push(mensaje.id);
+                campo.setAttribute('aria-describedby', descritos.join(' '));
+            }
+        });
+
+        // El resumen también cubre campos sin mensaje inline y todas las
+        // opciones de un grupo de radios, no sólo la primera.
+        resumen.querySelectorAll('[data-ux-error-campo]').forEach((mensaje, indice) => {
+            const nombre = mensaje.getAttribute('data-ux-error-campo');
+            if (!nombre) {
+                return; // Las reglas de bloque no pertenecen a un único campo.
+            }
+            mensaje.id = 'error-resumen-' + indice;
+            document.querySelectorAll('[name]').forEach(campo => {
+                if (campo.name !== nombre || campo.type === 'hidden') {
+                    return;
+                }
+                campo.setAttribute('aria-invalid', 'true');
+                const ids = new Set((campo.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
+                ids.add(mensaje.id);
+                campo.setAttribute('aria-describedby', [...ids].join(' '));
+                const seccion = campo.closest('details');
+                if (seccion) {
+                    seccion.open = true;
+                }
+            });
+        });
+
+        // Foco directo: requestAnimationFrame no corre en pestañas de fondo y
+        // dejaría el error sin anunciar para quien llega desde otro programa.
+        resumen.focus();
+    } else {
+        // Foco declarativo al cargar: título del folio, encabezados de paso.
+        const destinoFoco = document.querySelector('[data-ux-foco]');
+
+        if (destinoFoco) {
+            destinoFoco.focus();
+        }
+    }
+
+    // Copiar el folio y anunciar el resultado.
+    document.querySelectorAll('[data-ux-copiar]').forEach(boton => {
+        boton.addEventListener('click', () => {
+            const valor = boton.getAttribute('data-ux-copiar') || '';
+            const avisoCopia = document.querySelector('[data-ux-copiar-aviso]');
+
+            const anunciar = texto => {
+                if (avisoCopia) {
+                    avisoCopia.textContent = texto;
+                }
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(valor)
+                    .then(() => anunciar(boton.getAttribute('data-ux-copiar-ok') || 'Copiado.'))
+                    .catch(() => anunciar('No se pudo copiar. Anote el folio manualmente.'));
+            } else {
+                anunciar('No se pudo copiar. Anote el folio manualmente.');
+            }
+        });
+    });
+
+    // Confirmación guardada: la rueda se convierte en check, sin redirigir.
+    document.querySelectorAll('.envio').forEach(envio => {
+        if (reducido) {
+            envio.classList.add('envio--listo');
+            return;
+        }
+
+        window.setTimeout(() => envio.classList.add('envio--listo'), 900);
     });
 })();

@@ -1,0 +1,252 @@
+/* ==========================================================================
+   Pantalla de acceso de funcionarios (login).
+   ========================================================================== */
+/* ==========================================================================
+   Pantalla de acceso del apoderado (mockup 01 · acceso-apoderado)
+   ========================================================================== */
+
+.acceso__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+}
+
+/* Panel izquierdo oscuro */
+.acceso__panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-primary);
+    color: #FFFFFF;
+    padding: 3rem 4rem 0;
+}
+
+.acceso__panel-texto {
+    max-width: 32rem;
+    margin: 0 auto;
+    padding-top: 4rem;
+}
+
+.acceso__titulo {
+    font-size: clamp(2rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 1.75rem;
+}
+
+.acceso__regla {
+    width: 56px;
+    height: 4px;
+    background: var(--color-accent);
+    margin-bottom: 2.5rem;
+}
+
+.acceso__panel-parrafo {
+    color: var(--color-text-panel);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin: 0 0 2.5rem;
+}
+
+.acceso__pasos {
+    color: var(--color-panel-soft);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.acceso__panel-pie {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+    margin: auto -4rem 0;
+    background: var(--color-primary-strong);
+    color: var(--color-panel-muted);
+    font-size: 0.75rem;
+}
+
+/* Logo oficial del colegio: emblema circular con borde dorado (marco propio,
+   no se le agrega fondo ni aro adicional). */
+.acceso__logo-img {
+    display: block;
+    width: 112px;
+    height: auto;
+    user-select: none;
+}
+
+.error__card .acceso__logo-img {
+    width: 48px;
+    margin: 0 auto 1.25rem;
+}
+
+/* Panel derecho: formulario */
+.acceso__form-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+}
+
+.acceso__card {
+    width: 100%;
+    max-width: 460px;
+}
+
+.acceso__subtitulo {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+}
+
+.acceso__ayuda-titulo {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin: 0 0 2.5rem;
+}
+
+.acceso__info {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.acceso__campo {
+    margin-bottom: 2rem;
+}
+
+.acceso__etiqueta {
+    display: block;
+    color: #3D4C60;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.acceso__input {
+    display: block;
+    width: 100%;
+    height: 44px;
+    padding: 0 1rem;
+    border: 1px solid var(--color-input-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 1rem;
+}
+
+.acceso__input:focus {
+    outline: 2px solid var(--color-action);
+    outline-offset: 1px;
+}
+
+.acceso__input::placeholder {
+    color: var(--color-placeholder);
+}
+
+.acceso__boton {
+    display: block;
+    width: 100%;
+    height: 50px;
+    margin: 2.25rem 0 2rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--color-action);
+    color: #FFFFFF;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.acceso__boton:hover {
+    background: var(--color-primary);
+}
+
+.acceso__boton:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.acceso__aviso {
+    border-radius: 6px;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+}
+
+.acceso__ayuda {
+    margin-top: 1.5rem;
+}
+
+/* Aviso y resumen de errores: mismo molde que .acceso__aviso, con tono de
+   error. Iba sin estilos propios y se veía como texto suelto. */
+.acceso__alerta {
+    border-radius: 6px;
+    border-left: 4px solid var(--color-danger);
+    background: var(--color-danger-bg);
+    color: var(--color-text);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    padding: 0.75rem 1rem;
+}
+
+.acceso__alerta ul {
+    margin: 0;
+    padding-left: 1.15rem;
+}
+
+.acceso__alerta li + li {
+    margin-top: 0.3rem;
+}
+
+.acceso__ayuda p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem;
+}
+
+.acceso__enlace {
+    color: var(--color-action);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Pantalla de error */
+.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.error__card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    max-width: 460px;
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.error__card h1 {
+    font-size: 1.5rem;
+    margin: 0 0 0.75rem;
+}
+
+.error__card p {
+    color: var(--color-text-secondary);
+    margin: 0 0 0.5rem;
+}
+
+.error__card .acceso__enlace {
+    display: inline-block;
+    margin-top: 1rem;
+}
+

@@ -23,17 +23,20 @@ public class FuncionariosController : Controller
     private readonly MatriculaDbContext _db;
     private readonly UserManager<IdentityUser> _usuarios;
     private readonly EscrituraAuditada _escritura;
+    private readonly VigilanteSesion _vigilante;
     private readonly ILogger<FuncionariosController> _log;
 
     public FuncionariosController(
         MatriculaDbContext db,
         UserManager<IdentityUser> usuarios,
         EscrituraAuditada escritura,
+        VigilanteSesion vigilante,
         ILogger<FuncionariosController> log)
     {
         _db = db;
         _usuarios = usuarios;
         _escritura = escritura;
+        _vigilante = vigilante;
         _log = log;
     }
 
@@ -205,6 +208,13 @@ public class FuncionariosController : Controller
             return Task.CompletedTask;
         });
 
+        if (!activo)
+        {
+            // S-03: desactivar debe cortar el acceso ya otorgado, no esperar a
+            // que caduque la cookie.
+            await RevocarSesionesAsync(funcionario);
+        }
+
         TempData["Aviso"] = activo
             ? $"Cuenta de {funcionario.Nombre} activada."
             : $"Cuenta de {funcionario.Nombre} desactivada.";
@@ -233,8 +243,53 @@ public class FuncionariosController : Controller
             return Task.CompletedTask;
         });
 
+        // S-03: los permisos emitidos al iniciar sesión ya no representan al
+        // funcionario; se renueva el sello para que la cookie deje de servir.
+        var afectado = await _db.Funcionarios.FirstOrDefaultAsync(f => f.Id == funcionarioId);
+
+        if (afectado is not null)
+        {
+            await RevocarSesionesAsync(afectado);
+        }
+
         TempData["Aviso"] = "Rol cerrado con la fecha de hoy. El historial se conserva.";
         return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Renueva el sello de seguridad de la cuenta y olvida la comprobación
+    /// memorizada, de modo que la sesión abierta deje de conceder permisos.
+    /// </summary>
+    private async Task RevocarSesionesAsync(Funcionario funcionario)
+    {
+        IdentityUser? usuario = null;
+
+        if (!string.IsNullOrWhiteSpace(funcionario.SsoSujeto))
+        {
+            usuario = await _usuarios.FindByIdAsync(funcionario.SsoSujeto);
+        }
+
+        usuario ??= await _usuarios.FindByEmailAsync(funcionario.Correo.Trim().ToLowerInvariant());
+
+        if (usuario is null)
+        {
+            _log.LogWarning(
+                "No hay cuenta de Identity que revocar para el funcionario {Correo}.",
+                funcionario.Correo);
+            return;
+        }
+
+        var resultado = await _usuarios.UpdateSecurityStampAsync(usuario);
+
+        if (!resultado.Succeeded)
+        {
+            _log.LogWarning(
+                "No se pudo invalidar la sesión de {Correo}: {Errores}",
+                funcionario.Correo,
+                string.Join("; ", resultado.Errors.Select(error => error.Description)));
+        }
+
+        _vigilante.Invalidar(funcionario.Id);
     }
 
     private async Task CargarRolesAsync()

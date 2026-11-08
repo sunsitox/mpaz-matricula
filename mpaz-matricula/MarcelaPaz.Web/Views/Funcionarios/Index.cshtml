@@ -20,16 +20,18 @@
     }
     else
     {
-        <table class="admin__tabla">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Correo</th>
-                    <th>Roles vigentes</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Funcionarios del colegio, con sus roles vigentes y su estado.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Roles vigentes</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
             <tbody>
                 @foreach (var funcionario in Model)
                 {
@@ -48,7 +50,12 @@
                                     <form asp-action="CerrarRol" method="post">
                                         <input type="hidden" name="funcionarioId" value="@funcionario.Id" />
                                         <input type="hidden" name="rolId" value="@rol.RolId" />
-                                        <button type="submit" title="Cerrar este rol hoy">×</button>
+                                        <button type="submit"
+                                                class="admin__chip-cerrar"
+                                                aria-label="Cerrar el rol @rol.Codigo de @funcionario.Nombre"
+                                                data-ux-confirmar="¿Cerrar el rol @rol.Codigo de @funcionario.Nombre? La fecha de cierre será hoy y no se puede deshacer desde esta pantalla.">
+                                            Cerrar rol
+                                        </button>
                                     </form>
                                 </span>
                             }
@@ -75,6 +82,7 @@
                     </tr>
                 }
             </tbody>
-        </table>
+            </table>
+        </div>
     }
 </div>

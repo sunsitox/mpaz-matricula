@@ -8,13 +8,17 @@ namespace MarcelaPaz.Infrastructure.Persistence;
 /// <summary>
 /// Contexto único del portal.
 ///
-/// Las tablas de identidad (contraseñas en hash) viven en el esquema <c>auth</c> y
-/// las administra EF Core con migraciones. Las tablas del DDL institucional viven en
-/// <c>public</c> y quedan excluidas de las migraciones: su fuente de verdad es el
-/// script SQL entregado por el colegio, aquí solo se mapean.
+/// Todo el portal vive en el esquema <see cref="Esquema"/>: las tablas del DDL
+/// institucional y las de identidad (contraseñas en hash). Así esta base puede
+/// convivir con otras bases del colegio sin mezclar nombres de tablas.
+/// Las tablas institucionales quedan excluidas de las migraciones: su fuente de
+/// verdad es el script SQL, aquí solo se mapean.
 /// </summary>
 public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 {
+    /// <summary>Esquema PostgreSQL exclusivo del portal.</summary>
+    public const string Esquema = "mpaz_matricula";
+
     public MatriculaDbContext(DbContextOptions<MatriculaDbContext> options)
         : base(options)
     {
@@ -54,20 +58,31 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<RestriccionFamiliar> RestriccionesFamiliares => Set<RestriccionFamiliar>();
 
+    public DbSet<FichaVersion> FichaVersiones => Set<FichaVersion>();
+
+    public DbSet<PlantillaAutorizacion> PlantillasAutorizacion => Set<PlantillaAutorizacion>();
+
+    public DbSet<Autorizacion> Autorizaciones => Set<Autorizacion>();
+
+    public DbSet<AutorizacionAlcance> AutorizacionesAlcance => Set<AutorizacionAlcance>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        // Identity queda aislado en su propio esquema para no mezclarse con el DDL.
+        // Esquema por defecto: también ubica __EFMigrationsHistory.
+        builder.HasDefaultSchema(Esquema);
+
+        // Identity comparte el esquema del portal (no se usa "auth" genérico).
         foreach (var entidad in builder.Model.GetEntityTypes()
                      .Where(t => t.ClrType.Namespace?.StartsWith("Microsoft.AspNetCore.Identity") == true))
         {
-            entidad.SetSchema("auth");
+            entidad.SetSchema(Esquema);
         }
 
         builder.Entity<Funcionario>(e =>
         {
-            e.ToTable("funcionario", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("funcionario", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
@@ -81,7 +96,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<Rol>(e =>
         {
-            e.ToTable("rol", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("rol", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.Codigo).HasColumnName("codigo").HasMaxLength(30).IsRequired();
@@ -91,7 +106,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<FuncionarioRol>(e =>
         {
-            e.ToTable("funcionario_rol", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("funcionario_rol", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => new { x.FuncionarioId, x.RolId });
             e.Property(x => x.FuncionarioId).HasColumnName("funcionario_id");
             e.Property(x => x.RolId).HasColumnName("rol_id");
@@ -107,7 +122,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<RolPermiso>(e =>
         {
-            e.ToTable("rol_permiso", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("rol_permiso", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => new { x.RolId, x.Area, x.Accion });
             e.Property(x => x.RolId).HasColumnName("rol_id");
             e.Property(x => x.Area).HasColumnName("area").HasMaxLength(30);
@@ -116,7 +131,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<RegistroAcceso>(e =>
         {
-            e.ToTable("registros_acceso", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("registros_acceso", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.FuncionarioId).HasColumnName("funcionario_id");
@@ -133,7 +148,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
         // Registro único de estudiantes: sólo lectura para la ficha.
         builder.Entity<Estudiante>(e =>
         {
-            e.ToTable("estudiante", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("estudiante", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.TipoIdentificador).HasColumnName("tipo_identificador").HasMaxLength(10).IsRequired();
@@ -152,7 +167,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
         // Historial de matrículas: cada año su propio registro.
         builder.Entity<MatriculaAnual>(e =>
         {
-            e.ToTable("matricula_anual", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("matricula_anual", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -162,12 +177,14 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(20).IsRequired();
             e.Property(x => x.CreadaPor).HasColumnName("creada_por");
             e.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
+            e.Property(x => x.ConfirmadaEn).HasColumnName("confirmada_en");
+            e.Property(x => x.ConfirmadaPor).HasColumnName("confirmada_por");
             e.HasOne(x => x.Curso).WithMany().HasForeignKey(x => x.CursoId);
         });
 
         builder.Entity<Curso>(e =>
         {
-            e.ToTable("curso", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("curso", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(30).IsRequired();
@@ -176,7 +193,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<Comuna>(e =>
         {
-            e.ToTable("comuna", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("comuna", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(80).IsRequired();
@@ -185,7 +202,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
         // Personas vinculadas al estudiante (madre, padre, apoderados).
         builder.Entity<Persona>(e =>
         {
-            e.ToTable("persona", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("persona", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.TipoIdentificador).HasColumnName("tipo_identificador").HasMaxLength(10).IsRequired();
@@ -200,7 +217,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<EstudiantePersona>(e =>
         {
-            e.ToTable("estudiante_persona", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("estudiante_persona", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -217,7 +234,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<ContactoEmergencia>(e =>
         {
-            e.ToTable("contacto_emergencia", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("contacto_emergencia", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -231,7 +248,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<RetiroAutorizado>(e =>
         {
-            e.ToTable("retiro_autorizado", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("retiro_autorizado", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -245,7 +262,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<SituacionMedica>(e =>
         {
-            e.ToTable("situacion_medica", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("situacion_medica", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -258,17 +275,19 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<AntecedenteSalud>(e =>
         {
-            e.ToTable("antecedente_salud", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("antecedente_salud", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
             e.Property(x => x.TieneSituacionMedica).HasColumnName("tiene_situacion_medica");
             e.Property(x => x.NecesidadesAtencion).HasColumnName("necesidades_atencion");
+            e.Property(x => x.ContactoSanitarioNombre).HasColumnName("contacto_sanitario_nombre").HasMaxLength(150);
+            e.Property(x => x.ContactoSanitarioTelefono).HasColumnName("contacto_sanitario_telefono").HasMaxLength(20);
         });
 
         builder.Entity<AntecedenteApoyo>(e =>
         {
-            e.ToTable("antecedente_apoyo", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("antecedente_apoyo", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
@@ -279,7 +298,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<RestriccionFamiliar>(e =>
         {
-            e.ToTable("restriccion_familiar", "public", t => t.ExcludeFromMigrations());
+            e.ToTable("restriccion_familiar", Esquema, t => t.ExcludeFromMigrations());
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
             e.Property(x => x.EstudiantePersonaId).HasColumnName("estudiante_persona_id");
@@ -288,6 +307,67 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
             e.HasOne(x => x.EstudiantePersona).WithMany().HasForeignKey(x => x.EstudiantePersonaId);
+        });
+
+        // Versiones cerradas de la ficha: folio y copia congelada de los datos.
+        builder.Entity<FichaVersion>(e =>
+        {
+            e.ToTable("ficha_version", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.MatriculaId).HasColumnName("matricula_id");
+            e.Property(x => x.NumeroVersion).HasColumnName("numero_version");
+            e.Property(x => x.Folio).HasColumnName("folio").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(12).IsRequired();
+            e.Property(x => x.DatosSnapshot).HasColumnName("datos_snapshot").HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.GeneradaPor).HasColumnName("generada_por");
+            e.Property(x => x.GeneradaEn).HasColumnName("generada_en");
+            e.Property(x => x.PdfDocumentoId).HasColumnName("pdf_documento_id");
+            e.Property(x => x.FechaFirma).HasColumnName("fecha_firma");
+            e.Property(x => x.FirmantePersonaId).HasColumnName("firmante_persona_id");
+        });
+
+        builder.Entity<PlantillaAutorizacion>(e =>
+        {
+            e.ToTable("plantilla_autorizacion", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(15).IsRequired();
+            e.Property(x => x.Version).HasColumnName("version");
+            e.Property(x => x.Texto).HasColumnName("texto").IsRequired();
+            e.Property(x => x.AprobadoPor).HasColumnName("aprobado_por").HasMaxLength(150);
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+        });
+
+        builder.Entity<Autorizacion>(e =>
+        {
+            e.ToTable("autorizacion", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(15).IsRequired();
+            e.Property(x => x.PlantillaId).HasColumnName("plantilla_id");
+            e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(12).IsRequired();
+            e.Property(x => x.Proposito).HasColumnName("proposito");
+            e.Property(x => x.FichaVersionId).HasColumnName("ficha_version_id");
+            e.Property(x => x.FirmantePersonaId).HasColumnName("firmante_persona_id");
+            e.Property(x => x.FechaFirma).HasColumnName("fecha_firma");
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.RevocadaEn).HasColumnName("revocada_en");
+            e.Property(x => x.MotivoRevocacion).HasColumnName("motivo_revocacion");
+            e.HasMany(x => x.Alcances).WithOne().HasForeignKey(a => a.AutorizacionId);
+        });
+
+        builder.Entity<AutorizacionAlcance>(e =>
+        {
+            e.ToTable("autorizacion_alcance", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.AutorizacionId).HasColumnName("autorizacion_id");
+            e.Property(x => x.Alcance).HasColumnName("alcance").HasMaxLength(60).IsRequired();
+            e.Property(x => x.Otorgado).HasColumnName("otorgado");
         });
     }
 }

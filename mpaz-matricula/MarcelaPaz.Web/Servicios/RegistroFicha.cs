@@ -1,9 +1,12 @@
 using MarcelaPaz.Domain.Entidades;
 using MarcelaPaz.Domain.Identificacion;
 using MarcelaPaz.Infrastructure.Persistence;
+using MarcelaPaz.Web.Models;
+using MarcelaPaz.Web.Models.Validaciones;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 
 namespace MarcelaPaz.Web.Servicios;
 
@@ -75,27 +78,28 @@ public class RegistroFicha
         List<string> avisos,
         CancellationToken ct)
     {
-        var rut = NormalizarRut(Texto(datos, "cédula de identidad"));
+        var tipoDocumento = TipoDocumento(Texto(datos, "tipo identificador"));
+        var documento = NormalizarDocumento(tipoDocumento, Texto(datos, "cédula de identidad"));
         var nombres = Texto(datos, "nombres");
         var paterno = Texto(datos, "apellido paterno");
         var nacimiento = Fecha(Texto(datos, "fecha nacimiento"));
 
-        var estudiante = rut is null
+        var estudiante = documento is null
             ? null
-            : await _db.Estudiantes.FirstOrDefaultAsync(e => e.Identificador == rut, ct);
+            : await _db.Estudiantes.FirstOrDefaultAsync(e => e.Identificador == documento, ct);
 
         if (estudiante is null)
         {
-            if (rut is null || !RutValido(rut) || nombres is null || paterno is null || nacimiento is null)
+            if (documento is null || !DocumentoValido(tipoDocumento, documento) || nombres is null || paterno is null || nacimiento is null)
             {
-                avisos.Add("El estudiante aún no se registra en la base: se necesitan RUN válido, nombres, apellido paterno y fecha de nacimiento.");
+                avisos.Add("El estudiante aún no se registra en la base: se necesitan documento válido (RUN o IPE/IPA), nombres, apellido paterno y fecha de nacimiento.");
                 return;
             }
 
             estudiante = new Estudiante
             {
-                TipoIdentificador = "RUN",
-                Identificador = rut,
+                TipoIdentificador = tipoDocumento,
+                Identificador = documento,
                 Nombres = nombres,
                 ApellidoPaterno = paterno,
                 ApellidoMaterno = Texto(datos, "apellido materno"),
@@ -110,6 +114,7 @@ public class RegistroFicha
         else
         {
             // Sólo se reemplaza lo que vino con valor: nunca se borra lo ya guardado.
+            estudiante.TipoIdentificador = tipoDocumento;
             estudiante.Nombres = nombres ?? estudiante.Nombres;
             estudiante.ApellidoPaterno = paterno ?? estudiante.ApellidoPaterno;
             estudiante.ApellidoMaterno = Texto(datos, "apellido materno") ?? estudiante.ApellidoMaterno;
@@ -406,6 +411,8 @@ public class RegistroFicha
         antecedente.NecesidadesAtencion = saleAlBano is null
             ? antecedente.NecesidadesAtencion
             : $"Sale al baño durante la jornada: {(saleAlBano.Value ? "SI" : "NO")}.";
+        antecedente.ContactoSanitarioNombre = Texto(datos, "contacto sanitario: nombre") ?? antecedente.ContactoSanitarioNombre;
+        antecedente.ContactoSanitarioTelefono = Texto(datos, "contacto sanitario: teléfono") ?? antecedente.ContactoSanitarioTelefono;
 
         var declaradas = new List<SituacionMedica>();
 
@@ -441,11 +448,33 @@ public class RegistroFicha
         if (declaradas.Count > 0)
         {
             var anteriores = await _db.SituacionesMedicas
-                .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null)
+                .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null && s.Tipo != "ALERGIA")
                 .ToListAsync(ct);
 
             _db.SituacionesMedicas.RemoveRange(anteriores);
             _db.SituacionesMedicas.AddRange(declaradas);
+        }
+
+        // Alergias: se guardan como situación médica de tipo ALERGIA.
+        var alergias = Texto(datos, "alergias");
+        if (alergias is not null)
+        {
+            var alergiasAnteriores = await _db.SituacionesMedicas
+                .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null && s.Tipo == "ALERGIA")
+                .ToListAsync(ct);
+
+            _db.SituacionesMedicas.RemoveRange(alergiasAnteriores);
+
+            if (!SinAlergias(alergias))
+            {
+                _db.SituacionesMedicas.Add(new SituacionMedica
+                {
+                    EstudianteId = estudiante.Id,
+                    Tipo = "ALERGIA",
+                    Descripcion = alergias,
+                    VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
+                });
+            }
         }
 
         // PIE y apoyos: un único registro por estudiante.
@@ -484,23 +513,160 @@ public class RegistroFicha
                 apoyo.ApoyosInformados = apoyosPie;
             }
         }
+
+        await GuardarAutorizacionesAsync(datos, estudiante, avisos, ct);
+    }
+
+    // ── Autorizaciones de imagen y convivencia (MAT-03 y MAT-04) ─────────────
+
+    private static readonly (string Clave, string Tipo, string Texto, string[] Alcances)[] AutorizacionesFicha =
+    [
+        ("autorización de uso de imagen (SI/NO)", "IMAGEN", FichaImpresion.TextoImagen,
+            ["CAPTACION_INTERNA", "SITIO_INSTITUCIONAL", "REDES_SOCIALES"]),
+        ("autorización de convivencia escolar (SI/NO)", "CONVIVENCIA", FichaImpresion.TextoConvivencia, []),
+    ];
+
+    /// <summary>
+    /// Guarda la respuesta a cada autorización con su estado (OTORGADA/RECHAZADA)
+    /// y sus alcances. Si el colegio todavía no aprueba el texto, la plantilla queda
+    /// registrada como pendiente de aprobación para no bloquear la captura.
+    /// </summary>
+    private async Task GuardarAutorizacionesAsync(
+        IReadOnlyDictionary<string, string> datos,
+        Estudiante estudiante,
+        List<string> avisos,
+        CancellationToken ct)
+    {
+        var hoy = DateOnly.FromDateTime(DateTime.Now);
+        var firmante = await PersonaFirmanteAsync(datos, ct);
+
+        foreach (var (clave, tipo, texto, alcances) in AutorizacionesFicha)
+        {
+            var respuesta = SiNo(Texto(datos, clave));
+            if (respuesta is null)
+            {
+                continue;
+            }
+
+            var plantilla = await _db.PlantillasAutorizacion
+                .FirstOrDefaultAsync(p => p.Tipo == tipo && p.VigenteHasta == null, ct);
+
+            if (plantilla is null)
+            {
+                var ultima = await _db.PlantillasAutorizacion
+                    .Where(p => p.Tipo == tipo)
+                    .MaxAsync(p => (short?)p.Version, ct) ?? 0;
+
+                plantilla = new PlantillaAutorizacion
+                {
+                    Tipo = tipo,
+                    Version = (short)(ultima + 1),
+                    Texto = texto,
+                    AprobadoPor = "Pendiente de aprobación (Dirección)",
+                    VigenteDesde = hoy,
+                };
+
+                _db.PlantillasAutorizacion.Add(plantilla);
+                await _db.SaveChangesAsync(ct);
+            }
+
+            var autorizacion = await _db.Autorizaciones
+                .Include(a => a.Alcances)
+                .FirstOrDefaultAsync(
+                    a => a.EstudianteId == estudiante.Id && a.Tipo == tipo && a.VigenteHasta == null,
+                    ct);
+
+            if (autorizacion is null)
+            {
+                autorizacion = new Autorizacion
+                {
+                    EstudianteId = estudiante.Id,
+                    Tipo = tipo,
+                    PlantillaId = plantilla.Id,
+                };
+
+                _db.Autorizaciones.Add(autorizacion);
+            }
+
+            // ck_aut_otorgada exige firmante y fecha cuando la respuesta es OTORGADA.
+            if (respuesta.Value && firmante is null)
+            {
+                avisos.Add($"La autorización de {tipo.ToLowerInvariant()} quedó pendiente: no se encontró la persona firmante.");
+                autorizacion.Estado = "PENDIENTE";
+                autorizacion.FirmantePersonaId = null;
+                autorizacion.FechaFirma = null;
+            }
+            else
+            {
+                autorizacion.Estado = respuesta.Value ? "OTORGADA" : "RECHAZADA";
+                autorizacion.FirmantePersonaId = firmante;
+                autorizacion.FechaFirma = hoy;
+            }
+
+            autorizacion.VigenteDesde = hoy;
+            autorizacion.VigenteHasta = null;
+
+            if (alcances.Length > 0)
+            {
+                _db.AutorizacionesAlcance.RemoveRange(autorizacion.Alcances);
+                autorizacion.Alcances.Clear();
+
+                foreach (var alcance in alcances)
+                {
+                    autorizacion.Alcances.Add(new AutorizacionAlcance
+                    {
+                        Alcance = alcance,
+                        Otorgado = respuesta.Value,
+                    });
+                }
+            }
+        }
     }
 
     // ── Apoyo ────────────────────────────────────────────────────────────────
+
+    /// <summary>Persona que firma: apoderado principal, madre o padre, en ese orden.</summary>
+    private async Task<int?> PersonaFirmanteAsync(
+        IReadOnlyDictionary<string, string> datos,
+        CancellationToken ct)
+    {
+        foreach (var prefijo in new[] { "apoderado principal", "madre", "padre" })
+        {
+            var rut = NormalizarRut(Texto(datos, $"{prefijo}: cédula identidad"));
+
+            if (rut is null || !RutValido(rut))
+            {
+                continue;
+            }
+
+            var id = await _db.Personas
+                .Where(p => p.Identificador == rut)
+                .Select(p => p.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (id != 0)
+            {
+                return id;
+            }
+        }
+
+        return null;
+    }
 
     private async Task<Estudiante?> EstudianteActualAsync(
         IReadOnlyDictionary<string, string> datos,
         List<string> avisos,
         CancellationToken ct)
     {
-        var rut = NormalizarRut(Texto(datos, "cédula de identidad"));
-        var estudiante = rut is null
+        var tipo = TipoDocumento(Texto(datos, "tipo identificador"));
+        var documento = NormalizarDocumento(tipo, Texto(datos, "cédula de identidad"));
+        var estudiante = documento is null
             ? null
-            : await _db.Estudiantes.FirstOrDefaultAsync(e => e.Identificador == rut, ct);
+            : await _db.Estudiantes.FirstOrDefaultAsync(e => e.Identificador == documento, ct);
 
         if (estudiante is null)
         {
-            avisos.Add("El estudiante todavía no está registrado en la base: complete el paso 1 con un RUN válido.");
+            avisos.Add("El estudiante todavía no está registrado en la base: complete el paso 1 con un documento válido.");
         }
 
         return estudiante;
@@ -671,6 +837,249 @@ public class RegistroFicha
 
         return cursos.FirstOrDefault(c => SinTildes(c.Nombre) == objetivo)
             ?? cursos.FirstOrDefault(c => SinTildes(c.Nombre).StartsWith(SinTildes($"{grado} "), StringComparison.Ordinal));
+    }
+
+    // ── Cierre de la ficha (MAT-08) ──────────────────────────────────────────
+
+    /// <summary>Resultado del cierre: expediente, versión, folio y número de versión.</summary>
+    public sealed record CierreFicha(int EstudianteId, int MatriculaId, int FichaVersionId, string Folio, short Version);
+
+    /// <summary>
+    /// Cierra el borrador y genera la versión firmable: congela los datos en
+    /// <c>ficha_version.datos_snapshot</c>, obtiene el folio institucional y deja
+    /// la matrícula en FICHA_GENERADA. Devuelve null si falta el estudiante o su
+    /// matrícula del año.
+    /// </summary>
+    public async Task<CierreFicha?> CerrarFichaAsync(
+        IReadOnlyDictionary<string, string> datos,
+        int anio,
+        int funcionarioId,
+        CancellationToken ct = default)
+    {
+        var documento = NormalizarDocumento(
+            TipoDocumento(Texto(datos, "tipo identificador")),
+            Texto(datos, "cédula de identidad"));
+
+        if (documento is null)
+        {
+            return null;
+        }
+
+        var estudiante = await _db.Estudiantes.FirstOrDefaultAsync(e => e.Identificador == documento, ct);
+        if (estudiante is null)
+        {
+            return null;
+        }
+
+        var matricula = await _db.Matriculas.FirstOrDefaultAsync(
+            m => m.EstudianteId == estudiante.Id && m.Anio == anio && m.Estado != "ANULADA", ct);
+
+        if (matricula is null)
+        {
+            return null;
+        }
+
+        var ultimaVersion = await _db.FichaVersiones
+            .Where(v => v.MatriculaId == matricula.Id)
+            .MaxAsync(v => (short?)v.NumeroVersion, ct) ?? 0;
+
+        var version = (short)(ultimaVersion + 1);
+        // siguiente_folio recibe SMALLINT: sin el cast, PostgreSQL no resuelve
+        // la función al enviar el año como integer.
+        var folio = await _db.Database
+            .SqlQuery<string>($"SELECT siguiente_folio(CAST({anio} AS smallint)) AS \"Value\"")
+            .SingleAsync(ct);
+
+        var vigentes = await _db.FichaVersiones
+            .Where(v => v.MatriculaId == matricula.Id && v.Estado == "VIGENTE")
+            .ToListAsync(ct);
+
+        foreach (var anterior in vigentes)
+        {
+            anterior.Estado = "REEMPLAZADA";
+        }
+
+        var ficha = new FichaVersion
+        {
+            MatriculaId = matricula.Id,
+            NumeroVersion = version,
+            Folio = folio,
+            Estado = "VIGENTE",
+            DatosSnapshot = JsonSerializer.Serialize(new
+            {
+                campos = new SortedDictionary<string, string>(
+                    datos.ToDictionary(par => par.Key, par => par.Value)),
+                generado_en = DateTimeOffset.UtcNow,
+            }),
+            GeneradaPor = funcionarioId,
+            GeneradaEn = DateTimeOffset.UtcNow,
+        };
+
+        _db.FichaVersiones.Add(ficha);
+
+        if (matricula.Estado == "BORRADOR")
+        {
+            matricula.Estado = "FICHA_GENERADA";
+            matricula.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new CierreFicha(estudiante.Id, matricula.Id, ficha.Id, folio, version);
+    }
+
+    /// <summary>Versión vigente de la ficha para un estudiante y año, si existe.</summary>
+    public Task<FichaVersion?> FichaVigenteAsync(int estudianteId, int anio, CancellationToken ct = default) =>
+        _db.FichaVersiones
+            .Join(
+                _db.Matriculas.Where(m => m.EstudianteId == estudianteId && m.Anio == anio),
+                version => version.MatriculaId,
+                matricula => matricula.Id,
+                (version, _) => version)
+            .Where(version => version.Estado == "VIGENTE")
+            .OrderByDescending(version => version.NumeroVersion)
+            .FirstOrDefaultAsync(ct);
+
+    /// <summary>Recupera los campos congelados de una versión cerrada.</summary>
+    public static Dictionary<string, string> DatosDesdeSnapshot(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new Dictionary<string, string>();
+        }
+
+        try
+        {
+            using var documento = JsonDocument.Parse(json);
+
+            if (documento.RootElement.TryGetProperty("campos", out var campos)
+                && campos.ValueKind == JsonValueKind.Object)
+            {
+                return campos.Deserialize<Dictionary<string, string>>() ?? new Dictionary<string, string>();
+            }
+        }
+        catch (JsonException)
+        {
+            // Un snapshot ilegible no debe romper la consulta: se trata como vacío.
+        }
+
+        return new Dictionary<string, string>();
+    }
+
+    /// <summary>
+    /// Registra la recepción de la ficha firmada (BORRADOR → FICHA_GENERADA →
+    /// FIRMADA). El escaneo del documento firmado se agrega en la Etapa II.
+    /// </summary>
+    public async Task<string?> RegistrarFirmaAsync(
+        int matriculaId,
+        DateOnly fechaFirma,
+        CancellationToken ct = default)
+    {
+        var matricula = await _db.Matriculas.FirstOrDefaultAsync(m => m.Id == matriculaId, ct);
+
+        if (matricula is null)
+        {
+            return "No se encontró la matrícula seleccionada.";
+        }
+
+        if (matricula.Estado == "FIRMADA")
+        {
+            return null;
+        }
+
+        if (matricula.Estado != "FICHA_GENERADA")
+        {
+            return "Sólo se registra la firma de una matrícula con la ficha generada.";
+        }
+
+        var ficha = await _db.FichaVersiones
+            .Where(v => v.MatriculaId == matriculaId && v.Estado == "VIGENTE")
+            .OrderByDescending(v => v.NumeroVersion)
+            .FirstOrDefaultAsync(ct);
+
+        if (ficha is null)
+        {
+            return "La matrícula no tiene una ficha vigente: genere la ficha antes de registrar la firma.";
+        }
+
+        ficha.FechaFirma = fechaFirma;
+        matricula.Estado = "FIRMADA";
+        matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return null;
+    }
+
+    /// <summary>Confirma la matrícula según el procedimiento oficial (MAT-04).</summary>
+    public async Task<string?> ConfirmarAsync(int matriculaId, int funcionarioId, CancellationToken ct = default)
+    {
+        var matricula = await _db.Matriculas.FirstOrDefaultAsync(m => m.Id == matriculaId, ct);
+
+        if (matricula is null)
+        {
+            return "No se encontró la matrícula seleccionada.";
+        }
+
+        if (matricula.Estado == "CONFIRMADA")
+        {
+            return null;
+        }
+
+        if (matricula.Estado is not ("FICHA_GENERADA" or "FIRMADA"))
+        {
+            return "Sólo se confirma una matrícula con la ficha generada o firmada.";
+        }
+
+        var tieneFicha = await _db.FichaVersiones
+            .AnyAsync(v => v.MatriculaId == matriculaId && v.Estado == "VIGENTE", ct);
+
+        if (!tieneFicha)
+        {
+            return "La matrícula no tiene una ficha vigente: genere la ficha antes de confirmar.";
+        }
+
+        matricula.Estado = "CONFIRMADA";
+        matricula.ConfirmadaEn = DateTimeOffset.UtcNow;
+        matricula.ConfirmadaPor = funcionarioId;
+        matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return null;
+    }
+
+    private static string TipoDocumento(string? tipo)
+    {
+        var limpio = (tipo ?? "RUN").Trim().ToUpperInvariant();
+
+        return limpio is "IPE" or "IPA" ? limpio : "RUN";
+    }
+
+    private static string? NormalizarDocumento(string tipo, string? documento)
+    {
+        if (string.IsNullOrWhiteSpace(documento))
+        {
+            return null;
+        }
+
+        return tipo == "RUN"
+            ? RutChileno.Limpiar(documento)
+            : documento.Trim().ToUpperInvariant();
+    }
+
+    private static bool DocumentoValido(string tipo, string documento) =>
+        tipo == "RUN"
+            ? RutChileno.EsValido(documento)
+            : IdentificadorAttribute.EsValido(documento, tipo);
+
+    private static bool SinAlergias(string texto)
+    {
+        var limpio = SinTildes(texto);
+
+        return limpio.StartsWith("ningun", StringComparison.Ordinal)
+            || limpio.StartsWith("sin alerg", StringComparison.Ordinal)
+            || limpio is "no" or "ninguna";
     }
 
     private static string? Texto(IReadOnlyDictionary<string, string> datos, string clave)

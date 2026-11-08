@@ -1,15 +1,15 @@
 @model MarcelaPaz.Web.Models.BusquedaFicha
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Buscar estudiante";
+    ViewData["Title"] = "Matrícula";
 }
 
 <div class="admin__tarjeta">
-    <h1 class="admin__titulo-seccion">Matrícula 2027</h1>
+    <h1 class="admin__titulo-seccion">Matrícula @Model.Anio</h1>
     <p class="admin__ayuda">
-        Busque al estudiante por RUN. Si ya tuvo matrícula en un año anterior se abre la
+        Busque al estudiante por RUN o por IPE/IPA. Si ya tuvo matrícula en un año anterior se abre la
         renovación con sus datos; si no está registrado, se inicia una matrícula nueva.
-        Puede escribir el RUN con o sin puntos.
+        El RUN se puede escribir con o sin puntos.
     </p>
 
     @if (!string.IsNullOrWhiteSpace(Model.Error))
@@ -19,9 +19,17 @@
 
     <form method="get" asp-controller="Ficha" asp-action="Buscar">
         <div class="acceso__campo">
-            <label class="acceso__etiqueta" for="rut">RUN del estudiante</label>
+            <label class="acceso__etiqueta" for="tipo">Tipo de documento</label>
+            <select class="acceso__input" id="tipo" name="tipo">
+                <option value="RUN" selected="@(Model.Tipo == "RUN")">RUN (cédula nacional)</option>
+                <option value="IPE" selected="@(Model.Tipo == "IPE")">IPE</option>
+                <option value="IPA" selected="@(Model.Tipo == "IPA")">IPA</option>
+            </select>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="rut">RUN o número IPE/IPA del estudiante</label>
             <input class="acceso__input" id="rut" name="rut" value="@Model.Rut"
-                   placeholder="Ej: 20.114.567-8" autocomplete="off" />
+                   placeholder="Ej: 20.114.567-8 o IPE-1234" autocomplete="off" />
         </div>
         <button type="submit" class="admin__boton admin__boton--primario">Buscar</button>
     </form>
@@ -34,7 +42,7 @@
         {
             <h2 class="admin__titulo-seccion">Sin registro</h2>
             <p class="admin__ayuda">
-                No hay un estudiante con el RUN <strong>@Model.Rut</strong> en el registro único.
+                No hay un estudiante con el documento <strong>@Model.Rut</strong> en el registro único.
                 Corresponde una matrícula nueva.
             </p>
             <form method="post" asp-controller="Ficha" asp-action="Nueva">
@@ -45,7 +53,7 @@
         {
             <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
             <p class="admin__ayuda">
-                Ya tiene matrícula 2027 en estado <strong>@Model.EstadoVigente</strong>.
+                Ya tiene matrícula @Model.Anio en estado <strong>@Model.EstadoVigente</strong>.
                 No se crea un segundo expediente para el mismo año.
             </p>
             <a class="admin__boton" asp-controller="Home" asp-action="Index">Volver al inicio</a>
@@ -55,12 +63,12 @@
             <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
             <p class="admin__ayuda">
                 Estudiante ya inscrito: matrícula @Model.AnioAnterior@(string.IsNullOrWhiteSpace(Model.CursoAnterior) ? "" : $" · {Model.CursoAnterior}").
-                La renovación 2027 abre un expediente nuevo con estos datos; la matrícula
+                La renovación @Model.Anio abre un expediente nuevo con estos datos; la matrícula
                 anterior queda intacta.
             </p>
             <form method="post" asp-controller="Ficha" asp-action="Renovar">
                 <input type="hidden" name="id" value="@Model.EstudianteId" />
-                <button type="submit" class="admin__boton admin__boton--primario">Renovar matrícula 2027</button>
+                <button type="submit" class="admin__boton admin__boton--primario">Renovar matrícula @Model.Anio</button>
             </form>
         }
         else

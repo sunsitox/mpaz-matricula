@@ -1,8 +1,9 @@
 # Entrega final con Docker · Portal de Matrícula MPAZ
 
 Empaquetado reproducible: la aplicación corre en su propia imagen y PostgreSQL 16
-se inicializa solo con el DDL institucional, el esquema `auth` de Identity, los
-datos mock y los permisos mínimos del rol de aplicación.
+se inicializa solo con el DDL institucional, las tablas de Identity y el historial de
+migraciones en el esquema `mpaz_matricula`, los datos mock y los permisos mínimos del
+rol de aplicación.
 
 ## Requisito
 
@@ -27,7 +28,7 @@ docker compose ps
 La base se carga **solo la primera vez**, cuando el volumen `datos-db` está vacío.
 Orden de carga: `00-rol-app.sql` → `01-ddl-institucional.sql` →
 `02-identidad-auth.sql` → `03-datos-mock.sql` → `04-datos-gestion-expediente.sql`
-→ `05-privilegios-app.sql`.
+→ `05-privilegios-app.sql` → `06-anio-escolar.sql`.
 
 La aplicación queda en:
 
@@ -35,17 +36,27 @@ La aplicación queda en:
 http://127.0.0.1:5101
 ```
 
-## Credenciales de prueba
+## Credenciales
 
-| Elemento | Valor |
+El compose no trae contraseñas por defecto: `docker compose` se detiene si `.env`
+no define `CLAVE_POSTGRES` y `CLAVE_APP`. Genere claves aleatorias antes del
+primer arranque (por ejemplo `openssl rand -base64 24`).
+
+| Elemento | Variable en `.env` |
 | --- | --- |
 | Base | `mpaz_matricula` |
-| Rol de la aplicación | `mpaz_app` / `mpaz_app_2027` |
-| Superusuario PostgreSQL | `postgres` / `postgres_mpaz_2027` |
-| Cuenta de funcionario | `mteresa.lagos@mpaz.cl` / `Mpaz2027segura` |
+| Dominio público del portal | `ALLOWED_HOSTS` (obligatorio; no se acepta `*`) |
+| Rol de la aplicación | `mpaz_app` / `CLAVE_APP` |
+| Superusuario PostgreSQL | `postgres` / `CLAVE_POSTGRES` |
+| Cuenta de funcionario | se crea una por persona desde el portal, no se publica ninguna |
 
-Todas se definen en `.env` y se pueden cambiar ahí. Si cambias `CLAVE_APP`,
-actualiza también `db-init/00-rol-app.sql` antes del primer arranque.
+`Seguridad__ContrasenaInicial` (`CLAVE_INICIAL`) sólo se usa cuando ya existen
+funcionarios sin cuenta de Identity: se define para el primer arranque y se
+retira enseguida. En producción el portal aborta si detecta una de las claves
+que alguna vez estuvieron en el repositorio.
+
+Si cambias `CLAVE_APP`, actualiza también `db-init/00-rol-app.sql` antes del
+primer arranque.
 
 ## Exposición pública
 
@@ -54,6 +65,10 @@ Cloudflare a `http://127.0.0.1:5101` con Cloudflare Access delante.
 
 El inicio de sesión usa cookie `Secure`, así que debe probarse por HTTPS
 (dominio del colegio o túnel), no por `http://IP:5101`.
+
+`ALLOWED_HOSTS` debe listar el dominio público (por ejemplo
+`matriculas.mpaz.cl`). Sin esa variable el portal sólo acepta `localhost` y
+`127.0.0.1`, y responde 400 al resto de los encabezados `Host`.
 
 ## Operación
 

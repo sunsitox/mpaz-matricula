@@ -1,17 +1,17 @@
+SET search_path TO mpaz_matricula, public;
+
 -- =====================================================================
 -- Alumnos de prueba · Portal de Matrícula 2027
 -- Generado desde alumnos-mockup-2027.json (10 casos ficticios).
 --
--- NO se ejecutó contra un servidor: no hay PostgreSQL en el equipo de
--- desarrollo. Probarlo primero en una base de prueba, nunca en producción.
+-- Sólo para bases de desarrollo o demostración: nunca en producción.
 --
--- Uso:
---   psql "postgresql://USUARIO:CLAVE@localhost:5432/matricula_2027"
---        -v ON_ERROR_STOP=1 -f 02-alumnos-prueba.sql
+-- Uso (con el DDL aplicado en el esquema mpaz_matricula):
+--   psql -d <base> -v ON_ERROR_STOP=1 -f "datos mock.sql"
 --
 -- Idempotente: se puede correr dos veces sin duplicar estudiantes, personas
--- ni matrículas. Todo ocurre en una transacción. Requiere el DDL aplicado
--- (funciones normalizar_rut y rut_valido).
+-- ni matrículas. Todo ocurre en una transacción. Requiere las funciones
+-- normalizar_rut y rut_valido del DDL.
 -- =====================================================================
 
 begin;
@@ -39,10 +39,10 @@ insert into curso (nombre) values
 on conflict (nombre) do nothing;
 
 -- 1. Estudiantes (Bloque A). El RUN se normaliza con la función del DDL.
-insert into estudiante (identificador, nombres, apellido_paterno, apellido_materno,
-                        fecha_nacimiento, nacionalidad, domicilio, comuna_id,
-                        sale_solo_final_jornada)
-select normalizar_rut(v.run), v.nombres, v.ap_pat, v.ap_mat, v.nac::date,
+insert into estudiante (tipo_identificador, identificador, nombres, apellido_paterno,
+                        apellido_materno, fecha_nacimiento, nacionalidad, domicilio,
+                        comuna_id, sale_solo_final_jornada)
+select 'RUN', normalizar_rut(v.run), v.nombres, v.ap_pat, v.ap_mat, v.nac::date,
        v.nacionalidad, v.domicilio, (select id from comuna where nombre = 'San Bernardo'),
        v.sale_solo
 from (values

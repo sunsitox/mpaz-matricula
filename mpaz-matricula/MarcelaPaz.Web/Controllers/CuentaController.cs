@@ -17,22 +17,28 @@ namespace MarcelaPaz.Web.Controllers;
 public class CuentaController : Controller
 {
     private readonly SignInManager<IdentityUser> _sesion;
+    private readonly UserManager<IdentityUser> _usuarios;
     private readonly CuentasFuncionario _cuentas;
     private readonly MatriculaDbContext _db;
     private readonly IAuditoriaAcceso _auditoria;
+    private readonly IConfiguration _configuracion;
     private readonly ILogger<CuentaController> _log;
 
     public CuentaController(
         SignInManager<IdentityUser> sesion,
+        UserManager<IdentityUser> usuarios,
         CuentasFuncionario cuentas,
         MatriculaDbContext db,
         IAuditoriaAcceso auditoria,
+        IConfiguration configuracion,
         ILogger<CuentaController> log)
     {
         _sesion = sesion;
+        _usuarios = usuarios;
         _cuentas = cuentas;
         _db = db;
         _auditoria = auditoria;
+        _configuracion = configuracion;
         _log = log;
     }
 
@@ -134,4 +140,77 @@ public class CuentaController : Controller
     [HttpGet]
     [Authorize]
     public IActionResult SinPermiso() => View();
+
+    /// <summary>
+    /// Cambio obligatorio de la contraseña inicial compartida (S-09). El
+    /// middleware de Program.cs envía aquí mientras la cuenta la siga usando.
+    /// </summary>
+    [HttpGet]
+    [Authorize]
+    public IActionResult CambiarContrasena() => View(new CambioContrasenaForm());
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CambiarContrasena(CambioContrasenaForm form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(form);
+        }
+
+        var usuario = await _usuarios.GetUserAsync(User);
+
+        if (usuario is null)
+        {
+            await _sesion.SignOutAsync();
+            return RedirectToAction(nameof(Login));
+        }
+
+        var inicial = _configuracion["Seguridad:ContrasenaInicial"];
+
+        if (!string.IsNullOrWhiteSpace(inicial)
+            && string.Equals(form.Nueva, inicial, StringComparison.Ordinal))
+        {
+            ModelState.AddModelError(nameof(form.Nueva),
+                "La contraseña nueva no puede ser la contraseña inicial compartida.");
+            return View(form);
+        }
+
+        var resultado = await _usuarios.ChangePasswordAsync(usuario, form.Actual, form.Nueva);
+
+        if (!resultado.Succeeded)
+        {
+            foreach (var error in resultado.Errors)
+            {
+                ModelState.AddModelError(string.Empty, Traducir(error));
+            }
+
+            return View(form);
+        }
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "GENERAL",
+            "cuenta",
+            detalle: "{\"evento\":\"cambio_contrasena_inicial\"}");
+
+        // Se cierra la sesión para que el claim de cambio obligatorio no quede
+        // en la cookie actual.
+        await _sesion.SignOutAsync();
+        TempData["Aviso"] = "Contraseña actualizada. Ingrese de nuevo con su contraseña nueva.";
+
+        return RedirectToAction(nameof(Login));
+    }
+
+    private static string Traducir(IdentityError error) => error.Code switch
+    {
+        "PasswordMismatch" => "La contraseña actual no es correcta.",
+        "PasswordTooShort" => "La contraseña debe tener al menos 10 caracteres.",
+        "PasswordRequiresDigit" => "La contraseña debe incluir al menos un número.",
+        "PasswordRequiresUpper" => "La contraseña debe incluir al menos una mayúscula.",
+        "PasswordRequiresLower" => "La contraseña debe incluir al menos una minúscula.",
+        "PasswordRequiresNonAlphanumeric" => "La contraseña debe incluir un símbolo.",
+        _ => error.Description,
+    };
 }

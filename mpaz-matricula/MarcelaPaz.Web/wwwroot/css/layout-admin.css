@@ -19,7 +19,7 @@
 
 .admin__menu-titulo {
     margin: 0 0 0.75rem 0.6rem;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -159,7 +159,11 @@
 }
 
 .alumnos__volver {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    /* Objetivo táctil de al menos 24 px de alto (WCAG 2.2 · 2.5.8). */
+    min-height: 24px;
+    padding-block: 0.15rem;
     margin-bottom: 0.35rem;
 }
 
@@ -171,7 +175,8 @@
     padding: 0.65rem 0.6rem;
     border-bottom: 1px solid var(--color-border);
     background: var(--color-bg);
-    font-size: 0.72rem;
+    /* Encabezados legibles: nunca por debajo de 12 px. */
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -187,6 +192,9 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    /* Objetivo táctil de al menos 24 px de alto (WCAG 2.2 · 2.5.8). */
+    min-height: 24px;
+    padding-block: 0.15rem;
     color: inherit;
     text-decoration: none;
 }
@@ -203,8 +211,11 @@
     font-size: 0.65rem;
 }
 
+/* Los datos (RUN, curso, estado, comuna) no deben partirse en varias líneas:
+   la tabla ya se desplaza en horizontal dentro de su envoltura. */
 .alumnos__dato {
     color: var(--color-text-secondary);
+    white-space: nowrap;
 }
 
 .alumnos__nombre {
@@ -246,6 +257,11 @@
 }
 
 .alumnos__ver {
+    display: inline-flex;
+    align-items: center;
+    /* Enlace de acción de la tabla: 24 px de alto (WCAG 2.2 · 2.5.8). */
+    min-height: 24px;
+    padding-block: 0.15rem;
     color: var(--color-action);
     font-size: 0.85rem;
     font-weight: 600;
@@ -356,4 +372,16 @@
     .perfil__grid {
         grid-template-columns: 1fr;
     }
+}
+
+.admin__menu-titulo--secundario {
+    margin-top: 1.25rem;
+}
+
+/* Formularios de configuración */
+.configuracion__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
 }

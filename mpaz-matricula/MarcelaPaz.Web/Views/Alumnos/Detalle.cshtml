@@ -1,17 +1,15 @@
 @model MarcelaPaz.Web.Models.PerfilAlumno
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuracion
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Ficha del alumno";
+    ViewData["Title"] = "Estudiantes";
 
-    var exigirLogin = Configuracion.GetValue<bool>("Seguridad:ExigirInicioSesion");
-    var puedeMatricula = !exigirLogin || User.HasClaim("permiso", "GENERAL:CREAR");
+    var puedeMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
 }
 
 <div class="admin__tarjeta">
     <div class="perfil__cabecera">
         <div>
-            <a class="alumnos__volver" asp-action="Index">← Volver al listado</a>
+            <a class="alumnos__volver" asp-action="Index" asp-route-anio="@Model.Anio">← Volver al listado</a>
             <h1 class="admin__titulo-seccion">@Model.Nombre</h1>
             <p class="admin__ayuda">
                 RUN @Model.Rut
@@ -25,7 +23,8 @@
                 }
             </p>
             <div>
-                <span class="admin__chip">@(Model.EstadoActual ?? "Sin matrícula 2027")</span>
+                <span class="admin__chip">Año escolar @Model.Anio</span>
+                <span class="admin__chip">@(Model.EstadoActual ?? $"Sin matrícula {Model.Anio}")</span>
                 @if (Model.Restricciones.Count > 0)
                 {
                     <span class="admin__chip admin__chip--alerta">Restricción vigente</span>
@@ -36,6 +35,7 @@
         <div class="alumnos__acciones">
             <a class="admin__boton admin__boton--primario"
                asp-controller="Ficha" asp-action="FormularioAlumno" asp-route-id="@Model.Id"
+               asp-route-anio="@Model.Anio"
                data-ux-cargando>
                 Descargar formulario
             </a>
@@ -47,6 +47,66 @@
         </div>
     </div>
 </div>
+
+<section class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Ficha de matrícula y autorizaciones</h2>
+
+    @if (!string.IsNullOrWhiteSpace(Model.FolioFicha))
+    {
+        <div class="perfil__dato"><span>Folio</span><strong>@Model.FolioFicha</strong></div>
+        <div class="perfil__dato"><span>Versión</span><strong>@Model.VersionFicha</strong></div>
+    }
+    else
+    {
+        <p class="admin__ayuda">Sin ficha generada para el año: se genera al finalizar el asistente de matrícula.</p>
+    }
+
+    @if (!Model.PuedeVerAutorizaciones)
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de autorizaciones del apoderado.</p>
+    }
+    else if (Model.Autorizaciones.Count > 0)
+    {
+        <div class="perfil__dato">
+            <span>Autorizaciones vigentes</span>
+            <strong>@string.Join(" · ", Model.Autorizaciones)</strong>
+        </div>
+    }
+    else
+    {
+        <p class="admin__ayuda">Sin autorizaciones registradas.</p>
+    }
+
+    @if (Model.EstadoActual == "FICHA_GENERADA" && Model.MatriculaId is int fichaMatriculaId && puedeMatricula)
+    {
+        <form method="post" asp-action="RegistrarFirma" asp-route-id="@fichaMatriculaId"
+              data-ux-envio="Registrando la firma…">
+            <div class="acceso__campo">
+                <label class="acceso__etiqueta" for="fecha-firma">Fecha de la firma del apoderado</label>
+                <input class="acceso__input" id="fecha-firma" name="fecha" type="date"
+                       value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <button type="submit" class="admin__boton">Registrar ficha firmada</button>
+        </form>
+        <p class="admin__ayuda">
+            Marque este paso cuando Secretaría reciba la ficha firmada. El escaneo del documento
+            firmado se incorpora en la Etapa II.
+        </p>
+    }
+
+    @if (Model.PuedeConfirmar && Model.MatriculaId is int matriculaId && puedeMatricula)
+    {
+        <form method="post" asp-action="Confirmar" asp-route-id="@matriculaId"
+              data-ux-envio="Confirmando la matrícula…">
+            <button type="submit" class="admin__boton admin__boton--primario">
+                Confirmar matrícula
+            </button>
+        </form>
+        <p class="admin__ayuda">
+            Confirme sólo cuando la ficha esté firmada y revisada según el procedimiento oficial.
+        </p>
+    }
+</section>
 
 <div class="perfil__grid">
     <section class="admin__tarjeta">
@@ -76,15 +136,17 @@
         }
         else
         {
-            <table class="admin__tabla">
-                <thead>
-                    <tr>
-                        <th>Año</th>
-                        <th>Curso</th>
-                        <th>Matrícula</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Matrículas del estudiante, por año y estado.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Año</th>
+                            <th scope="col">Curso</th>
+                            <th scope="col">Matrícula</th>
+                            <th scope="col">Estado</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var matricula in Model.Matriculas)
                     {
@@ -96,7 +158,8 @@
                         </tr>
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
         }
     </section>
 </div>
@@ -104,22 +167,28 @@
 <section class="admin__tarjeta">
     <h2 class="admin__titulo-seccion">Apoderados</h2>
 
-    @if (Model.Apoderados.Count == 0)
+    @if (!Model.PuedeVerFamilia)
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de los datos familiares.</p>
+    }
+    else if (Model.Apoderados.Count == 0)
     {
         <p class="admin__ayuda">Sin apoderados registrados.</p>
     }
     else
     {
-        <table class="admin__tabla">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>RUN</th>
-                    <th>Vínculo</th>
-                    <th>Teléfono</th>
-                    <th>Correo</th>
-                </tr>
-            </thead>
+        <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Apoderados del estudiante, con RUN, vínculo y contacto.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">RUN</th>
+                            <th scope="col">Vínculo</th>
+                            <th scope="col">Teléfono</th>
+                            <th scope="col">Correo</th>
+                        </tr>
+                    </thead>
             <tbody>
                 @foreach (var apoderado in Model.Apoderados)
                 {
@@ -138,7 +207,8 @@
                     </tr>
                 }
             </tbody>
-        </table>
+            </table>
+        </div>
     }
 </section>
 
@@ -146,20 +216,26 @@
     <section class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Contactos de emergencia</h2>
 
-        @if (Model.Contactos.Count == 0)
+        @if (!Model.PuedeVerFamilia)
+        {
+            <p class="admin__ayuda">Su rol no incluye la consulta de los datos familiares.</p>
+        }
+        else if (Model.Contactos.Count == 0)
         {
             <p class="admin__ayuda">Sin contactos registrados.</p>
         }
         else
         {
-            <table class="admin__tabla">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Vínculo</th>
-                    </tr>
-                </thead>
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Contactos de emergencia del estudiante.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Teléfono</th>
+                            <th scope="col">Vínculo</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var contacto in Model.Contactos)
                     {
@@ -170,27 +246,34 @@
                         </tr>
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
         }
     </section>
 
     <section class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Personas autorizadas a retirar</h2>
 
-        @if (Model.Retiros.Count == 0)
+        @if (!Model.PuedeVerRetiro)
+        {
+            <p class="admin__ayuda">Su rol no incluye la consulta de las personas autorizadas a retirar.</p>
+        }
+        else if (Model.Retiros.Count == 0)
         {
             <p class="admin__ayuda">Sin personas autorizadas registradas.</p>
         }
         else
         {
-            <table class="admin__tabla">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>RUN</th>
-                        <th>Vínculo</th>
-                    </tr>
-                </thead>
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Personas autorizadas a retirar al estudiante.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">RUN</th>
+                            <th scope="col">Vínculo</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var retiro in Model.Retiros)
                     {
@@ -201,7 +284,8 @@
                         </tr>
                     }
                 </tbody>
-            </table>
+                </table>
+            </div>
         }
     </section>
 </div>
@@ -209,6 +293,13 @@
 <section class="admin__tarjeta">
     <h2 class="admin__titulo-seccion">Salud y restricciones</h2>
 
+    @if (!Model.PuedeVerSalud && !Model.PuedeVerFamilia)
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de datos de salud ni de restricciones familiares.</p>
+    }
+
+    @if (Model.PuedeVerSalud)
+    {
     <div class="perfil__dato">
         <span>¿Tiene situación médica declarada?</span>
         <strong>@(Model.TieneSituacionMedica is bool tiene ? (tiene ? "Sí" : "No") : "—")</strong>
@@ -217,17 +308,20 @@
         <span>Necesidades de atención</span>
         <strong>@(Model.NecesidadesAtencion ?? "—")</strong>
     </div>
+    }
 
-    @if (Model.Situaciones.Count > 0)
+    @if (Model.PuedeVerSalud && Model.Situaciones.Count > 0)
     {
-        <table class="admin__tabla">
-            <thead>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Descripción</th>
-                    <th>En tratamiento</th>
-                </tr>
-            </thead>
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Situaciones médicas declaradas del estudiante.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col">En tratamiento</th>
+                    </tr>
+                </thead>
             <tbody>
                 @foreach (var situacion in Model.Situaciones)
                 {
@@ -238,10 +332,11 @@
                     </tr>
                 }
             </tbody>
-        </table>
+            </table>
+        </div>
     }
 
-    @if (Model.Restricciones.Count > 0)
+    @if (Model.PuedeVerFamilia && Model.Restricciones.Count > 0)
     {
         <div class="perfil__aviso">
             <strong>Restricciones vigentes</strong>

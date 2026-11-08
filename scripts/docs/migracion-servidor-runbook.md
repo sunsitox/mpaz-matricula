@@ -34,11 +34,12 @@ El script produce en `artifacts/`:
 - `mpaz-matriculas-<UTC>-linux-x64.tar.gz`;
 - el checksum `.sha256`;
 - aplicación self-contained sin `appsettings.Development.json`, PDB, datos mock ni credenciales conocidas;
-- `efbundle` para las tablas `auth` de ASP.NET Core Identity;
-- `MPAZ_Matricula_2027_DDL.sql`, fuente de verdad de `public`;
+- `efbundle` para las tablas de ASP.NET Core Identity;
+- `01-ddl-institucional.sql`, fuente de verdad del esquema `mpaz_matricula`;
+- `90-migrar-bases-existentes.sql`, para mover una base existente a ese esquema;
 - unidad systemd y ejemplo de variables.
 
-No incluir `database/datos-prueba/` ni ejecutar `permisos-iniciales.sql` sin aprobación institucional.
+No incluir `database/datos-prueba/` ni ejecutar `03-permisos-iniciales.sql` sin aprobación institucional.
 
 ## 3. Preflight de solo lectura
 
@@ -82,7 +83,7 @@ Antes de modificar el servidor:
 sudo install -d -m 0700 /srv/mpaz-data/backups/matriculas
 sudo -u postgres pg_dump --format=custom --file \
   /srv/mpaz-data/backups/matriculas/pre-migracion-$(date -u +%Y%m%dT%H%M%SZ).dump \
-  mpaz_matricula
+  matricula
 ```
 
 Un dump en el mismo servidor no sustituye la copia externa cifrada.
@@ -130,23 +131,33 @@ Aplicar primero el DDL institucional y después la migración de Identity, usand
 ```bash
 sudo -u postgres psql --set ON_ERROR_STOP=on \
   --dbname mpaz_matricula \
-  --file /opt/mpaz-matriculas/releases/<release>/database/MPAZ_Matricula_2027_DDL.sql
+  --file /opt/mpaz-matriculas/releases/<release>/database/01-ddl-institucional.sql
 
 /opt/mpaz-matriculas/releases/<release>/efbundle \
   --connection 'Host=127.0.0.1;Port=5432;Database=mpaz_matricula;Username=<rol_migrador>;Password=<secreto>'
 ```
 
-El DDL crea objetos `public`; `efbundle` crea el esquema `auth`. No ejecutar la aplicación antes de ambos pasos.
+El DDL crea el esquema `mpaz_matricula` con todas las tablas institucionales; `efbundle` crea allí mismo las tablas de Identity y el historial de migraciones. No ejecutar la aplicación antes de ambos pasos.
+
+Si la base ya existía con las tablas institucionales en `public` y las de Identity en `auth`, ejecutar antes de `efbundle`:
+
+```bash
+sudo -u postgres psql --set ON_ERROR_STOP=on \
+  --dbname mpaz_matricula \
+  --file /opt/mpaz-matriculas/releases/<release>/database/90-migrar-bases-existentes.sql
+```
+
+El script es idempotente, conserva los datos y deja todo en `mpaz_matricula`.
 
 Aplicar y verificar los privilegios mínimos preparados:
 
 ```bash
 sudo -u postgres psql --set ON_ERROR_STOP=on \
   --dbname mpaz_matricula \
-  --file /opt/mpaz-matriculas/releases/<release>/database/privilegios-produccion.sql
+  --file /opt/mpaz-matriculas/releases/<release>/database/04-privilegios-aplicacion.sql
 ```
 
-La aplicación puede seleccionar e insertar/actualizar en `public`, administrar sus tablas `auth` y no es propietaria de los objetos. No recibe `DELETE` general: la única excepción actual es `situacion_medica`, porque `RegistroFicha` reemplaza esas filas mediante `DELETE` y luego `INSERT`. El script revoca expresamente modificación de las tablas solo-inserción y termina con consultas `has_table_privilege` para comprobar el resultado.
+La aplicación puede seleccionar e insertar/actualizar en `mpaz_matricula`, administrar sus tablas de Identity en el mismo esquema y no es propietaria de los objetos. No recibe `DELETE` general: la única excepción actual es `situacion_medica`, porque `RegistroFicha` reemplaza esas filas mediante `DELETE` y luego `INSERT`. El script revoca expresamente modificación de las tablas solo-inserción y termina con consultas `has_table_privilege` para comprobar el resultado.
 
 ## 7. Instalar un release
 

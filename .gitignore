@@ -8,6 +8,9 @@ obj/
 appsettings.*.local.json
 *.db
 *.log
+.env
+.env.*
+mpaz-matricula/database/datos-prueba/credenciales.txt
 
 # Artefactos locales de publicación
 artifacts/

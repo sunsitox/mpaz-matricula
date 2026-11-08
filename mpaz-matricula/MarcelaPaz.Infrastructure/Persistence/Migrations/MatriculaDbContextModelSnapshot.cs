@@ -18,10 +18,305 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("mpaz_matricula")
                 .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.AntecedenteApoyo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApoyosInformados")
+                        .HasColumnType("text")
+                        .HasColumnName("apoyos_informados");
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("ParticipaPie")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("participa_pie");
+
+                    b.Property<bool?>("TieneDiagnostico")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tiene_diagnostico");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("antecedente_apoyo", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.AntecedenteSalud", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("NecesidadesAtencion")
+                        .HasColumnType("text")
+                        .HasColumnName("necesidades_atencion");
+
+                    b.Property<bool?>("TieneSituacionMedica")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tiene_situacion_medica");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("antecedente_salud", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Comuna", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("comuna", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.ContactoEmergencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombre");
+
+                    b.Property<short>("Orden")
+                        .HasColumnType("smallint")
+                        .HasColumnName("orden");
+
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("telefono");
+
+                    b.Property<DateOnly?>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
+                    b.Property<string>("Vinculo")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("vinculo");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("contacto_emergencia", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Curso", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("nombre");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("curso", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Estudiante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApellidoMaterno")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("apellido_materno");
+
+                    b.Property<string>("ApellidoPaterno")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("apellido_paterno");
+
+                    b.Property<int?>("ComunaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("comuna_id");
+
+                    b.Property<string>("Domicilio")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("domicilio");
+
+                    b.Property<DateOnly>("FechaNacimiento")
+                        .HasColumnType("date")
+                        .HasColumnName("fecha_nacimiento");
+
+                    b.Property<string>("Identificador")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("identificador");
+
+                    b.Property<string>("Nacionalidad")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("nacionalidad");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nombres");
+
+                    b.Property<bool?>("SaleSoloFinalJornada")
+                        .HasColumnType("boolean")
+                        .HasColumnName("sale_solo_final_jornada");
+
+                    b.Property<string>("TipoIdentificador")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("tipo_identificador");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComunaId");
+
+                    b.ToTable("estudiante", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.EstudiantePersona", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Parentesco")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("parentesco");
+
+                    b.Property<int>("PersonaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("persona_id");
+
+                    b.Property<bool?>("TieneRestriccion")
+                        .HasColumnType("boolean")
+                        .HasColumnName("tiene_restriccion");
+
+                    b.Property<string>("TipoApoderado")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("tipo_apoderado");
+
+                    b.Property<DateOnly?>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
+                    b.Property<string>("Vinculo")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("vinculo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstudianteId");
+
+                    b.HasIndex("PersonaId");
+
+                    b.ToTable("estudiante_persona", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
 
             modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Funcionario", b =>
                 {
@@ -67,7 +362,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                     b.HasIndex("SsoSujeto")
                         .IsUnique();
 
-                    b.ToTable("funcionario", "public", t =>
+                    b.ToTable("funcionario", "mpaz_matricula", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -95,7 +390,121 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RolId");
 
-                    b.ToTable("funcionario_rol", "public", t =>
+                    b.ToTable("funcionario_rol", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.MatriculaAnual", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<short>("Anio")
+                        .HasColumnType("smallint")
+                        .HasColumnName("anio");
+
+                    b.Property<int?>("CreadaPor")
+                        .HasColumnType("integer")
+                        .HasColumnName("creada_por");
+
+                    b.Property<int?>("CursoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("curso_id");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("estado");
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CursoId");
+
+                    b.ToTable("matricula_anual", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Persona", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Apellidos")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("apellidos");
+
+                    b.Property<string>("Correo")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("correo");
+
+                    b.Property<string>("Domicilio")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("domicilio");
+
+                    b.Property<string>("Escolaridad")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("escolaridad");
+
+                    b.Property<string>("Identificador")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("identificador");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nombres");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("telefono");
+
+                    b.Property<string>("TipoIdentificador")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("tipo_identificador");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("persona", "mpaz_matricula", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -154,7 +563,102 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("registros_acceso", "public", t =>
+                    b.ToTable("registros_acceso", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.RestriccionFamiliar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("descripcion");
+
+                    b.Property<int>("EstudiantePersonaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_persona_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<DateOnly?>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstudiantePersonaId");
+
+                    b.ToTable("restriccion_familiar", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.RetiroAutorizado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Identificador")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("identificador");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nombre");
+
+                    b.Property<string>("TipoIdentificador")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("tipo_identificador");
+
+                    b.Property<DateOnly?>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
+                    b.Property<string>("Vinculo")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("vinculo");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("retiro_autorizado", "mpaz_matricula", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -186,7 +690,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                     b.HasIndex("Codigo")
                         .IsUnique();
 
-                    b.ToTable("rol", "public", t =>
+                    b.ToTable("rol", "mpaz_matricula", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -210,7 +714,52 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasKey("RolId", "Area", "Accion");
 
-                    b.ToTable("rol_permiso", "public", t =>
+                    b.ToTable("rol_permiso", "mpaz_matricula", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.SituacionMedica", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<bool?>("EnTratamiento")
+                        .HasColumnType("boolean")
+                        .HasColumnName("en_tratamiento");
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estudiante_id");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tipo");
+
+                    b.Property<DateOnly?>("VigenteDesde")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_desde");
+
+                    b.Property<DateOnly?>("VigenteHasta")
+                        .HasColumnType("date")
+                        .HasColumnName("vigente_hasta");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("situacion_medica", "mpaz_matricula", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -239,7 +788,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", "auth");
+                    b.ToTable("AspNetRoles", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -264,7 +813,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", "auth");
+                    b.ToTable("AspNetRoleClaims", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
@@ -328,7 +877,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", "auth");
+                    b.ToTable("AspNetUsers", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -353,7 +902,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", "auth");
+                    b.ToTable("AspNetUserClaims", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -375,7 +924,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", "auth");
+                    b.ToTable("AspNetUserLogins", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -390,7 +939,7 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", "auth");
+                    b.ToTable("AspNetUserRoles", "mpaz_matricula");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -409,7 +958,35 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", "auth");
+                    b.ToTable("AspNetUserTokens", "mpaz_matricula");
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.Estudiante", b =>
+                {
+                    b.HasOne("MarcelaPaz.Domain.Entidades.Comuna", "Comuna")
+                        .WithMany()
+                        .HasForeignKey("ComunaId");
+
+                    b.Navigation("Comuna");
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.EstudiantePersona", b =>
+                {
+                    b.HasOne("MarcelaPaz.Domain.Entidades.Estudiante", "Estudiante")
+                        .WithMany()
+                        .HasForeignKey("EstudianteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarcelaPaz.Domain.Entidades.Persona", "Persona")
+                        .WithMany()
+                        .HasForeignKey("PersonaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Estudiante");
+
+                    b.Navigation("Persona");
                 });
 
             modelBuilder.Entity("MarcelaPaz.Domain.Entidades.FuncionarioRol", b =>
@@ -429,6 +1006,26 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                     b.Navigation("Funcionario");
 
                     b.Navigation("Rol");
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.MatriculaAnual", b =>
+                {
+                    b.HasOne("MarcelaPaz.Domain.Entidades.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId");
+
+                    b.Navigation("Curso");
+                });
+
+            modelBuilder.Entity("MarcelaPaz.Domain.Entidades.RestriccionFamiliar", b =>
+                {
+                    b.HasOne("MarcelaPaz.Domain.Entidades.EstudiantePersona", "EstudiantePersona")
+                        .WithMany()
+                        .HasForeignKey("EstudiantePersonaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EstudiantePersona");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

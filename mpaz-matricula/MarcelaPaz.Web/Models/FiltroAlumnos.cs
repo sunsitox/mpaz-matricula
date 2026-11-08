@@ -6,7 +6,11 @@ namespace MarcelaPaz.Web.Models;
 /// </summary>
 public class FiltroAlumnos
 {
+    /// <summary>Año consultado: el activo por omisión, o uno anterior desde el selector.</summary>
     public int Anio { get; set; }
+
+    /// <summary>Años disponibles en el selector, del más reciente al más antiguo.</summary>
+    public List<int> Anios { get; set; } = new();
 
     /// <summary>Nombre o RUN, con o sin puntos.</summary>
     public string? Texto { get; set; }

@@ -7,6 +7,9 @@ namespace MarcelaPaz.Web.Models;
 /// </summary>
 public class PerfilAlumno
 {
+    /// <summary>Año escolar consultado: el activo o el elegido en el selector.</summary>
+    public int Anio { get; set; }
+
     public int Id { get; set; }
 
     public string Nombre { get; set; } = string.Empty;
@@ -46,6 +49,30 @@ public class PerfilAlumno
     public string? CursoActual { get; set; }
 
     public string? EstadoActual { get; set; }
+
+    /// <summary>Folio y versión de la ficha vigente del año (MAT-08).</summary>
+    public string? FolioFicha { get; set; }
+
+    public short? VersionFicha { get; set; }
+
+    public int? MatriculaId { get; set; }
+
+    /// <summary>La matrícula tiene ficha generada y puede confirmarse (MAT-04).</summary>
+    public bool PuedeConfirmar { get; set; }
+
+    /// <summary>Autorizaciones vigentes, ya formateadas para mostrar.</summary>
+    public List<string> Autorizaciones { get; set; } = new();
+
+    // Qué bloques puede ver esta sesión. El servidor no consulta ni proyecta los
+    // datos de un área sin su permiso; la vista usa estas banderas para explicar
+    // la ausencia en lugar de mostrar una lista vacía (S-02).
+    public bool PuedeVerFamilia { get; set; }
+
+    public bool PuedeVerRetiro { get; set; }
+
+    public bool PuedeVerSalud { get; set; }
+
+    public bool PuedeVerAutorizaciones { get; set; }
 
     public class MatriculaPerfil
     {

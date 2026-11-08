@@ -43,7 +43,11 @@
 
 BEGIN;
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;   -- búsqueda por nombre (MAT-11)
+-- Todo el portal vive en su propio esquema: así esta base puede convivir con
+-- otras bases del colegio sin mezclar tablas homónimas.
+CREATE SCHEMA IF NOT EXISTS mpaz_matricula;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;   -- búsqueda por nombre (MAT-11), queda en public
+SET LOCAL search_path TO mpaz_matricula, public;
 
 -- =====================================================================
 -- 0. FUNCIONES AUXILIARES

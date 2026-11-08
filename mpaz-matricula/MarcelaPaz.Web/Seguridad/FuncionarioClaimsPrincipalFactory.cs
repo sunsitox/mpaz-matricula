@@ -1,6 +1,7 @@
 using MarcelaPaz.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
@@ -14,14 +15,17 @@ namespace MarcelaPaz.Web.Seguridad;
 public class FuncionarioClaimsPrincipalFactory : UserClaimsPrincipalFactory<IdentityUser>
 {
     private readonly MatriculaDbContext _db;
+    private readonly IConfiguration _configuracion;
 
     public FuncionarioClaimsPrincipalFactory(
         UserManager<IdentityUser> usuarios,
         IOptions<IdentityOptions> opciones,
-        MatriculaDbContext db)
+        MatriculaDbContext db,
+        IConfiguration configuracion)
         : base(usuarios, opciones)
     {
         _db = db;
+        _configuracion = configuracion;
     }
 
     protected override async Task<ClaimsIdentity> GenerateClaimsAsync(IdentityUser usuario)
@@ -64,6 +68,17 @@ public class FuncionarioClaimsPrincipalFactory : UserClaimsPrincipalFactory<Iden
         foreach (var permiso in permisos)
         {
             identidad.AddClaim(new Claim("permiso", $"{permiso.Area}:{permiso.Accion}"));
+        }
+
+        // S-09: si la cuenta todavía usa la contraseña inicial compartida, la
+        // sesión debe cambiarla antes de operar. El claim desaparece solo cuando
+        // la persona define su propia contraseña.
+        var inicial = _configuracion["Seguridad:ContrasenaInicial"];
+
+        if (!string.IsNullOrWhiteSpace(inicial)
+            && await UserManager.CheckPasswordAsync(usuario, inicial))
+        {
+            identidad.AddClaim(new Claim("debe_cambiar_contrasena", "1"));
         }
 
         return identidad;

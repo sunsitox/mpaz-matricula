@@ -27,8 +27,9 @@ rm -f \
   "$STAGE/app/appsettings.Development.json" \
   "$STAGE/app/"*.pdb
 
-cp "$PROJECT/database/MPAZ_Matricula_2027_DDL.sql" "$STAGE/database/"
-cp "$PROJECT/database/privilegios-produccion.sql" "$STAGE/database/"
+cp "$PROJECT/database/"*.sql "$STAGE/database/"
+cp "$PROJECT/database/aplicar.sh" "$STAGE/database/"
+cp "$PROJECT/database/DESPLIEGUE.md" "$STAGE/database/"
 cp "$PROJECT/deploy/mpaz-matriculas.service" "$STAGE/"
 cp "$PROJECT/deploy/mpaz-matriculas.env.example" "$STAGE/"
 

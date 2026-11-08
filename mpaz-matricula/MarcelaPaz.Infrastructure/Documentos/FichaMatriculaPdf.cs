@@ -80,11 +80,19 @@ public sealed class FichaMatriculaPdf
                         identificacion.Item()
                             .Text("FOLIO").FontSize(5.6f).SemiBold().FontColor(Gris);
                         identificacion.Item()
-                            .Text(ficha.Folio).FontSize(8).Bold().FontColor(Azul);
+                            .Text(string.IsNullOrWhiteSpace(ficha.Folio) ? "Sin folio" : ficha.Folio)
+                            .FontSize(8).Bold().FontColor(Azul);
                         identificacion.Item()
                             .Text($"Año escolar {ficha.Anio}").FontSize(6).FontColor(Gris);
-                        identificacion.Item()
-                            .Text($"Versión {ficha.Version}").FontSize(6).FontColor(Gris);
+
+                        // La versión es una frase completa («versión 1 · vigente»,
+                        // «matrícula 2026 · activa»); se imprime tal cual, sin
+                        // prefijo, y se omite cuando el documento no declara estado.
+                        if (!string.IsNullOrWhiteSpace(ficha.Version))
+                        {
+                            identificacion.Item()
+                                .Text(MayusculaInicial(ficha.Version)).FontSize(6).FontColor(Gris);
+                        }
                     });
             });
 
@@ -334,7 +342,9 @@ public sealed class FichaMatriculaPdf
             columna.Item().PaddingTop(4).Row(fila =>
             {
                 fila.RelativeItem()
-                    .Text($"Escuela Escritora Marcela Paz · Ficha de matrícula {ficha.Anio} · Folio {ficha.Folio}")
+                    .Text(string.IsNullOrWhiteSpace(ficha.Folio)
+                        ? $"Escuela Escritora Marcela Paz · Ficha de matrícula {ficha.Anio} · Borrador sin folio"
+                        : $"Escuela Escritora Marcela Paz · Ficha de matrícula {ficha.Anio} · Folio {ficha.Folio}")
                     .FontSize(6)
                     .FontColor(GrisClaro);
 
@@ -349,4 +359,8 @@ public sealed class FichaMatriculaPdf
             });
         });
     }
+
+    /// <summary>Deja la frase de estado con mayúscula inicial, sin tocar el resto.</summary>
+    private static string MayusculaInicial(string texto) =>
+        char.ToUpperInvariant(texto[0]) + texto[1..];
 }

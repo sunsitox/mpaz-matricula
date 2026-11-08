@@ -6,6 +6,12 @@ namespace MarcelaPaz.Web.Models;
 /// </summary>
 public class BusquedaFicha
 {
+    /// <summary>Año escolar con matrícula activa: el que se está matriculando.</summary>
+    public int Anio { get; set; }
+
+    /// <summary>RUN, IPE o IPA: documento con que se busca al estudiante.</summary>
+    public string Tipo { get; set; } = "RUN";
+
     public string? Rut { get; set; }
 
     /// <summary>Mensaje cuando el RUN escrito no es válido.</summary>

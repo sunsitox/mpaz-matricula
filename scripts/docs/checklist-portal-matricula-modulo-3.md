@@ -1,8 +1,8 @@
 # Checklist — Portal de Matrícula MPAZ Web (Módulo 3)
 
 Escuela Escritora Marcela Paz · Basado en “Requerimientos Portal de Matrícula 2027” v1.0 (03-11-2026)  
-Base de datos: `mpaz-matricula/database/MPAZ_Matricula_2027_DDL.sql` (fuente de verdad del esquema)  
-**Estado revisado:** 6 de noviembre de 2026
+Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de verdad del esquema)  
+**Estado revisado:** 7 de noviembre de 2026
 
 ## Criterio de esta revisión
 
@@ -51,19 +51,19 @@ Base de datos: `mpaz-matricula/database/MPAZ_Matricula_2027_DDL.sql` (fuente de 
 - [ ] [José] Alinear entidades y migraciones al DDL (curso y año en `matricula_anual`; familia en `estudiante_persona`; sin `autoriza_paracetamol`) — **Parcial:** `MatriculaDbContext` mapea `matricula_anual` y `estudiante_persona`, pero `FichaForm`, `Paso6`, `FichaController` y `FichaImpresion` todavía incluyen autorización de paracetamol. Solo existe una migración para Identity; las tablas `public` dependen del DDL.
 - [x] [José] Verificar si PostgreSQL y el runtime de la app están instalados en el servidor; instalar lo que falte — **Comprobado:** `aspnetcore-runtime-10.0 10.0.14-0ubuntu1~24.04.1` y `postgresql-16 16.15-0ubuntu0.24.04.1` desde los repositorios de Ubuntu 24.04; sin SDK ni Docker.
 - [x] [José] Cargar el DDL en PostgreSQL y correr una prueba de humo — **Comprobado:** DDL y esquema `auth` aplicados sobre `mpaz_matricula`; `/Cuenta/Login` responde 200 y se crearon 7 cuentas de Identity.
-- [x] [José] Crear el rol de base de datos de la app, sin permiso de borrar ni modificar las tablas solo-inserción — **Comprobado:** rol `mpaz_app` con `database/privilegios-produccion.sql`; `has_table_privilege` confirma lectura de `estudiante`, sin UPDATE en `registros_acceso` y UPDATE sobre `auth."AspNetUsers"`.
+- [x] [José] Crear el rol de base de datos de la app, sin permiso de borrar ni modificar las tablas solo-inserción — **Comprobado:** rol `mpaz_app` con `database/04-privilegios-aplicacion.sql`; `has_table_privilege` confirma lectura de `estudiante`, sin UPDATE en `registros_acceso` y UPDATE sobre `auth."AspNetUsers"`.
 
 ## 3. Seguridad y acceso (sec. 10 y 11)
 
 - [ ] [José] Login de funcionarios con cuentas propias (hash de contraseña, bloqueo tras intentos fallidos, sesiones seguras) — **Parcial:** Identity almacena hash, exige contraseña mínima, bloquea tras 5 intentos por 15 minutos y usa cookie `HttpOnly`/`Secure`; la configuración base y el servidor tienen `Seguridad:ExigirInicioSesion=true`, y se crearon 7 cuentas desde los funcionarios mock. Falta probar credenciales reales, cierre de sesión y bloqueo.
 - [ ] [José] Pantalla de administración de cuentas y roles, visible solo para `ADMIN_TI` — **Parcial:** existen `FuncionariosController` y sus vistas con política `ADMIN:ADMINISTRAR`, pero el interruptor de seguridad desactivado vuelve abierta esa política.
-- [x] [José] Roles: SECRETARIA, DIRECCION, INSPECTORIA, EQUIPO_PIE, TENS, DOCENTE, ADMIN_TI — verificados en `MPAZ_Matricula_2027_DDL.sql` y modelados en `Domain/Entidades/Seguridad.cs`.
-- [ ] [José] **MAT-12** Permisos leer / crear / editar / exportar / validar / administrar, por rol y por área de datos, aplicados en el servidor — **Parcial:** existe `PermisoPolicyProvider`, claims desde `rol_permiso` y `permisos-iniciales.sql`; solo algunas acciones usan políticas y todas quedan abiertas mientras `ExigirInicioSesion=false`.
+- [x] [José] Roles: SECRETARIA, DIRECCION, INSPECTORIA, EQUIPO_PIE, TENS, DOCENTE, ADMIN_TI — verificados en `01-ddl-institucional.sql` y modelados en `Domain/Entidades/Seguridad.cs`.
+- [ ] [José] **MAT-12** Permisos leer / crear / editar / exportar / validar / administrar, por rol y por área de datos, aplicados en el servidor — **Parcial:** existe `PermisoPolicyProvider`, claims desde `rol_permiso` y `03-permisos-iniciales.sql`; solo algunas acciones usan políticas y todas quedan abiertas mientras `ExigirInicioSesion=false`.
 - [ ] [José] Denegar y registrar el intento cuando un rol no tiene permiso (también en la API) — **Parcial:** `PermisoAuthorizationHandler` y `AuditoriaAcceso` registran `DENEGADO`, pero no operan efectivamente con seguridad desactivada y no hay una API separada comprobada.
 - [ ] [José] **MAT-13** Ejecutar `SET LOCAL app.funcionario_id` en cada transacción que escriba — **Parcial:** `EscrituraAuditada` usa `set_config(..., true)` en administración de funcionarios; `RegistroFicha` guarda los pasos sin ese envoltorio.
 - [ ] [José] **MAT-13** Registrar en `registros_acceso` lecturas, búsquedas, descargas, exportaciones y accesos denegados de datos sensibles — **Parcial:** se registran denegaciones de login y políticas; no se encontraron llamadas para lectura, búsqueda, descarga o exportación.
 - [ ] [José] TLS en tránsito; archivos y respaldos protegidos; mínimos privilegios — configurado parcialmente para cookies/HSTS en producción, pero no desplegado ni comprobado.
-- [ ] [José] [BLOQUEADO] Cargar la matriz de permisos en `rol_permiso` cuando el colegio la apruebe — existe propuesta no aprobada en `database/permisos-iniciales.sql`.
+- [ ] [José] [BLOQUEADO] Cargar la matriz de permisos en `rol_permiso` cuando el colegio la apruebe — existe propuesta no aprobada en `database/03-permisos-iniciales.sql`.
 
 ## 4. Etapa I — Captura y PDF
 
@@ -169,7 +169,7 @@ MAT-01 matrículas por año · MAT-02 validar y evitar duplicados · MAT-03 fami
 | PostgreSQL 16 instalado y activo | `postgresql-16` 16.15; clúster `16/main` escuchando en `127.0.0.1:5432` |
 | Aplicación desplegada | Release en `/opt/mpaz-matriculas/releases/20261106T054708Z`, enlace `current`, sin configuración de desarrollo |
 | Aislamiento del RFID | Usuario `mpaz-matriculas`, config en `/etc/mpaz-matriculas`; `mpaz-rfid`, nginx y `cloudflared` verificados activos antes y después |
-| Base y rol creados | `mpaz_matricula` + `mpaz_app` con `privilegios-produccion.sql` aplicado |
+| Base y rol creados | `mpaz_matricula` + `mpaz_app` con `04-privilegios-aplicacion.sql` aplicado |
 | Esquema institucional cargado | DDL aplicado sin errores (`ON_ERROR_STOP=1`) |
 | Esquema `auth` creado | Script idempotente de EF Core; 7 cuentas de Identity sembradas desde los funcionarios mock |
 | Datos mock cargados | 10 estudiantes, 10 matrículas, 9 fichas versionadas, 27 documentos, 21 autorizaciones, 61 requisitos, 44 permisos |
@@ -188,6 +188,16 @@ MAT-01 matrículas por año · MAT-02 validar y evitar duplicados · MAT-03 fami
 | Credenciales | Visibles en archivos `0644` por decisión de esta etapa de pruebas |
 | Documentación operativa | Existe el runbook, pero sin prueba de restauración ni procedimiento de cuentas verificado |
 | Entrega con Docker | Archivos creados y orden de carga verificado; falta construir la imagen y probar el arranque completo |
+
+## 11.1 Avances del 07-11-2026 (esquema y cierre de ficha)
+
+| Cambio | Evidencia |
+| --- | --- |
+| Esquema dedicado `mpaz_matricula` | DDL, Identity y `__EFMigrationsHistory` viven en `mpaz_matricula`; `public` solo conserva la extensión `pg_trgm` y ya no se usa `auth`. Script idempotente en `database/90-migrar-bases-existentes.sql` y migración `EsquemaDedicado`. |
+| Base local migrada sin pérdida de datos | 38 tablas en `mpaz_matricula`, 10 estudiantes, 19 matrículas y 7 usuarios; respaldo en `artifacts/mpaz-matricula-antes-esquema.dump`. |
+| Instalación limpia verificada | Cadena de Docker (`01`→`04`) deja 38 tablas en `mpaz_matricula` con datos mock; probado en una base temporal. |
+| Cierre de ficha con confirmación visual | Tras «Guardar y finalizar» se muestra la rueda de carga, un check verde y el aviso «Ficha guardada» antes de volver a la ficha del estudiante. Sigue creando la matrícula en `BORRADOR`: no emite folio ni congela versión. |
+| Pendiente que este avance no cambia | La ficha aún no se cierra con `ficha_version.datos_snapshot` (MAT-08), no se registran descargas y la seguridad sigue desactivada por defecto en desarrollo. |
 
 ## 12. Fuera de alcance (no construir)
 

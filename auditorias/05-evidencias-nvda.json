@@ -1,0 +1,315 @@
+{
+  "nvda": "2025.3.2 portable, voz espeak es",
+  "fases": [
+    {
+      "nombre": "login",
+      "hora": "2026-11-07T04:53:08.752Z"
+    },
+    {
+      "nombre": "sesion",
+      "hora": "2026-11-07T04:53:18.338Z",
+      "url": "http://127.0.0.1:5196/"
+    },
+    {
+      "nombre": "paso1-cargado",
+      "hora": "2026-11-07T04:53:22.082Z"
+    },
+    {
+      "nombre": "paso1-tab1",
+      "hora": "2026-11-07T04:53:23.500Z",
+      "activo": {
+        "tag": "A",
+        "id": "",
+        "name": "",
+        "texto": "Saltar al contenido de la ficha",
+        "tipo": ""
+      }
+    },
+    {
+      "nombre": "paso1-errores",
+      "hora": "2026-11-07T04:53:28.752Z",
+      "activo": {
+        "tag": "DIV",
+        "id": "",
+        "name": "",
+        "texto": "Ingrese la comuna del domicilio.\n                    Ingrese los nombr",
+        "tipo": ""
+      }
+    },
+    {
+      "nombre": "paso6-cargado",
+      "hora": "2026-11-07T04:53:32.435Z"
+    },
+    {
+      "nombre": "paso6-radio",
+      "hora": "2026-11-07T04:53:34.263Z"
+    },
+    {
+      "nombre": "paso6-flechas",
+      "hora": "2026-11-07T04:53:37.279Z",
+      "valor": "Pendiente"
+    },
+    {
+      "nombre": "paso6-alergias",
+      "hora": "2026-11-07T04:53:38.784Z"
+    },
+    {
+      "nombre": "folio",
+      "hora": "2026-11-07T04:53:48.692Z",
+      "url": "http://127.0.0.1:5196/Ficha/Enviada/11"
+    },
+    {
+      "nombre": "folio-tab",
+      "hora": "2026-11-07T04:53:50.304Z",
+      "activo": {
+        "tag": "BUTTON",
+        "id": "",
+        "name": "",
+        "texto": "Copiar el folio",
+        "tipo": "button"
+      }
+    },
+    {
+      "nombre": "folio-copia",
+      "hora": "2026-11-07T04:53:52.935Z",
+      "aviso": "Folio copiado al portapapeles."
+    }
+  ],
+  "anuncios": [
+    {
+      "fase": "login",
+      "hora": "01:53:08",
+      "anuncios": [
+        "principal región ,",
+        "formulario región ,",
+        "Correo institucional , edición , , en blanco",
+        "Contraseña , edición , contraseña , , en blanco",
+        "Cargando página",
+        "Carga completada",
+        "Panel · Portal de Matrícula 2027 ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Portal de Matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Panel , CallbackCommand(name=say-all:lineReached)",
+        "María Teresa Lagos Sandoval , CallbackCommand(name=say-all:lineReached), sección , botón , Cerrar sesión , CallbackCommand(name=say-all:lineReached), fuera de sección",
+        "Secciones del portal , navegación región , MENÚ , CallbackCommand(name=say-all:lineReached)",
+        "misma página , enlace , Panel , CallbackCommand(name=say-all:lineReached)",
+        "enlace , Alumnos , CallbackCommand(name=say-all:lineReached)",
+        "enlace , Matrícula"
+      ]
+    },
+    {
+      "fase": "sesion",
+      "hora": "01:53:18",
+      "anuncios": [
+        "Cargando página",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde."
+      ]
+    },
+    {
+      "fase": "paso1-cargado",
+      "hora": "01:53:22",
+      "anuncios": [
+        "Saltar al contenido de la ficha , misma página , enlace"
+      ]
+    },
+    {
+      "fase": "paso1-tab1",
+      "hora": "01:53:23",
+      "anuncios": [
+        "Cargando página",
+        "botón , no disponible ,",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz , documento ,",
+        "principal región ,",
+        "formulario región ,",
+        "Carga completada",
+        "principal región , sección , lista , con 9 elementos , • Ingrese la comuna del domicilio. , • Ingrese los nombres del estudiante. , • Ingrese el domicilio del estudiante. , • Seleccione la letra del curso. , • Seleccione el curso al que postula el estudiante. , • Ingrese la nacionalidad del estudiante. , • Ingrese el apellido paterno del estudiante. , • Ingrese el RUN o número IPE/IPA del estudiante. , • Ingrese la fecha de nacimiento del estudiante.",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached)",
+        "• Ingrese la comuna del domicilio."
+      ]
+    },
+    {
+      "fase": "paso1-errores",
+      "hora": "01:53:28",
+      "anuncios": [
+        "Cargando página",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde."
+      ]
+    },
+    {
+      "fase": "paso6-cargado",
+      "hora": "01:53:32",
+      "anuncios": [
+        "principal región ,",
+        "formulario región ,",
+        "Programa de Integración Escolar (PIE) , agrupación ,",
+        "Si , botón de opción , sin marcar ,"
+      ]
+    },
+    {
+      "fase": "paso6-radio",
+      "hora": "01:53:34",
+      "anuncios": [
+        "No , botón de opción , marcado ,",
+        "Pendiente , botón de opción , marcado ,"
+      ]
+    },
+    {
+      "fase": "paso6-flechas",
+      "hora": "01:53:37",
+      "anuncios": [
+        "Alergias y contacto sanitario , agrupación ,",
+        "Alergias declaradas * , edición , requerido , , N"
+      ]
+    },
+    {
+      "fase": "paso6-alergias",
+      "hora": "01:53:38",
+      "anuncios": [
+        "Cargando página",
+        "Carga completada",
+        "Buscar estudiante · Portal de Matrícula 2027 ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Portal de Matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Buscar estudiante , CallbackCommand(name=say-all:lineReached)",
+        "María Teresa Lagos Sandoval , CallbackCommand(name=say-all:lineReached), sección , botón , Cerrar sesión , CallbackCommand(name=say-all:lineReached), fuera de sección",
+        "Secciones del portal , navegación región , MENÚ , CallbackCommand(name=say-all:lineReached)",
+        "enlace , Panel , CallbackCommand(name=say-all:lineReached)",
+        "enlace , Alumnos , CallbackCommand(name=say-all:lineReached)",
+        "enlace , Matrícula",
+        "Cargando página",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "Cargando página",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "principal región , sección , procesando , Guardar y continuar , botón",
+        "Carga completada",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "Cargando página",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde.",
+        "principal región , sección , procesando , Guardar y continuar , botón",
+        "Carga completada",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde.",
+        "Cargando página",
+        "formulario región , procesando ,",
+        "botón , no disponible ,",
+        "Carga completada",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz - Perfil 1: Microsoft\\u200b Edge , ventana ,",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde.",
+        "Cargando página",
+        "principal región , sección , procesando , Guardar y continuar , botón",
+        "Carga completada",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde.",
+        "Cargando página",
+        "formulario región , procesando ,",
+        "botón , no disponible ,",
+        "Carga completada",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz - Perfil 1: Microsoft\\u200b Edge , ventana ,",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), principal región , sección , agrupación , iera que sea?",
+        "principal región ,",
+        "formulario región ,",
+        "Alergias y contacto sanitario , agrupación ,",
+        "Alergias declaradas * , edición , requerido , , Ninguna",
+        "Persona a avisar en una urgencia * , edición , requerido , , Contacto de prueba",
+        "Teléfono del contacto * , edición , requerido , , +56911112222",
+        "Autorización de uso de imagen , agrupación ,",
+        "No , botón de opción , marcado ,",
+        "Autorización para el trabajo con Convivencia Escolar , agrupación ,",
+        "No , botón de opción , marcado ,",
+        "Guardar y continuar , botón",
+        "Cargando página",
+        "Carga completada",
+        "Cargando página",
+        "Carga completada",
+        "Ficha de matrícula 2027 - Escuela Básica Escritora Marcela Paz ,",
+        "CallbackCommand(name=say-all:lineReached), misma página , enlace , Saltar al contenido de la ficha , CallbackCommand(name=say-all:lineReached)",
+        "título región , gráfico , Logo Escuela Escritora Marcela Paz , CallbackCommand(name=say-all:lineReached)",
+        "Ficha de matrícula 2027 , CallbackCommand(name=say-all:lineReached)",
+        "Complete los siete pasos; puede retomar la ficha más tarde.",
+        "principal región , sección , Confirmo que revisé con el apoderado todos los datos de esta ficha, incluidas las autorizaciones, y que la información es fiel a lo declarado. , casilla de verificación , sin marcar , requerido , entrada inválida",
+        "procesando",
+        "Cargando página",
+        "Guardar y finalizar , botón , no disponible",
+        "Ficha guardada · Portal de Matrícula 2027 , documento ,",
+        "principal región ,",
+        "Ficha guardada , región ,",
+        "Carga completada",
+        "principal región , Ficha guardada , región , Ficha guardada , encabezado , nivel 1",
+        "Ficha guardada · Portal de Matrícula 2027 ,",
+        "CallbackCommand(name=say-all:lineReached), encabezado , nivel 1 , Ficha guardada , CallbackCommand(name=say-all:lineReached)",
+        "La ficha quedó generada con el folio , MP-2027-00001 , (versión 1)."
+      ]
+    },
+    {
+      "fase": "folio",
+      "hora": "01:53:48",
+      "anuncios": [
+        "Copiar el folio , botón"
+      ]
+    },
+    {
+      "fase": "folio-tab",
+      "hora": "01:53:50",
+      "anuncios": [
+        "Folio copiado al portapapeles."
+      ]
+    },
+    {
+      "fase": "folio-copia",
+      "hora": "01:53:52",
+      "anuncios": [
+        "Freebuff: The free coding agent , documento , , ￼",
+        "(328) Huntleo reacciona a \"Los Crímenes de Ainz Ooal Gown Que el Anime Censuró Completamente\" - YouTube — Mozilla Firefox ,",
+        "(328) Huntleo reacciona a \"Los Crímenes de Ainz Ooal Gown Que el Anime Censuró Completamente\" - YouTube ,",
+        "CallbackCommand(name=say-all:lineReached), cliqueable , título región , cliqueable , botón , Guía , CallbackCommand(name=say-all:lineReached)",
+        "visitado , enlace , Inicio de YouTube Premium , CallbackCommand(name=say-all:lineReached)",
+        "CL , CallbackCommand(name=say-all:lineReached)",
+        "cliqueable , botón , Saltar navegación , CallbackCommand(name=say-all:lineReached)",
+        "búsqueda región , cliqueable , Buscar , cuadro combinado , expandido , tiene auto completado , editable , CallbackCommand(name=say-all:lineReached)",
+        "botón , Search , CallbackCommand(name=say-all:lineReached)",
+        "cliqueable , botón , Haz búsquedas por voz , CallbackCommand(name=say-all:lineReached)",
+        "CallbackCommand(name=say-all:lineReached)",
+        "cliqueable , botón , Crear , CallbackCommand(name=say-all:lineReached)",
+        "cliqueable , botón , Notificaciones",
+        "Huntleo reacciona a \"Los Crímenes de Ainz Ooal Gown Que el Anime Censuró Completamente\"",
+        "Freebuff: 1 ventana en ejecución",
+        "Freebuff: The free coding agent ,",
+        "Freebuff: The free coding agent , documento , , ￼",
+        "Visual Studio Debugger Console Application Resources: 1 ventana en ejecución"
+      ]
+    }
+  ]
+}

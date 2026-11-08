@@ -8,3 +8,7 @@ END $$;
 
 GRANT CONNECT ON DATABASE mpaz_matricula TO mpaz_app;
 REVOKE CONNECT ON DATABASE mpaz_matricula FROM PUBLIC;
+
+-- Los objetos del portal viven en el esquema mpaz_matricula.
+ALTER ROLE mpaz_app IN DATABASE mpaz_matricula SET search_path = mpaz_matricula, public;
+ALTER DATABASE mpaz_matricula SET search_path = mpaz_matricula, public;

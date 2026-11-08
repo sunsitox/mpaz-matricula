@@ -1,0 +1,273 @@
+/* ==========================================================================
+   Confirmación del envío (folio) y aviso con rueda.
+   ========================================================================== */
+/* ==========================================================================
+   Aviso con rueda al enviar y notificación flotante del resultado
+   ========================================================================== */
+
+/* Velo de carga: se muestra mientras el envío a revisión está en curso */
+.ux-cargando {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(12, 37, 91, .55);
+}
+
+.ux-cargando--visible {
+    display: flex;
+}
+
+.ux-cargando__rueda {
+    width: 46px;
+    height: 46px;
+    border: 4px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: ux-girar .8s linear infinite;
+}
+
+@keyframes ux-girar {
+    to { transform: rotate(360deg); }
+}
+
+.ux-cargando__texto {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Notificación del resultado, sobre la barra fija de acciones */
+.ux-toast {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 9500;
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    width: min(26rem, calc(100vw - 2.5rem));
+    padding: .9rem 1rem .95rem 1.1rem;
+    border: 1px solid #BFD8C8;
+    border-left: 4px solid #1E7A4B;
+    border-radius: 10px;
+    background: #F2FAF5;
+    box-shadow: 0 12px 28px rgba(12, 37, 91, .18);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.ux-toast--visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* En la ficha la altura la ajusta ux.js sobre la barra fija de acciones */
+
+.ux-toast__marca {
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: .15rem;
+    border-radius: 50%;
+    background: #1E7A4B;
+    box-shadow: inset 0 0 0 3px #F2FAF5;
+}
+
+.ux-toast__texto {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    color: #17452E;
+    font-size: .92rem;
+    line-height: 1.4;
+}
+
+.ux-toast__titulo {
+    color: #14563A;
+    font-size: .95rem;
+}
+
+.ux-toast__cerrar {
+    flex: none;
+    margin-left: auto;
+    padding: 0 .2rem;
+    border: 0;
+    background: none;
+    color: #3C6450;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ux-toast__cerrar:hover {
+    color: #14563A;
+}
+
+@media (max-width: 699px) {
+    .ux-toast {
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ux-cargando__rueda {
+        animation-duration: 2.4s;
+    }
+
+    .ux-toast {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   Confirmación del envío antes de volver a la ficha del estudiante
+   ========================================================================== */
+
+.envio {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(12, 37, 91, .55);
+}
+
+.envio__tarjeta {
+    width: min(28rem, 100%);
+    padding: 1.9rem 1.6rem 1.6rem;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 24px 48px rgba(12, 37, 91, .3);
+    text-align: center;
+    animation: ux-entrada .3s ease-out both;
+}
+
+.envio__rueda {
+    display: inline-block;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 1rem;
+    border: 4px solid rgba(12, 37, 91, .18);
+    border-top-color: var(--color-action);
+    border-radius: 50%;
+    animation: ux-girar .8s linear infinite;
+}
+
+/* El foco del título llega por script (data-ux-foco) para que el lector de
+   pantalla anuncie la confirmación. Es un encabezado, no un control: el
+   recuadro del navegador (negro o dorado a todo el ancho) se lee como un campo
+   de formulario, así que se omite el contorno. El foco sigue activo. */
+.envio__titulo:focus,
+.envio__titulo:focus-visible {
+    outline: none;
+}
+
+.envio__titulo {
+    margin: 0 0 .5rem;
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.envio__texto {
+    margin: 0 0 .6rem;
+    color: #3A4A63;
+    font-size: .95rem;
+    line-height: 1.5;
+}
+
+.envio__detalle {
+    margin: 0 0 1.1rem;
+    color: #5A6B80;
+    font-size: .85rem;
+}
+
+.envio__boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .envio__rueda {
+        animation-duration: 2.4s;
+    }
+
+    .envio__tarjeta {
+        animation: none;
+    }
+}
+
+/* El botón de la confirmación es un enlace: se muestra como botón, sin subrayado */
+.envio__boton:link,
+.envio__boton:visited {
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Rueda que se convierte en check al terminar de guardar */
+.envio__marca {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 1rem;
+}
+
+.envio__marca .envio__rueda {
+    position: absolute;
+    inset: 0;
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    transition: opacity .2s ease;
+}
+
+.envio__check {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #1E7A4B;
+    opacity: 0;
+    transform: scale(.6);
+    transition: opacity .22s ease, transform .22s ease;
+}
+
+.envio__check::after {
+    content: "";
+    width: 10px;
+    height: 18px;
+    margin-top: -4px;
+    border: solid #fff;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+.envio--listo .envio__rueda {
+    opacity: 0;
+}
+
+.envio--listo .envio__check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .envio__check {
+        transition: none;
+    }
+}
