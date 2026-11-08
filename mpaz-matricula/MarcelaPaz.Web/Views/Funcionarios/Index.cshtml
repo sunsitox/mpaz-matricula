@@ -13,6 +13,18 @@
     <a class="admin__boton admin__boton--primario" asp-action="Crear">Crear funcionario</a>
 </div>
 
+@if (TempData["ClaveTemporal"] is string claveTemporal)
+{
+    <div class="admin__tarjeta admin__aviso" role="alert">
+        <h2 class="admin__titulo-seccion">Contraseña temporal</h2>
+        <p class="admin__ayuda">
+            Entréguela a <strong>@TempData["ClaveTemporalCorreo"]</strong>. Se muestra una sola vez
+            y la persona deberá cambiarla en su próximo ingreso.
+        </p>
+        <p class="admin__ayuda"><strong>@claveTemporal</strong></p>
+    </div>
+}
+
 <div class="admin__tarjeta">
     @if (Model.Count == 0)
     {
@@ -71,13 +83,27 @@
                             }
                         </td>
                         <td>
-                            <form asp-action="CambiarEstado" method="post">
-                                <input type="hidden" name="id" value="@funcionario.Id" />
-                                <input type="hidden" name="activo" value="@(funcionario.Activo ? "false" : "true")" />
-                                <button type="submit" class="admin__boton">
-                                    @(funcionario.Activo ? "Desactivar" : "Activar")
-                                </button>
-                            </form>
+                            <div class="admin__acciones">
+                                <form asp-action="CambiarEstado" method="post">
+                                    <input type="hidden" name="id" value="@funcionario.Id" />
+                                    <input type="hidden" name="activo" value="@(funcionario.Activo ? "false" : "true")" />
+                                    <button type="submit" class="admin__boton">
+                                        @(funcionario.Activo ? "Desactivar" : "Activar")
+                                    </button>
+                                </form>
+                                <form asp-action="RestablecerContrasena" method="post">
+                                    <input type="hidden" name="id" value="@funcionario.Id" />
+                                    <button type="submit"
+                                            class="admin__boton"
+                                            data-ux-confirmar="¿Restablecer la contraseña de @funcionario.Nombre? Se cerrarán sus sesiones y deberá cambiarla al ingresar.">
+                                        Restablecer contraseña
+                                    </button>
+                                </form>
+                                <form asp-action="Desbloquear" method="post">
+                                    <input type="hidden" name="id" value="@funcionario.Id" />
+                                    <button type="submit" class="admin__boton">Desbloquear</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 }

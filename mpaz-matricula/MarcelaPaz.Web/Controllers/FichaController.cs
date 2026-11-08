@@ -35,6 +35,7 @@ public class FichaController : Controller
     private readonly RegistroFicha _registro;
     private readonly IAuditoriaAcceso _auditoria;
     private readonly AnioEscolar _anios;
+    private readonly EscrituraAuditada _escritura;
 
     public FichaController(
         MatriculaDbContext db,
@@ -42,7 +43,8 @@ public class FichaController : Controller
         IWebHostEnvironment entorno,
         RegistroFicha registro,
         IAuditoriaAcceso auditoria,
-        AnioEscolar anios)
+        AnioEscolar anios,
+        EscrituraAuditada escritura)
     {
         _db = db;
         _pdf = pdf;
@@ -50,6 +52,7 @@ public class FichaController : Controller
         _registro = registro;
         _auditoria = auditoria;
         _anios = anios;
+        _escritura = escritura;
     }
 
     // El parámetro de ruta por defecto se llama 'id' (Program.cs), así que se ocupa ese nombre:
@@ -272,9 +275,16 @@ public class FichaController : Controller
                     return RedirectToAction(nameof(Paso), new { id = 7 });
                 }
 
-                var cierre = await _registro.CerrarFichaAsync(datos, anio, funcionarioId.Value);
+                RegistroFicha.CierreFicha? cierre = null;
 
-                if (cierre is null)
+                await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+                {
+                    cierre = await _registro.CerrarFichaAsync(datos, anio, funcionarioId.Value, ct);
+                }, HttpContext.RequestAborted);
+
+                var cerrada = cierre;
+
+                if (cerrada is null)
                 {
                     TempData["Aviso"] = "No se pudo cerrar la ficha: revise que el estudiante y su matrícula del año estén registrados.";
                     return RedirectToAction(nameof(Paso), new { id = 1 });
@@ -284,15 +294,20 @@ public class FichaController : Controller
                     "REEMPLAZAR",
                     "MATRICULA",
                     "ficha_version",
-                    detalle: $"{{\"evento\":\"generar_ficha\",\"folio\":\"{cierre.Folio}\",\"version\":{cierre.Version}}}",
-                    estudianteId: cierre.EstudianteId,
-                    recursoId: cierre.FichaVersionId);
+                    detalle: $"{{\"evento\":\"generar_ficha\",\"folio\":\"{cerrada.Folio}\",\"version\":{cerrada.Version}}}",
+                    estudianteId: cerrada.EstudianteId,
+                    recursoId: cerrada.FichaVersionId);
 
                 TempData.Remove(ClaveBorrador);
-                return RedirectToAction(nameof(Enviada), new { id = cierre.EstudianteId });
+                return RedirectToAction(nameof(Enviada), new { id = cerrada.EstudianteId });
         }
 
-        var aviso = await _registro.AplicarAsync(paso, datos, anio);
+        string? aviso = null;
+
+        await _escritura.EjecutarAsync(
+            FuncionarioId() ?? 0,
+            async ct => aviso = await _registro.AplicarAsync(paso, datos, anio, ct),
+            HttpContext.RequestAborted);
 
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
 

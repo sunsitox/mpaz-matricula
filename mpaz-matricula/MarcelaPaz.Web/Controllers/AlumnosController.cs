@@ -26,17 +26,20 @@ public class AlumnosController : Controller
     private readonly RegistroFicha _registro;
     private readonly IAuditoriaAcceso _auditoria;
     private readonly AnioEscolar _anios;
+    private readonly EscrituraAuditada _escritura;
 
     public AlumnosController(
         MatriculaDbContext db,
         RegistroFicha registro,
         IAuditoriaAcceso auditoria,
-        AnioEscolar anios)
+        AnioEscolar anios,
+        EscrituraAuditada escritura)
     {
         _db = db;
         _registro = registro;
         _auditoria = auditoria;
         _anios = anios;
+        _escritura = escritura;
     }
 
     /// <summary>¿La sesión tiene el permiso de área indicado?</summary>
@@ -420,7 +423,12 @@ public class AlumnosController : Controller
             return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
         }
 
-        var error = await _registro.ConfirmarAsync(id, funcionarioId.Value);
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            error = await _registro.ConfirmarAsync(id, funcionarioId.Value, ct);
+        }, HttpContext.RequestAborted);
 
         if (error is null)
         {
@@ -456,7 +464,16 @@ public class AlumnosController : Controller
             ? valor
             : DateOnly.FromDateTime(DateTime.Today);
 
-        var error = await _registro.RegistrarFirmaAsync(id, dia);
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var idFuncionario)
+            ? idFuncionario
+            : 0;
+
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId, async ct =>
+        {
+            error = await _registro.RegistrarFirmaAsync(id, dia, ct);
+        }, HttpContext.RequestAborted);
 
         TempData[error is null ? "Notificacion" : "Aviso"] =
             error ?? "Ficha firmada registrada. Queda pendiente la confirmación de Secretaría.";

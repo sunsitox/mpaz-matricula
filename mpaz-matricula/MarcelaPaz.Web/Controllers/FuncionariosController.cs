@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace MarcelaPaz.Web.Controllers;
 
@@ -24,6 +25,7 @@ public class FuncionariosController : Controller
     private readonly UserManager<IdentityUser> _usuarios;
     private readonly EscrituraAuditada _escritura;
     private readonly VigilanteSesion _vigilante;
+    private readonly IAuditoriaAcceso _auditoria;
     private readonly ILogger<FuncionariosController> _log;
 
     public FuncionariosController(
@@ -31,12 +33,14 @@ public class FuncionariosController : Controller
         UserManager<IdentityUser> usuarios,
         EscrituraAuditada escritura,
         VigilanteSesion vigilante,
+        IAuditoriaAcceso auditoria,
         ILogger<FuncionariosController> log)
     {
         _db = db;
         _usuarios = usuarios;
         _escritura = escritura;
         _vigilante = vigilante;
+        _auditoria = auditoria;
         _log = log;
     }
 
@@ -140,6 +144,10 @@ public class FuncionariosController : Controller
             await CargarRolesAsync();
             return View(form);
         }
+
+        // La persona debe cambiar la contraseña entregada por Administración en
+        // su primer ingreso, aunque el valor no sea la contraseña inicial.
+        await _usuarios.AddClaimAsync(usuario, new Claim("debe_cambiar_contrasena", "1"));
 
         var hoy = DateOnly.FromDateTime(DateTime.Today);
 
@@ -290,6 +298,154 @@ public class FuncionariosController : Controller
         }
 
         _vigilante.Invalidar(funcionario.Id);
+    }
+
+    /// <summary>
+    /// Restablece la contraseña con un valor temporal que se muestra una sola vez
+    /// y obliga a cambiarlo en el próximo ingreso. También retira el bloqueo por
+    /// intentos fallidos y cierra las sesiones abiertas del afectado.
+    /// </summary>
+    [HttpPost("restablecer")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestablecerContrasena(int id)
+    {
+        var funcionario = await _db.Funcionarios.FirstOrDefaultAsync(f => f.Id == id);
+
+        if (funcionario is null)
+        {
+            return NotFound();
+        }
+
+        var usuario = await BuscarUsuarioAsync(funcionario);
+
+        if (usuario is null)
+        {
+            TempData["Aviso"] = $"El funcionario {funcionario.Nombre} no tiene cuenta de acceso.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var clave = GenerarClaveTemporal();
+        var token = await _usuarios.GeneratePasswordResetTokenAsync(usuario);
+        var resultado = await _usuarios.ResetPasswordAsync(usuario, token, clave);
+
+        if (!resultado.Succeeded)
+        {
+            _log.LogWarning(
+                "No se pudo restablecer la contraseña de {Correo}: {Errores}",
+                funcionario.Correo,
+                string.Join("; ", resultado.Errors.Select(error => error.Description)));
+
+            TempData["Aviso"] = "No se pudo restablecer la contraseña. Intente nuevamente.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var marcas = await _usuarios.GetClaimsAsync(usuario);
+
+        if (!marcas.Any(c => c.Type == "debe_cambiar_contrasena" && c.Value == "1"))
+        {
+            await _usuarios.AddClaimAsync(usuario, new Claim("debe_cambiar_contrasena", "1"));
+        }
+
+        await _usuarios.SetLockoutEndDateAsync(usuario, null);
+        await _usuarios.ResetAccessFailedCountAsync(usuario);
+        await RevocarSesionesAsync(funcionario);
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "GENERAL",
+            "cuenta",
+            funcionarioId: FuncionarioActualId,
+            detalle: $"{{\"evento\":\"restablecer_contrasena\",\"funcionario\":{funcionario.Id}}}");
+
+        TempData["ClaveTemporal"] = clave;
+        TempData["ClaveTemporalCorreo"] = funcionario.Correo;
+        TempData["Aviso"] = $"Contraseña restablecida para {funcionario.Nombre}. Debe cambiarla en el próximo ingreso.";
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>Retira el bloqueo por intentos fallidos sin cambiar la contraseña.</summary>
+    [HttpPost("desbloquear")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Desbloquear(int id)
+    {
+        var funcionario = await _db.Funcionarios.FirstOrDefaultAsync(f => f.Id == id);
+
+        if (funcionario is null)
+        {
+            return NotFound();
+        }
+
+        var usuario = await BuscarUsuarioAsync(funcionario);
+
+        if (usuario is null)
+        {
+            TempData["Aviso"] = $"El funcionario {funcionario.Nombre} no tiene cuenta de acceso.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        await _usuarios.SetLockoutEndDateAsync(usuario, null);
+        await _usuarios.ResetAccessFailedCountAsync(usuario);
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "GENERAL",
+            "cuenta",
+            funcionarioId: FuncionarioActualId,
+            detalle: $"{{\"evento\":\"desbloquear_cuenta\",\"funcionario\":{funcionario.Id}}}");
+
+        TempData["Aviso"] = $"Cuenta de {funcionario.Nombre} desbloqueada.";
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<IdentityUser?> BuscarUsuarioAsync(Funcionario funcionario)
+    {
+        var correo = funcionario.Correo.Trim().ToLowerInvariant();
+
+        IdentityUser? usuario = null;
+
+        if (!string.IsNullOrWhiteSpace(funcionario.SsoSujeto))
+        {
+            usuario = await _usuarios.FindByIdAsync(funcionario.SsoSujeto);
+        }
+
+        return usuario
+               ?? await _usuarios.FindByEmailAsync(correo)
+               ?? await _usuarios.FindByNameAsync(correo);
+    }
+
+    /// <summary>Clave temporal legible que cumple la política (mayúscula, minúscula y dígito).</summary>
+    private static string GenerarClaveTemporal()
+    {
+        const string mayusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string minusculas = "abcdefghijkmnopqrstuvwxyz";
+        const string digitos = "23456789";
+
+        var caracteres = new List<char>(13);
+
+        for (var i = 0; i < 4; i++)
+        {
+            caracteres.Add(mayusculas[RandomNumberGenerator.GetInt32(mayusculas.Length)]);
+        }
+
+        for (var i = 0; i < 5; i++)
+        {
+            caracteres.Add(minusculas[RandomNumberGenerator.GetInt32(minusculas.Length)]);
+        }
+
+        for (var i = 0; i < 4; i++)
+        {
+            caracteres.Add(digitos[RandomNumberGenerator.GetInt32(digitos.Length)]);
+        }
+
+        for (var i = caracteres.Count - 1; i > 0; i--)
+        {
+            var j = RandomNumberGenerator.GetInt32(i + 1);
+            (caracteres[i], caracteres[j]) = (caracteres[j], caracteres[i]);
+        }
+
+        return new string(caracteres.ToArray());
     }
 
     private async Task CargarRolesAsync()

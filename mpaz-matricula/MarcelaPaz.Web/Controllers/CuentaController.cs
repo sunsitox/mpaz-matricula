@@ -189,6 +189,16 @@ public class CuentaController : Controller
             return View(form);
         }
 
+        // La marca de cambio obligatorio puede venir de la contraseña inicial o
+        // de un restablecimiento hecho por Administración; se retira al cambiarla.
+        var marcas = await _usuarios.GetClaimsAsync(usuario);
+        var marca = marcas.FirstOrDefault(c => c.Type == "debe_cambiar_contrasena");
+
+        if (marca is not null)
+        {
+            await _usuarios.RemoveClaimAsync(usuario, marca);
+        }
+
         await _auditoria.RegistrarAsync(
             "REEMPLAZAR",
             "GENERAL",

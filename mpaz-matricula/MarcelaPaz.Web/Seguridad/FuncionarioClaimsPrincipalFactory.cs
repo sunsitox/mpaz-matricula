@@ -70,12 +70,14 @@ public class FuncionarioClaimsPrincipalFactory : UserClaimsPrincipalFactory<Iden
             identidad.AddClaim(new Claim("permiso", $"{permiso.Area}:{permiso.Accion}"));
         }
 
-        // S-09: si la cuenta todavía usa la contraseña inicial compartida, la
-        // sesión debe cambiarla antes de operar. El claim desaparece solo cuando
-        // la persona define su propia contraseña.
+        // S-09: la sesión debe cambiar la contraseña antes de operar cuando la
+        // cuenta todavía usa la inicial compartida o cuando Administración acaba
+        // de restablecerla (claim guardado en Identity). El claim desaparece
+        // cuando la persona define su propia contraseña.
         var inicial = _configuracion["Seguridad:ContrasenaInicial"];
 
-        if (!string.IsNullOrWhiteSpace(inicial)
+        if (!identidad.HasClaim("debe_cambiar_contrasena", "1")
+            && !string.IsNullOrWhiteSpace(inicial)
             && await UserManager.CheckPasswordAsync(usuario, inicial))
         {
             identidad.AddClaim(new Claim("debe_cambiar_contrasena", "1"));
