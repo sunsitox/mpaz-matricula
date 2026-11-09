@@ -1,7 +1,7 @@
 @inject MarcelaPaz.Web.Servicios.AnioEscolar AniosEscolares
 @{
     var pasoActual = (int)(ViewData["Paso"] ?? 1);
-    string[] nombresPasos = { "Estudiante", "Madre y padre", "Apoderados", "Emergencia", "Retiro", "Salud y PIE", "Revisar y confirmar" };
+    string[] nombresPasos = { "Estudiante", "Madre y padre", "Apoderados", "Emergencia", "Retiro", "Salud y PIE", "Autorizaciones", "Revisar y confirmar" };
 
     var anioActivo = await AniosEscolares.ActivoAsync();
     var tituloPagina = anioActivo is int anio
@@ -65,7 +65,7 @@
 
     <!-- Stepper de progreso -->
     <nav class="wizard__pasos" aria-label="Pasos de la ficha">
-        @for (var i = 1; i <= 7; i++)
+        @for (var i = 1; i <= nombresPasos.Length; i++)
         {
             var clase = i < pasoActual ? "wizard__paso--hecho"
                       : i == pasoActual ? "wizard__paso--activo"
@@ -75,7 +75,7 @@
             <div class="wizard__paso @clase" @(i == pasoActual ? "aria-current=\"step\"" : "")>
                 <span class="wizard__paso-numero" aria-hidden="true">@i</span>
                 <span class="wizard__paso-texto">@nombresPasos[i - 1]</span>
-                <span class="sr-only">Paso @i de 7: @estado</span>
+                <span class="sr-only">Paso @i de 8: @estado</span>
             </div>
         }
     </nav>
@@ -83,7 +83,7 @@
     <main id="contenido-principal" tabindex="-1" class="wizard__cuerpo @(ViewData["AnchoAmplio"] is true ? "wizard__cuerpo--amplio" : null)">
         <div class="wizard__contexto @(ViewData["AnchoAmplio"] is true ? "wizard__contexto--amplio" : null)">
             <h1 class="wizard__titulo-pagina">@tituloPagina</h1>
-            <p class="wizard__ayuda-pagina">Complete los siete pasos; puede retomar la ficha más tarde.</p>
+            <p class="wizard__ayuda-pagina">Complete los ocho pasos; puede retomar la ficha más tarde.</p>
         </div>
 
         <div class="wizard__tarjeta">

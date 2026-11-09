@@ -70,6 +70,9 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<RequisitoDocumental> RequisitosDocumentales => Set<RequisitoDocumental>();
 
+    /// <summary>Auditoría de cambios (solo lectura: la escribe el trigger).</summary>
+    public DbSet<HistorialCambio> HistorialCambios => Set<HistorialCambio>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -180,9 +183,14 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
             e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(20).IsRequired();
             e.Property(x => x.CreadaPor).HasColumnName("creada_por");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
             e.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
+            e.Property(x => x.Version).HasColumnName("version").HasDefaultValue(1);
             e.Property(x => x.ConfirmadaEn).HasColumnName("confirmada_en");
             e.Property(x => x.ConfirmadaPor).HasColumnName("confirmada_por");
+            e.Property(x => x.Observaciones).HasColumnName("observaciones");
+            e.Property(x => x.ValidadaEn).HasColumnName("validada_en");
+            e.Property(x => x.ValidadaPor).HasColumnName("validada_por");
             e.HasOne(x => x.Curso).WithMany().HasForeignKey(x => x.CursoId);
         });
 
@@ -232,6 +240,9 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.TieneRestriccion).HasColumnName("tiene_restriccion");
             e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
+            e.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
+            e.Property(x => x.Version).HasColumnName("version").HasDefaultValue(1);
             e.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId);
             e.HasOne(x => x.Estudiante).WithMany().HasForeignKey(x => x.EstudianteId);
         });
@@ -272,7 +283,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
             e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
             e.Property(x => x.Descripcion).HasColumnName("descripcion").HasMaxLength(255).IsRequired();
-            e.Property(x => x.EnTratamiento).HasColumnName("en_tratamiento");
+            // La columna es NOT NULL DEFAULT FALSE; el modelo no debe enviar NULL.
+            e.Property(x => x.EnTratamiento).HasColumnName("en_tratamiento").IsRequired();
             e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
         });
@@ -324,6 +336,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Folio).HasColumnName("folio").HasMaxLength(20).IsRequired();
             e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(12).IsRequired();
             e.Property(x => x.DatosSnapshot).HasColumnName("datos_snapshot").HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.MotivoCorreccion).HasColumnName("motivo_correccion");
             e.Property(x => x.GeneradaPor).HasColumnName("generada_por");
             e.Property(x => x.GeneradaEn).HasColumnName("generada_en");
             e.Property(x => x.PdfDocumentoId).HasColumnName("pdf_documento_id");
@@ -368,6 +381,20 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Version).HasColumnName("version");
         });
 
+        // Auditoría de cambios: solo se lee la última fila por registro. Sin
+        // clave porque la aplicación nunca la inserta ni la modifica.
+        builder.Entity<HistorialCambio>(e =>
+        {
+            e.ToTable("historial_cambios", Esquema, t => t.ExcludeFromMigrations());
+            e.HasNoKey();
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Tabla).HasColumnName("tabla").HasMaxLength(63).IsRequired();
+            e.Property(x => x.RegistroId).HasColumnName("registro_id");
+            e.Property(x => x.Accion).HasColumnName("accion").HasMaxLength(6).IsRequired();
+            e.Property(x => x.FuncionarioId).HasColumnName("funcionario_id");
+            e.Property(x => x.CambiadoEn).HasColumnName("cambiado_en");
+        });
+
         builder.Entity<PlantillaAutorizacion>(e =>
         {
             e.ToTable("plantilla_autorizacion", Esquema, t => t.ExcludeFromMigrations());
@@ -397,6 +424,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
             e.Property(x => x.RevocadaEn).HasColumnName("revocada_en");
+            e.Property(x => x.RevocadaPor).HasColumnName("revocada_registrada_por");
             e.Property(x => x.MotivoRevocacion).HasColumnName("motivo_revocacion");
             e.HasMany(x => x.Alcances).WithOne().HasForeignKey(a => a.AutorizacionId);
         });

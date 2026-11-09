@@ -137,3 +137,121 @@ body {
     background: var(--color-bg);
 }
 
+/* ==========================================================================
+   Alto contraste
+   Windows ofrece «Aumentar el contraste» (prefers-contrast) y el modo de
+   contraste forzado (forced-colors). El primero refuerza los tokens; el
+   segundo deja que el sistema decida los colores y sólo asegura bordes,
+   fondos y focos visibles.
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+    :root {
+        --color-text: #111C29;
+        --color-text-secondary: #38495C;
+        --color-border: #8B9AAD;
+        --color-input-border: #5C6E83;
+        --color-bg: #FFFFFF;
+        --color-warning-text: #5A3D00;
+        --color-danger: #8E1F1F;
+    }
+
+    .admin__tarjeta,
+    .wizard__tarjeta,
+    .wizard__desplegable,
+    .wizard__tarjeta .wizard__restriccion,
+    .acceso__input,
+    .admin__tabla th,
+    .admin__tabla td,
+    .tabla-envoltura {
+        border-color: var(--color-input-border);
+    }
+
+    .admin__tabla th {
+        border-bottom: 2px solid var(--color-text);
+    }
+
+    .acceso__boton,
+    .acceso__boton-secundario,
+    .admin__boton {
+        border: 2px solid var(--color-text);
+    }
+
+    :focus-visible {
+        outline-width: 4px;
+    }
+}
+
+@media (forced-colors: active) {
+    .wizard__botones,
+    .wizard__tarjeta,
+    .wizard__desplegable-resumen,
+    .admin__tarjeta,
+    .acceso__tarjeta {
+        background: Canvas;
+        color: CanvasText;
+        border-color: CanvasText;
+    }
+
+    .wizard__botones {
+        border-top: 2px solid CanvasText;
+    }
+
+    .saltar-contenido:focus,
+    .tabla-envoltura:focus-visible,
+    .acceso__alerta--errores:focus {
+        outline: 3px solid Highlight;
+    }
+
+    .alumnos__estado,
+    .wizard__paso-numero,
+    .wizard__desplegable,
+    .wizard__tarjeta .wizard__restriccion {
+        border: 1px solid CanvasText;
+    }
+
+    .wizard__titulo-paso::after {
+        background: CanvasText;
+    }
+
+    .acceso__error {
+        color: CanvasText;
+    }
+}
+
+/* ==========================================================================
+   Reflow a 200 % de zoom (viewport efectivo de ~640 px, WCAG 1.4.10)
+   Los filtros y las acciones dejan de competir por el ancho y se apilan; las
+   tablas siguen desplazándose dentro de su contenedor.
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .alumnos__encabezado,
+    .alumnos__resumen,
+    .admin__encabezado {
+        flex-wrap: wrap;
+    }
+
+    .alumnos__filtros {
+        gap: 0.6rem;
+    }
+
+    .alumnos__filtros > .acceso__campo,
+    .alumnos__check,
+    .alumnos__boton-buscar {
+        flex: 1 1 100%;
+    }
+
+    .alumnos__check {
+        min-height: 44px;
+    }
+
+    .wizard__botones {
+        padding-inline: 0.75rem;
+    }
+
+    .wizard__pdf-marco {
+        width: 100%;
+    }
+}
+

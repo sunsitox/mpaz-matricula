@@ -1,0 +1,87 @@
+@model MarcelaPaz.Web.Models.ReporteFaltantes
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Faltantes documentales {Model.Anio}";
+}
+<section class="admin__tarjeta">
+    <div class="alumnos__encabezado">
+        <div>
+            <h1 class="admin__titulo-seccion">Faltantes documentales @Model.Anio</h1>
+            <p class="admin__ayuda">
+                Requisitos todavía pendientes por estudiante. Solo se muestran los tipos
+                que su rol puede ver; la salud, el PIE y lo judicial exigen su permiso.
+                El CSV descarga exactamente esta tabla.
+            </p>
+        </div>
+        <span class="alumnos__insignia">Año escolar @Model.Anio</span>
+    </div>
+
+    <form method="get" asp-controller="Reportes" asp-action="Faltantes" class="alumnos__filtros">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="anio">Año escolar</label>
+            <select class="acceso__input" id="anio" name="anio" onchange="this.form.submit()">
+                @foreach (var anio in Model.Anios)
+                {
+                    <option value="@anio" selected="@(anio == Model.Anio ? "selected" : null)">@anio</option>
+                }
+            </select>
+        </div>
+        @if (User.HasClaim("permiso", "DOCUMENTOS:EXPORTAR"))
+        {
+            <a class="admin__boton admin__boton--primario" asp-controller="Reportes" asp-action="FaltantesCsv"
+               asp-route-anio="@Model.Anio">Descargar CSV</a>
+        }
+        <a class="admin__boton" asp-controller="Reportes" asp-action="Matriculas"
+           asp-route-anio="@Model.Anio">Ver estado de matrículas</a>
+    </form>
+
+    <p class="alumnos__conteo">
+        <strong>@Model.Filas.Count</strong>
+        @(Model.Filas.Count == 1 ? "documento pendiente" : "documentos pendientes")
+    </p>
+</section>
+
+<section class="admin__tarjeta">
+    @if (Model.Filas.Count == 0)
+    {
+        <div class="alumnos__vacio">
+            <p class="alumnos__vacio-texto">No hay documentos pendientes visibles para su rol en este año.</p>
+        </div>
+    }
+    else
+    {
+        <div class="alumnos__tabla-envoltura" tabindex="0">
+            <table class="admin__tabla alumnos__tabla">
+                <caption class="sr-only">
+                    Documentos pendientes del año escolar @Model.Anio por estudiante.
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Alumno</th>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Curso</th>
+                        <th scope="col">Documento pendiente</th>
+                        <th scope="col">Solicitado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fila in Model.Filas)
+                    {
+                        <tr>
+                            <td>
+                                <a class="alumnos__nombre" asp-controller="Alumnos" asp-action="Detalle"
+                                   asp-route-id="@fila.EstudianteId" asp-route-anio="@Model.Anio">
+                                    @fila.Estudiante
+                                </a>
+                            </td>
+                            <td class="alumnos__dato">@fila.Rut</td>
+                            <td class="alumnos__dato">@(fila.Curso ?? "—")</td>
+                            <td class="alumnos__dato">@fila.Etiqueta</td>
+                            <td class="alumnos__dato">@fila.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

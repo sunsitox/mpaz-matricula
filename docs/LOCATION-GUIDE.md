@@ -6,14 +6,14 @@ Esta guía explica qué va en cada carpeta del repo para mantener el proyecto or
 
 ```
 <raíz del repo>/
-├── project/          # Sistema completo (solución + 4 proyectos .NET)
+├── mpaz-matricula/   # Sistema completo (solución + proyectos .NET)
 ├── docs/             # Documentación general del proyecto
 └── scripts/          # Scripts de ingeniería / setup / automatización
 ```
 
 ---
 
-## project/
+## mpaz-matricula/
 
 **Propósito:** Contiene todo el sistema de MarcelaPaz.Matriculas (solución y 4 proyectos .NET).
 
@@ -44,7 +44,7 @@ Esta guía explica qué va en cada carpeta del repo para mantener el proyecto or
 **Por qué:** La documentación suele ser de lectura más que de ejecución; separarla del código ayuda a mantener el repo enfocado y la documentación accesible sin mezclar con rutas que el sistema espera en tiempo de ejecución.
 
 **Qué NO va aquí:**
-- Código fuente, scripts ejecutables, configuraciones de tiempo de ejecución, binarios, paquetes → esos van en `project/` o `scripts/` según corresponda
+- Código fuente, scripts ejecutables, configuraciones de tiempo de ejecución, binarios, paquetes → esos van en `mpaz-matricula/` o `scripts/` según corresponda
 
 ---
 
@@ -62,16 +62,16 @@ Esta guía explica qué va en cada carpeta del repo para mantener el proyecto or
 
 ## Convención adoptada
 
-- Separación simple en la raíz: `project/`, `docs/`, `scripts/`
-- El sistema completo vive en `project/`
-- Todo lo que no sea el sistema (documentación, scripts, notas) vive fuera de `project/` según su naturaleza
+- Separación simple en la raíz: `mpaz-matricula/`, `docs/`, `scripts/`
+- El sistema completo vive en `mpaz-matricula/`
+- Todo lo que no sea el sistema (documentación, scripts, notas) vive fuera de `mpaz-matricula/` según su naturaleza
 - Si en el futuro se agrega una carpeta `solution/` o `src/`, esta guía se actualiza para reflejar la nueva convención
 
 ---
 
 ## Ejemplos de uso común
 
-- Para abrir el sistema en Visual Studio / VS Code: abrir `project/MarcelaPaz.Matriculas.slnx`
-- Para ejecutar la API desde CLI: `cd project/MarcelaPaz.Web && dotnet run`
+- Para abrir el sistema en Visual Studio / VS Code: abrir `mpaz-matricula/MarcelaPaz.Matriculas.slnx`
+- Para ejecutar la API desde CLI: `cd mpaz-matricula/MarcelaPaz.Web && dotnet run`
 - Para regenerar la solución desde cero (Windows): `scripts/setup-marcela-paz-matriculas.bat`
 - Para leer la planificación del sistema: leer `docs/systema-matricula-tasks.md`

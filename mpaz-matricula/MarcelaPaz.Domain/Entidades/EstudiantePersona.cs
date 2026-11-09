@@ -30,4 +30,13 @@ public class EstudiantePersona
     public DateOnly? VigenteDesde { get; set; }
 
     public DateOnly? VigenteHasta { get; set; }
+
+    /// <summary>Creación del vínculo (<c>created_at</c>).</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>Última modificación del vínculo (<c>updated_at</c>).</summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>Versión de bloqueo optimista (<c>version</c>); la mantiene un trigger.</summary>
+    public int Version { get; set; } = 1;
 }

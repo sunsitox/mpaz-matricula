@@ -131,6 +131,27 @@
                 <span>No</span>
             </label>
         </div>
+        <span asp-validation-for="Restriccion_Madre" class="acceso__error"></span>
+        <div class="acceso__campo">
+            <span class="acceso__etiqueta">Tipo de restricción (sólo si respondió Sí)</span>
+            <div class="wizard__radios">
+                <label class="acceso__radio">
+                    <input asp-for="Restriccion_Madre_Tipo" type="radio" value="Judicial" />
+                    <span>Judicial</span>
+                </label>
+                <label class="acceso__radio">
+                    <input asp-for="Restriccion_Madre_Tipo" type="radio" value="Familiar" />
+                    <span>Familiar</span>
+                </label>
+            </div>
+            <span asp-validation-for="Restriccion_Madre_Tipo" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label asp-for="Restriccion_Madre_Detalle" class="acceso__etiqueta">Detalle de la restricción (sólo si respondió Sí)</label>
+            <textarea asp-for="Restriccion_Madre_Detalle" class="acceso__input" rows="3" maxlength="500"
+                      placeholder="Ej: orden del tribunal que prohíbe el acercamiento"></textarea>
+            <span asp-validation-for="Restriccion_Madre_Detalle" class="acceso__error"></span>
+        </div>
     </fieldset>
 
     <div class="wizard__botones">

@@ -22,6 +22,9 @@ public class FichaVersion
     /// <summary>Copia congelada de los datos de la ficha en formato JSON.</summary>
     public string DatosSnapshot { get; set; } = "{}";
 
+    /// <summary>Motivo de la corrección (MAT-18). Obligatorio desde la versión 2.</summary>
+    public string? MotivoCorreccion { get; set; }
+
     public int GeneradaPor { get; set; }
 
     public DateTimeOffset GeneradaEn { get; set; }

@@ -1,0 +1,128 @@
+@model MarcelaPaz.Web.Models.FichaForm
+@{
+    Layout = "_WizardLayout";
+    // La ficha se muestra a tamaño real: este paso ocupa más ancho que el resto.
+    ViewData["AnchoAmplio"] = true;
+    var datos = (Dictionary<string, string>)(ViewData["Borrador"] ?? new Dictionary<string, string>());
+
+    // Orden de revisión: el mismo del wizard (pasos 1 a 7). Las claves que un
+    // paso futuro agregue se muestran al final, sin romper la vista previa.
+    var orden = new[]
+    {
+        "curso: nivel", "curso: letra", "año escolar",
+        "tipo identificador", "cédula de identidad",
+        "nombres", "apellido paterno", "apellido materno",
+        "fecha nacimiento", "nacionalidad", "domicilio", "comuna",
+        "madre: nombre apellido", "madre: cédula identidad", "madre: teléfono",
+        "madre: escolaridad", "madre: domicilio", "madre: correo",
+        "restricción madre (SI/NO)", "restricción madre: tipo", "restricción madre: detalle",
+        "padre: nombre apellido", "padre: cédula identidad", "padre: teléfono",
+        "padre: escolaridad", "padre: domicilio", "padre: correo",
+        "restricción padre (SI/NO)", "restricción padre: tipo", "restricción padre: detalle",
+        "apoderado principal: vínculo", "apoderado principal: nombre apellido",
+        "apoderado principal: cédula identidad", "apoderado principal: teléfono",
+        "apoderado principal: correo",
+        "apoderado secundario: vínculo", "apoderado secundario: nombre apellido",
+        "apoderado secundario: cédula identidad", "apoderado secundario: teléfono",
+        "apoderado secundario: correo",
+        "contacto emergencia 01: identificación", "contacto emergencia 01: vínculo",
+        "contacto emergencia 01: teléfono",
+        "contacto emergencia 02: identificación", "contacto emergencia 02: vínculo",
+        "contacto emergencia 02: teléfono",
+        "retiro autorizado 01: vínculo", "retiro autorizado 01: rut",
+        "retiro autorizado 02: vínculo", "retiro autorizado 02: rut",
+        "retiro autorizado 03: vínculo", "retiro autorizado 03: rut",
+        "salida solo al finalizar jornada (SI/NO)",
+        "situación médica (SI/NO)",
+        "situación médica 01: identificación", "situación médica 01: detalle",
+        "situación médica 01: en tratamiento",
+        "situación médica 02: identificación", "situación médica 02: detalle",
+        "situación médica 02: en tratamiento",
+        "situación médica 03: identificación", "situación médica 03: detalle",
+        "situación médica 03: en tratamiento",
+        "alergias", "contacto sanitario: nombre", "contacto sanitario: teléfono",
+        "salida al baño (SI/NO)",
+        "PIE: participa (SI/NO/PENDIENTE)", "PIE: diagnosticado (SI/NO)",
+        "PIE: apoyos o diagnóstico",
+        "autorización de uso de imagen (SI/NO)",
+        "autorización de convivencia escolar (SI/NO)",
+    };
+}
+<h2 class="wizard__titulo-paso">Paso 8 · Revisar y confirmar</h2>
+<p class="wizard__ayuda">
+    Estos son los datos del borrador. Al guardar y finalizar se genera la ficha definitiva con
+    folio institucional y una copia congelada de estos datos; la vista previa de abajo es un borrador
+    sin folio hasta ese momento.
+</p>
+
+@* El formulario envuelve el resumen y la vista previa: así la barra de acciones
+   queda fija al pie desde el inicio del paso, sin tener que bajar hasta el final. *@
+<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="8" method="post"
+      data-ux-envio="Guardando la ficha…">
+    <partial name="_ResumenValidacion" />
+
+    @if (datos.Count == 0)
+    {
+        <div class="acceso__aviso">
+            Aun no hay datos en el borrador. Vuelva a un paso anterior antes de confirmar.
+        </div>
+    }
+    else
+    {
+        <div class="wizard__revision">
+            <dl class="wizard__resumen">
+                @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
+                {
+                    <div class="wizard__resumen-item">
+                        <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
+                        <dd>@valor</dd>
+                    </div>
+                }
+            </dl>
+
+            <aside class="wizard__pdf">
+                <h2 class="wizard__subtitulo">Ficha para firma</h2>
+                <div class="wizard__pdf-caja">
+                    <div class="wizard__pdf-cargando" aria-hidden="true">
+                        <span class="wizard__pdf-spinner"></span>
+                        Preparando la vista previa…
+                    </div>
+                    <iframe class="wizard__pdf-marco"
+                            src="@Url.Action("Comprobante", "Ficha")"
+                            title="Vista previa de la ficha de matrícula"></iframe>
+                </div>
+            </aside>
+        </div>
+    }
+
+    @if (datos.ContainsKey("corrección: versión base"))
+    {
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="motivo-correccion">Motivo de la corrección</label>
+            <textarea class="acceso__input" id="motivo-correccion" asp-for="Motivo_Correccion"
+                      rows="3" maxlength="500" required></textarea>
+            <p class="wizard__ayuda">
+                Se guardará una versión nueva de la ficha y la versión @datos["corrección: versión base"]
+                quedará reemplazada. La ficha antes firmada no se modifica.
+            </p>
+        </div>
+    }
+
+    <label class="wizard__confirmacion">
+        <input asp-for="Confirmo_Revision" type="checkbox" required />
+        <span>
+            Confirmo que revisé con el apoderado todos los datos de esta ficha, incluidas las autorizaciones,
+            y que la información es fiel a lo declarado.
+        </span>
+    </label>
+
+    <div class="wizard__botones wizard__botones--final">
+        <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="7">Volver</a>
+        @if (datos.Count > 0)
+        {
+            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" asp-route-descargar="true">Descargar PDF</a>
+            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" target="_blank" rel="noopener">Abrir en otra pestaña</a>
+        }
+        <button type="submit" class="acceso__boton wizard__guardar">Guardar y finalizar</button>
+    </div>
+</form>

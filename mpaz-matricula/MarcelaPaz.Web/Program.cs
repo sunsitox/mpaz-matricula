@@ -216,6 +216,23 @@ app.Use(async (contexto, siguiente) =>
         "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
         + "script-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';";
 
+    // El PDF del paso 8 debe poder incrustarse en el propio portal. Se aplica
+    // al emitir la respuesta para comprobar la acción resuelta y el tipo real:
+    // ni el login ni un error/redirección reciben esta excepción.
+    contexto.Response.OnStarting(() =>
+    {
+        if (string.Equals(contexto.Request.RouteValues["controller"]?.ToString(), "Ficha", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(contexto.Request.RouteValues["action"]?.ToString(), "Comprobante", StringComparison.OrdinalIgnoreCase)
+            && contexto.Response.ContentType == "application/pdf")
+        {
+            cabeceras["X-Frame-Options"] = "SAMEORIGIN";
+            cabeceras["Content-Security-Policy"] = cabeceras["Content-Security-Policy"]
+                .ToString().Replace("frame-ancestors 'none'", "frame-ancestors 'self'", StringComparison.Ordinal);
+        }
+
+        return Task.CompletedTask;
+    });
+
     await siguiente();
 });
 

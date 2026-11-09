@@ -2,10 +2,10 @@
 @{
     Layout = "_WizardLayout";
 }
-<h2 class="wizard__titulo-paso">Paso 6 · Datos médicos y PIE</h2>
+<h2 class="wizard__titulo-paso">Paso 6 · Salud y PIE</h2>
 <p class="wizard__ayuda">
-    Información médica y de apoyo PIE relevante para la atención escolar, con cada situación en un bloque desplegable.
-    Las alergias, el contacto sanitario, el PIE y las autorizaciones son obligatorios.
+    Información médica y de apoyo PIE relevante para la atención escolar, con cada situación en un bloque
+    desplegable. Las alergias, el contacto sanitario y la respuesta sobre el PIE son obligatorios.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="6" method="post">
@@ -198,62 +198,6 @@
             </label>
             <label class="acceso__radio">
                 <input asp-for="SalidaBano" type="radio" value="No" />
-                <span>No</span>
-            </label>
-        </div>
-    </fieldset>
-
-    <h2 class="wizard__seccion-titulo">Autorizaciones del apoderado</h2>
-
-    <fieldset class="wizard__restriccion">
-        <legend class="acceso__etiqueta">Uso de paracetamol (SI/NO)</legend>
-        <p class="wizard__restriccion-pregunta">
-            Siendo el adulto responsable del estudiante, ¿autoriza el uso de paracetamol en situaciones que se consideren necesarias?
-        </p>
-        <div class="wizard__radios">
-            <label class="acceso__radio">
-                <input asp-for="AutorizaParacetamol" type="radio" value="Si" />
-                <span>Si</span>
-            </label>
-            <label class="acceso__radio">
-                <input asp-for="AutorizaParacetamol" type="radio" value="No" />
-                <span>No</span>
-            </label>
-        </div>
-    </fieldset>
-
-    <fieldset class="wizard__restriccion">
-        <legend class="acceso__etiqueta">Autorización de uso de imagen</legend>
-        <p class="wizard__restriccion-pregunta">
-            Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales (registro interno,
-            sitio web y redes sociales del establecimiento), sin exponer datos sensibles. Puedo revocar esta
-            autorización por escrito en cualquier momento.
-        </p>
-        <div class="wizard__radios">
-            <label class="acceso__radio">
-                <input asp-for="AutorizaImagen" type="radio" value="Si" />
-                <span>Si</span>
-            </label>
-            <label class="acceso__radio">
-                <input asp-for="AutorizaImagen" type="radio" value="No" />
-                <span>No</span>
-            </label>
-        </div>
-    </fieldset>
-
-    <fieldset class="wizard__restriccion">
-        <legend class="acceso__etiqueta">Autorización para el trabajo con Convivencia Escolar</legend>
-        <p class="wizard__restriccion-pregunta">
-            Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea
-            necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.
-        </p>
-        <div class="wizard__radios">
-            <label class="acceso__radio">
-                <input asp-for="AutorizaConvivencia" type="radio" value="Si" />
-                <span>Si</span>
-            </label>
-            <label class="acceso__radio">
-                <input asp-for="AutorizaConvivencia" type="radio" value="No" />
                 <span>No</span>
             </label>
         </div>

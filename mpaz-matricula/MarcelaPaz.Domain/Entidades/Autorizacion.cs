@@ -56,6 +56,9 @@ public class Autorizacion
 
     public DateTimeOffset? RevocadaEn { get; set; }
 
+    /// <summary>Funcionario que registró la revocación (MAT-04).</summary>
+    public int? RevocadaPor { get; set; }
+
     public string? MotivoRevocacion { get; set; }
 
     public List<AutorizacionAlcance> Alcances { get; set; } = new();

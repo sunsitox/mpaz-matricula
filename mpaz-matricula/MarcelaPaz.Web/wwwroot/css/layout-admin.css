@@ -110,6 +110,20 @@
     gap: 0.75rem;
 }
 
+.alumnos__check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    font-size: 0.88rem;
+    color: var(--color-text);
+}
+
+.alumnos__check input {
+    width: 18px;
+    height: 18px;
+}
+
 .alumnos__campo-texto {
     flex: 1 1 280px;
 }
@@ -368,6 +382,45 @@
     padding-left: 1.1rem;
 }
 
+/* Pestañas con acceso condicionado de la ficha del alumno. */
+.perfil__pestanas [role="tablist"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1.25rem 0 0.25rem;
+}
+
+.perfil__pestana {
+    padding: 0.45rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.perfil__pestana:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-secondary);
+}
+
+.perfil__pestana.is-activo {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.perfil__pestana:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+[data-ux-grupo][hidden] {
+    display: none;
+}
+
 @media (max-width: 900px) {
     .perfil__grid {
         grid-template-columns: 1fr;
@@ -376,6 +429,297 @@
 
 .admin__menu-titulo--secundario {
     margin-top: 1.25rem;
+}
+
+/* Detalle del estudiante: separación de trámites, datos y formularios.
+   Alcance local para no alterar el listado ni las pantallas de configuración. */
+.perfil {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.perfil > .admin__tarjeta + .admin__tarjeta,
+.perfil > .perfil__grid,
+.perfil > .perfil__grid + .admin__tarjeta,
+.perfil > .perfil__grid + .perfil__grid {
+    margin-top: 0;
+}
+
+.perfil .admin__tarjeta {
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    min-width: 0;
+}
+
+.perfil .perfil__presentacion {
+    border-top: 4px solid var(--color-primary);
+}
+
+.perfil .perfil__cabecera > div:first-child {
+    flex: 1 1 300px;
+    min-width: 0;
+}
+
+.perfil .perfil__cabecera h1 {
+    font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.perfil .perfil__cabecera .admin__ayuda {
+    margin: 0.5rem 0 0.75rem;
+}
+
+.perfil .alumnos__acciones {
+    flex: 0 1 260px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.perfil .alumnos__acciones .admin__boton {
+    width: 100%;
+}
+
+.perfil h2.admin__titulo-seccion {
+    font-size: 1.15rem;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-primary);
+}
+
+.perfil h3.admin__titulo-seccion {
+    font-size: 1rem;
+    margin: 1.5rem 0 0.75rem;
+}
+
+.perfil .admin__ayuda {
+    line-height: 1.55;
+    max-width: 78ch;
+    margin-bottom: 1rem;
+}
+
+.perfil .perfil__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.perfil .perfil__dato {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    align-items: baseline;
+    padding-block: 0.7rem;
+    line-height: 1.45;
+}
+
+.perfil .perfil__dato strong {
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.perfil .tabla-envoltura {
+    max-width: 100%;
+    margin-block: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+
+.perfil .admin__tabla th {
+    background: var(--color-bg);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.perfil .admin__tabla th,
+.perfil .admin__tabla td {
+    padding: 0.8rem;
+    vertical-align: top;
+    line-height: 1.45;
+}
+
+.perfil .admin__tabla td {
+    min-width: 100px;
+    overflow-wrap: anywhere;
+}
+
+.perfil .admin__tabla td .admin__ayuda {
+    display: block;
+    margin: 0.3rem 0 0;
+    font-size: 0.8rem;
+}
+
+.perfil form .acceso__campo {
+    max-width: 480px;
+}
+
+.perfil .admin__tabla form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.perfil .admin__tabla .acceso__input {
+    width: 100%;
+    min-width: 210px;
+    height: auto;
+    min-height: 42px;
+}
+
+.perfil .admin__tabla .admin__acciones {
+    align-items: flex-start;
+    gap: 0.65rem;
+}
+
+.perfil .admin__tabla .admin__acciones > form:first-child {
+    flex: 1 1 230px;
+}
+
+.perfil > .admin__tarjeta > form {
+    margin-block: 1rem;
+}
+
+@media (max-width: 1000px) {
+    .perfil .perfil__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .perfil .alumnos__acciones {
+        flex-basis: 100%;
+    }
+
+    .perfil .perfil__dato {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.25rem;
+    }
+
+    .perfil .admin__boton {
+        white-space: normal;
+        height: auto;
+        min-height: 44px;
+        line-height: 1.4;
+    }
+}
+
+/* Expediente: archivo, estado y carga con espacio propio. */
+.perfil .expediente__tabla {
+    table-layout: fixed;
+}
+
+.perfil .expediente__tabla th:nth-child(1) { width: 22%; }
+.perfil .expediente__tabla th:nth-child(2) { width: 16%; }
+.perfil .expediente__tabla th:nth-child(3) { width: 24%; }
+.perfil .expediente__tabla th:nth-child(4) { width: 38%; }
+
+.perfil .expediente__tabla td {
+    min-width: 0;
+}
+
+.expediente__estado {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--color-bg);
+}
+
+.expediente__estado--pendiente {
+    color: var(--color-warning-text);
+    background: var(--color-warning-bg);
+}
+
+.expediente__estado--recibido {
+    color: #2C6B4F;
+    background: #E8F5EE;
+}
+
+.expediente__estado--no-aplica {
+    color: var(--color-text-secondary);
+}
+
+.perfil .expediente__tabla .admin__acciones {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.perfil .expediente__tabla .admin__acciones > form:first-child {
+    flex: none;
+}
+
+.perfil .expediente__tabla .acceso__input {
+    min-width: 0;
+    padding: 0.45rem;
+    font-size: 0.85rem;
+}
+
+.expediente__escaneo {
+    margin-top: 1.5rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.expediente__escaneo form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.expediente__escaneo .acceso__campo {
+    flex: 1 1 280px;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+@media (max-width: 1100px) {
+    .perfil .expediente__tabla,
+    .perfil .expediente__tabla tbody,
+    .perfil .expediente__tabla tr,
+    .perfil .expediente__tabla td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Oculto visualmente, conservado para lectores de pantalla. */
+    .perfil .expediente__tabla thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .perfil .expediente__tabla tr + tr {
+        border-top: 2px solid var(--color-border);
+    }
+
+    .perfil .expediente__tabla td {
+        border-bottom: 0;
+        padding: 0.55rem 1rem;
+    }
+
+    .perfil .expediente__tabla td::before {
+        content: attr(data-etiqueta);
+        display: block;
+        margin-bottom: 0.3rem;
+        color: var(--color-text-secondary);
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .perfil .expediente__tabla td:first-child {
+        padding-top: 1rem;
+    }
+
+    .perfil .expediente__tabla td:last-child {
+        padding-bottom: 1rem;
+    }
 }
 
 /* Formularios de configuración */

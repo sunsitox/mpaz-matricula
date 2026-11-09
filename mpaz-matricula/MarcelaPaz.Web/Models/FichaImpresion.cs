@@ -24,6 +24,7 @@ public static class FichaImpresion
         {
             "madre: nombre apellido", "madre: cédula identidad", "madre: teléfono",
             "madre: escolaridad", "madre: domicilio", "madre: correo", "restricción madre (SI/NO)",
+            "restricción madre: tipo", "restricción madre: detalle",
         }),
         ("Padre", new[]
         {
@@ -54,7 +55,6 @@ public static class FichaImpresion
         ("Autorizaciones", new[]
         {
             "salida solo al finalizar jornada (SI/NO)", "salida al baño (SI/NO)",
-            "autorización de paracetamol (SI/NO)",
         }),
         ("Antecedentes médicos", new[]
         {
@@ -128,6 +128,8 @@ public static class FichaImpresion
         ["PIE: diagnosticado (SI/NO)"] = "Diagnóstico PIE",
         ["PIE: apoyos o diagnóstico"] = "Apoyos o diagnóstico",
         ["salida solo al finalizar jornada (SI/NO)"] = "Salida solo",
+        ["restricción madre: tipo"] = "Restricción: tipo",
+        ["restricción madre: detalle"] = "Restricción: detalle",
         ["alergias"] = "Alergias",
         ["contacto sanitario: nombre"] = "Contacto sanitario",
         ["contacto sanitario: teléfono"] = "Teléfono del contacto sanitario",

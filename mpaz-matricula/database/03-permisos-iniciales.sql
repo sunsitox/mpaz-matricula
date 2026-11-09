@@ -32,6 +32,8 @@ JOIN (VALUES
     ('SECRETARIA', 'DOCUMENTOS',    'LEER'),
     ('SECRETARIA', 'DOCUMENTOS',    'CREAR'),
     ('SECRETARIA', 'DOCUMENTOS',    'EDITAR'),
+    ('SECRETARIA', 'GENERAL',       'EXPORTAR'),
+    ('SECRETARIA', 'DOCUMENTOS',    'EXPORTAR'),
     ('SECRETARIA', 'SALUD',         'LEER'),
     ('SECRETARIA', 'SALUD',         'CREAR'),
     ('SECRETARIA', 'SALUD',         'EDITAR'),
@@ -51,6 +53,8 @@ JOIN (VALUES
     ('DIRECCION', 'AUTORIZACIONES', 'VALIDAR'),
     ('DIRECCION', 'DOCUMENTOS',     'LEER'),
     ('DIRECCION', 'DOCUMENTOS',     'VALIDAR'),
+    ('DIRECCION', 'GENERAL',        'EXPORTAR'),
+    ('DIRECCION', 'DOCUMENTOS',     'EXPORTAR'),
 
     -- INSPECTORIA: contacto y retiro, sin diagnósticos.
     ('INSPECTORIA', 'GENERAL',      'LEER'),

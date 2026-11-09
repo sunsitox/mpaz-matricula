@@ -96,6 +96,13 @@ public class FichaForm
     // prohíba a la madre vincularse con el o la estudiante?
     public string? Restriccion_Madre { get; set; }
 
+    /// <summary>Tipo de restricción declarada: Judicial o Familiar.</summary>
+    public string? Restriccion_Madre_Tipo { get; set; }
+
+    /// <summary>Detalle de la restricción declarada.</summary>
+    [StringLength(500, ErrorMessage = "El detalle no puede superar los 500 caracteres.")]
+    public string? Restriccion_Madre_Detalle { get; set; }
+
     // Paso 3 · Apoderado principal y secundario
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     public string? Principal_Nombre_Apellido { get; set; }
@@ -191,9 +198,6 @@ public class FichaForm
     // ¿Condición médica que amerite salir constantemente al baño? (Si / No)
     public string? SalidaBano { get; set; }
 
-    // Autorización de paracetamol de la ficha vigente (Si / No)
-    public string? AutorizaParacetamol { get; set; }
-
     // Paso 6 · Programa de Integración Escolar (PIE)
     // ¿Participa del PIE? (Si / No / Pendiente)
     public string? ParticipaPie { get; set; }
@@ -209,6 +213,11 @@ public class FichaForm
     public string? AutorizaImagen { get; set; }
 
     public string? AutorizaConvivencia { get; set; }
+
+    // Paso 7 · motivo de la corrección (MAT-18): obligatorio cuando ya existe
+    // una ficha vigente y se genera la siguiente versión.
+    [StringLength(500, ErrorMessage = "El motivo no puede superar los 500 caracteres.")]
+    public string? Motivo_Correccion { get; set; }
 
     // Paso 7 · confirmación obligatoria para enviar la ficha a revisión.
     // Se valida en el controlador: un [Range] sobre bool invalidaba todos los pasos.

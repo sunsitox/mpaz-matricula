@@ -1,6 +1,6 @@
 # Diagrama relacional (borrador) — Sistema de Matrícula Escuela Marcela Paz
 
-> **Estado:** borrador previo al acta de constitución (22-10-2026). Alcance de la primera entrega conversado en la [reunión 1](scripts/docs/reunion-01-2026-10-21.md): estudiantes ya inscritos por proceso externo y sus apoderados. No representa decisiones aprobadas.
+> **Estado:** borrador previo al acta de constitución (22-10-2026). Alcance de la primera entrega conversado en la [reunión 1](docs/reunion-01-2026-10-21.md): estudiantes ya inscritos por proceso externo y sus apoderados. No representa decisiones aprobadas.
 
 Render: pegar el bloque en [mermaid.live](https://mermaid.live) o abrir con la vista Markdown de GitHub/GitLab.
 

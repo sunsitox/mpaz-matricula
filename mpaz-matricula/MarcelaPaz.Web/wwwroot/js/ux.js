@@ -321,4 +321,56 @@
 
         window.setTimeout(() => envio.classList.add('envio--listo'), 900);
     });
+
+    // Pestañas de la ficha del alumno: muestran un grupo de paneles sin
+    // recargar. Sin JS, todos los paneles quedan visibles.
+    document.querySelectorAll('[data-ux-pestanas]').forEach(navegacion => {
+        const botones = Array.from(navegacion.querySelectorAll('[data-ux-pestana]'));
+
+        if (botones.length === 0) {
+            return;
+        }
+
+        const paneles = Array.from(document.querySelectorAll('[data-ux-grupo]'));
+
+        const activar = (nombre, foco) => {
+            botones.forEach(boton => {
+                const activo = boton.dataset.uxPestana === nombre;
+                boton.classList.toggle('is-activo', activo);
+                boton.setAttribute('aria-selected', activo ? 'true' : 'false');
+                boton.tabIndex = activo ? 0 : -1;
+
+                if (activo && foco) {
+                    boton.focus();
+                }
+            });
+            paneles.forEach(panel => {
+                panel.hidden = panel.dataset.uxGrupo !== nombre;
+            });
+        };
+
+        botones.forEach((boton, indice) => {
+            boton.addEventListener('click', () => activar(boton.dataset.uxPestana, false));
+            boton.addEventListener('keydown', evento => {
+                let destino = null;
+
+                if (evento.key === 'ArrowRight') {
+                    destino = (indice + 1) % botones.length;
+                } else if (evento.key === 'ArrowLeft') {
+                    destino = (indice - 1 + botones.length) % botones.length;
+                } else if (evento.key === 'Home') {
+                    destino = 0;
+                } else if (evento.key === 'End') {
+                    destino = botones.length - 1;
+                }
+
+                if (destino !== null) {
+                    evento.preventDefault();
+                    activar(botones[destino].dataset.uxPestana, true);
+                }
+            });
+        });
+
+        activar(botones[0].dataset.uxPestana, false);
+    });
 })();

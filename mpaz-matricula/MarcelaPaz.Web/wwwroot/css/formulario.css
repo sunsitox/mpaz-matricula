@@ -1,8 +1,6 @@
 /* ==========================================================================
-   Asistente compacto y patrón de formulario por secciones.
-   ========================================================================== */
-/* ==========================================================================
-   Pasos del asistente más compactos: menos scroll y acciones siempre a mano
+   Asistente: cabecera compacta, secciones y acciones fijas al pie.
+   Un solo bloque por selector: las reglas móviles viven en un único @media.
    ========================================================================== */
 
 html {
@@ -62,8 +60,8 @@ html {
 
 .wizard__tarjeta {
     /* El ancho de padding se reutiliza en la barra de acciones */
-    --wizard-pad-x: clamp(1rem, 3vw, 2rem);
-    padding: 1.5rem var(--wizard-pad-x) 1.1rem;
+    --wizard-pad-x: clamp(1.25rem, 4vw, 2.5rem);
+    padding: 2rem var(--wizard-pad-x) 1.75rem;
 }
 
 .wizard__titulo-paso {
@@ -79,17 +77,18 @@ html {
 
 .wizard__ayuda {
     font-size: 0.9rem;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1.25rem;
 }
 
-/* Campos: dos o tres por fila según el ancho disponible */
+/* Campos: dos columnas parejas, una en pantallas pequeñas */
 .wizard__fila {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1.25rem;
 }
 
 .wizard__tarjeta .acceso__campo {
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.95rem;
 }
 
 .wizard__tarjeta .acceso__etiqueta {
@@ -98,220 +97,12 @@ html {
 }
 
 .wizard__tarjeta .acceso__input {
-    height: 40px;
+    height: 42px;
     font-size: 0.95rem;
 }
 
 select.acceso__input {
     background-position: calc(100% - 18px) 17px, calc(100% - 12px) 17px;
-}
-
-.wizard__desplegable {
-    margin-bottom: 0.85rem;
-}
-
-.wizard__desplegable-resumen {
-    padding: 0.7rem 1rem;
-    font-size: 0.95rem;
-}
-
-.wizard__desplegable-cuerpo {
-    padding: 0.9rem 1rem 0.1rem;
-}
-
-.wizard__restriccion {
-    padding-bottom: 0.9rem;
-}
-
-.wizard__restriccion-pregunta {
-    font-size: 0.9rem;
-    margin-bottom: 0.55rem;
-}
-
-.wizard__radios {
-    gap: 1.5rem;
-}
-
-/* Acciones fijas al pie de la página: acompañan al paso sin cortar la tarjeta.
-   Quedan alineadas con el contenido de la tarjeta y sobre el fondo del sitio. */
-.wizard__botones {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 20;
-    margin: 0;
-    padding: 0.8rem 0;
-    padding-inline: max(1rem, calc((100% - var(--wizard-ancho)) / 2 + var(--wizard-cuerpo-pad) + var(--wizard-pad-x)));
-    background: rgba(255, 255, 255, 0.97);
-    backdrop-filter: blur(8px);
-    border-top: 1px solid var(--color-border);
-    box-shadow: 0 -14px 28px -26px rgba(12, 37, 91, .6);
-}
-
-.wizard__botones a,
-.wizard__botones button {
-    white-space: nowrap;
-}
-
-.wizard__botones .acceso__boton,
-.wizard__botones .acceso__boton-secundario {
-    min-width: 170px;
-}
-
-.wizard__nota-guardado {
-    margin-top: 0.85rem;
-    padding: 0.7rem 1rem;
-    font-size: 0.85rem;
-}
-
-/* Paso 7: resumen más denso */
-.wizard__resumen-item {
-    padding: 0.55rem 1rem;
-}
-
-.wizard__revision {
-    gap: 1.25rem;
-}
-
-.wizard__confirmacion {
-    margin-top: 1rem;
-    padding: 0.85rem 1rem;
-}
-
-.wizard__pdf-caja {
-    margin-top: 0.6rem;
-}
-
-/* Móvil: stepper otra vez en dos líneas y campos a todo el ancho */
-@media (max-width: 699px) {
-    .wizard__paso {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .wizard__pasos {
-        gap: 0.5rem;
-        padding: 0.9rem 0.85rem 0;
-    }
-
-    .wizard__cuerpo {
-        padding: 0.85rem 0.75rem 1.25rem;
-    }
-
-    /* El padding lateral se comparte con la barra de acciones */
-    .wizard__tarjeta {
-        --wizard-pad-x: 1rem;
-        padding: 1.15rem var(--wizard-pad-x) 1rem;
-    }
-
-    .wizard__fila {
-        grid-template-columns: 1fr;
-    }
-
-    /* En móvil las acciones van en una fila, sin partir el texto */
-    .wizard__botones {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        justify-content: flex-end;
-        gap: 0.45rem;
-        padding: 0.6rem 0.9rem;
-        margin: 0;
-    }
-
-    .wizard__botones .acceso__boton,
-    .wizard__botones .acceso__boton-secundario {
-        flex: 0 0 auto;
-        width: auto;
-        min-width: 0;
-        height: 44px;
-        padding: 0 0.7rem;
-        font-size: 0.86rem;
-        white-space: nowrap;
-        text-align: center;
-    }
-
-    .wizard__cuerpo {
-        padding-bottom: 6rem;
-    }
-
-    /* Paso 7 en móvil: etiqueta y valor lado a lado.
-       Comparte el mismo breakpoint; se conserva el orden de las reglas. */
-    .wizard__resumen-item {
-        display: grid;
-        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
-        gap: 0.5rem;
-        align-items: baseline;
-        padding: 0.45rem 0.85rem;
-    }
-
-    .wizard__resumen-item dt {
-        margin: 0;
-        font-size: 0.8rem;
-    }
-
-    .wizard__resumen-item dd {
-        font-size: 0.9rem;
-    }
-
-    .wizard__revision {
-        gap: 1rem;
-    }
-
-    .wizard__confirmacion {
-        padding: 0.75rem 0.85rem;
-    }
-
-    /* El paso 7 lleva cuatro acciones y no caben en una fila: se reparten en
-       dos en vez de salirse por el borde izquierdo de la pantalla. */
-    .wizard__botones--paso7 {
-        flex-wrap: wrap;
-        row-gap: 0.45rem;
-    }
-
-    .wizard__botones--paso7 .acceso__boton,
-    .wizard__botones--paso7 .acceso__boton-secundario {
-        flex: 1 1 auto;
-    }
-
-    /* Con dos filas la barra es más alta: el contenido reserva ese alto.
-       El paso 7 es el único que abre el asistente a ancho amplio. */
-    .wizard__cuerpo--amplio {
-        padding-bottom: 8.5rem;
-    }
-}
-
-/* ==========================================================================
-   Texto centrado en botones y controles equivalentes
-   Los <button> lo hacen por defecto; los enlaces con forma de botón, no.
-   ========================================================================== */
-
-.acceso__boton,
-.acceso__boton-secundario,
-.admin__boton,
-.admin__salir,
-.wizard__salir {
-    text-align: center;
-}
-
-/* Enlaces usados como botón: centrado también en vertical */
-a.acceso__boton-secundario,
-a.admin__boton,
-a.wizard__salir {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ==========================================================================
-   Patrón de formulario por secciones
-   Cada bloque es una sección con encabezado propio y los campos se ordenan
-   en dos columnas parejas sobre un mismo ritmo vertical.
-   ========================================================================== */
-
-.wizard__tarjeta {
-    --wizard-pad-x: clamp(1.25rem, 4vw, 2.5rem);
-    padding: 2rem var(--wizard-pad-x) 1.75rem;
 }
 
 /* Sección: encabezado + cuerpo, con borde y esquinas suaves */
@@ -356,39 +147,178 @@ a.wizard__salir {
     font-weight: 700;
 }
 
-/* Grilla de campos: dos columnas parejas, una en pantallas pequeñas */
-.wizard__fila {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1.25rem;
+.wizard__restriccion-pregunta {
+    font-size: 0.9rem;
+    margin-bottom: 0.55rem;
 }
 
-.wizard__tarjeta .acceso__campo {
-    margin-bottom: 0.95rem;
+.wizard__radios {
+    gap: 1.5rem;
 }
 
-.wizard__tarjeta .acceso__etiqueta {
+/* Acciones fijas al pie de la página: acompañan al paso sin cortar la tarjeta.
+   Quedan alineadas con el contenido de la tarjeta y sobre el fondo del sitio. */
+.wizard__botones {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    padding: 0.8rem 0;
+    padding-inline: max(1rem, calc((100% - var(--wizard-ancho)) / 2 + var(--wizard-cuerpo-pad) + var(--wizard-pad-x)));
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -14px 28px -26px rgba(12, 37, 91, .6);
+}
+
+.wizard__botones a,
+.wizard__botones button {
+    white-space: nowrap;
+}
+
+.wizard__botones .acceso__boton,
+.wizard__botones .acceso__boton-secundario {
+    min-width: 170px;
+}
+
+.wizard__nota-guardado {
+    margin-top: 0.85rem;
+    padding: 0.7rem 1rem;
     font-size: 0.85rem;
-    margin-bottom: 0.3rem;
 }
 
-.wizard__tarjeta .acceso__input {
-    height: 42px;
-    font-size: 0.95rem;
+/* Paso final: resumen más denso */
+.wizard__resumen-item {
+    padding: 0.55rem 1rem;
 }
 
-.wizard__ayuda {
-    margin-bottom: 1.25rem;
+.wizard__revision {
+    gap: 1.25rem;
 }
 
+.wizard__confirmacion {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+}
+
+.wizard__pdf-caja {
+    margin-top: 0.6rem;
+}
+
+/* Móvil: stepper otra vez en dos líneas y campos a todo el ancho */
 @media (max-width: 699px) {
-    .wizard__fila {
-        grid-template-columns: 1fr;
+    .wizard__paso {
+        flex-direction: column;
+        text-align: center;
     }
 
+    .wizard__pasos {
+        gap: 0.5rem;
+        padding: 0.9rem 0.85rem 0;
+    }
+
+    .wizard__cuerpo {
+        /* El padding inferior deja sitio a la barra fija */
+        padding: 0.85rem 0.75rem 6rem;
+    }
+
+    /* El padding lateral se comparte con la barra de acciones */
     .wizard__tarjeta {
         --wizard-pad-x: 1.1rem;
         padding: 1.35rem var(--wizard-pad-x) 1.2rem;
     }
+
+    .wizard__fila {
+        grid-template-columns: 1fr;
+    }
+
+    /* En móvil las acciones van en una fila, sin partir el texto */
+    .wizard__botones {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 0.45rem;
+        padding: 0.6rem 0.9rem;
+        margin: 0;
+    }
+
+    .wizard__botones .acceso__boton,
+    .wizard__botones .acceso__boton-secundario {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 0;
+        height: 44px;
+        padding: 0 0.7rem;
+        font-size: 0.86rem;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    /* Paso final en móvil: etiqueta y valor lado a lado */
+    .wizard__resumen-item {
+        display: grid;
+        grid-template-columns: minmax(0, 42%) minmax(0, 1fr);
+        gap: 0.5rem;
+        align-items: baseline;
+        padding: 0.45rem 0.85rem;
+    }
+
+    .wizard__resumen-item dt {
+        margin: 0;
+        font-size: 0.8rem;
+    }
+
+    .wizard__resumen-item dd {
+        font-size: 0.9rem;
+    }
+
+    .wizard__revision {
+        gap: 1rem;
+    }
+
+    .wizard__confirmacion {
+        padding: 0.75rem 0.85rem;
+    }
+
+    /* El paso final lleva cuatro acciones y no caben en una fila: se reparten
+       en dos en vez de salirse por el borde izquierdo de la pantalla. */
+    .wizard__botones--final {
+        flex-wrap: wrap;
+        row-gap: 0.45rem;
+    }
+
+    .wizard__botones--final .acceso__boton,
+    .wizard__botones--final .acceso__boton-secundario {
+        flex: 1 1 auto;
+    }
+
+    /* Con dos filas la barra es más alta: el contenido reserva ese alto.
+       El paso final es el único que abre el asistente a ancho amplio. */
+    .wizard__cuerpo--amplio {
+        padding-bottom: 8.5rem;
+    }
 }
 
+/* ==========================================================================
+   Texto centrado en botones y controles equivalentes
+   Los <button> lo hacen por defecto; los enlaces con forma de botón, no.
+   ========================================================================== */
+
+.acceso__boton,
+.acceso__boton-secundario,
+.admin__boton,
+.admin__salir,
+.wizard__salir {
+    text-align: center;
+}
+
+/* Enlaces usados como botón: centrado también en vertical */
+a.acceso__boton-secundario,
+a.admin__boton,
+a.wizard__salir {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

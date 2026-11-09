@@ -7,7 +7,13 @@ public class AlumnoListado
 
     public string Nombre { get; set; } = string.Empty;
 
-    /// <summary>RUN con puntos, como se muestra en pantalla.</summary>
+    /// <summary>Documento tal como está guardado: RUN, IPE o IPA.</summary>
+    public string Identificador { get; set; } = string.Empty;
+
+    /// <summary>RUN, IPE o IPA.</summary>
+    public string TipoIdentificador { get; set; } = "RUN";
+
+    /// <summary>Documento listo para pantalla: RUN con puntos, IPE/IPA en mayúsculas.</summary>
     public string Rut { get; set; } = string.Empty;
 
     public string? Curso { get; set; }
@@ -19,6 +25,27 @@ public class AlumnoListado
     public string? Tipo { get; set; }
 
     public string? Comuna { get; set; }
+
+    /// <summary>La matrícula del año todavía no tiene una ficha vigente.</summary>
+    public bool SinFicha { get; set; }
+
+    /// <summary>Requisitos documentales de la matrícula que siguen en PENDIENTE.</summary>
+    public int DocumentosPendientes { get; set; }
+
+    /// <summary>Pendientes que impiden dar la matrícula por completa.</summary>
+    public int Pendientes => DocumentosPendientes + (SinFicha ? 1 : 0);
+
+    public bool TienePendientes => Pendientes > 0;
+
+    public string PendientesTexto => (SinFicha, DocumentosPendientes) switch
+    {
+        (true, 0) => "Sin ficha",
+        (false, 1) => "1 documento",
+        (false, > 1) => $"{DocumentosPendientes} documentos",
+        (true, 1) => "Sin ficha · 1 documento",
+        (true, > 1) => $"Sin ficha · {DocumentosPendientes} documentos",
+        _ => "—",
+    };
 
     public bool TieneMatricula => !string.IsNullOrWhiteSpace(Estado);
 

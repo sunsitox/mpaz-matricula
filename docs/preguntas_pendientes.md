@@ -1,6 +1,6 @@
 # Preguntas pendientes por definir
 
-**Actualizado tras reunión 1 (21-10-2026):** las [observaciones](scripts/docs/reunion-01-2026-10-21.md) son preliminares; falta el acta de constitución. Estas preguntas no implican decisiones ya aprobadas.
+**Actualizado tras reunión 1 (21-10-2026):** las [observaciones](docs/reunion-01-2026-10-21.md) son preliminares; falta el acta de constitución. Estas preguntas no implican decisiones ya aprobadas.
 
 ## Alcance y origen de datos
 - ¿Cómo se produce la inscripción previa fuera del sistema y quién carga/verifica los estudiantes ya inscritos?

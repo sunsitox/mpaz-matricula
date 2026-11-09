@@ -9,6 +9,7 @@
         anio = Model.Anio > 0 ? Model.Anio : (int?)null,
         curso = Model.Curso,
         estado = Model.Estado,
+        pendientes = Model.SoloPendientes ? "true" : null,
         orden = columna,
         dir = Model.Orden == columna && Model.Direccion == "asc" ? "desc" : "asc",
     })!;
@@ -29,13 +30,15 @@
         <div>
             <h1 class="admin__titulo-seccion">Estudiantes</h1>
             <p class="admin__ayuda">
-                Busque por nombre o RUN, filtre por año, curso o estado y ordene por cualquier columna.
+                Busque por nombre, RUN, IPE o IPA; filtre por año, curso, estado o pendientes y ordene por cualquier columna.
             </p>
         </div>
         @if (Model.Anio > 0)
         {
             <span class="alumnos__insignia">Año escolar @Model.Anio</span>
         }
+        <a class="admin__boton" asp-controller="Reportes" asp-action="Matriculas"
+           asp-route-anio="@(Model.Anio > 0 ? Model.Anio : (int?)null)" data-ux-cargando>Reportes</a>
     </div>
 
     <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
@@ -55,7 +58,7 @@
         <div class="acceso__campo alumnos__campo-texto">
             <label class="acceso__etiqueta" for="q">Buscar</label>
             <input class="acceso__input" id="q" name="q" value="@Model.Texto"
-                   placeholder="Nombre o RUN, con o sin puntos" autocomplete="off" />
+                   placeholder="Nombre, RUN, IPE o IPA" autocomplete="off" />
         </div>
 
         <div class="acceso__campo">
@@ -80,10 +83,18 @@
             </select>
         </div>
 
+        <label class="alumnos__check">
+            <input type="checkbox" name="pendientes" value="true"
+                   checked="@(Model.SoloPendientes ? "checked" : null)" />
+            <span>Solo con pendientes</span>
+        </label>
+
         <button type="submit" class="admin__boton admin__boton--primario alumnos__boton-buscar">Filtrar</button>
     </form>
 
-    <p class="alumnos__filtros-ayuda">Presione Enter para buscar. El RUN se acepta con o sin puntos.</p>
+    <p class="alumnos__filtros-ayuda">
+        Presione Enter para buscar. El RUN se acepta con o sin puntos; el IPE y el IPA, tal como figuran en el registro.
+    </p>
 </section>
 
 <section class="admin__tarjeta">
@@ -115,8 +126,8 @@
         <div class="alumnos__tabla-envoltura" tabindex="0">
             <table class="admin__tabla alumnos__tabla">
                 <caption class="sr-only">
-                    Estudiantes registrados en el año escolar @Model.Anio, con RUN, curso, estado, tipo de matrícula y comuna.
-                    Cada encabezado ordena la tabla.
+                    Estudiantes registrados en el año escolar @Model.Anio, con documento, curso, estado, tipo de matrícula,
+                    comuna y pendientes. Cada encabezado ordena la tabla.
                 </caption>
                 <thead>
                     <tr>
@@ -127,7 +138,7 @@
                         </th>
                         <th scope="col" aria-sort="@ariaSort("rut")">
                             <a class="@claseOrden("rut")" href="@enlaceOrden("rut")">
-                                RUN <span class="alumnos__flecha" aria-hidden="true">@flecha("rut")</span>
+                                Documento <span class="alumnos__flecha" aria-hidden="true">@flecha("rut")</span>
                             </a>
                         </th>
                         <th scope="col" aria-sort="@ariaSort("curso")">
@@ -150,6 +161,11 @@
                                 Comuna <span class="alumnos__flecha" aria-hidden="true">@flecha("comuna")</span>
                             </a>
                         </th>
+                        <th scope="col" aria-sort="@ariaSort("pendientes")">
+                            <a class="@claseOrden("pendientes")" href="@enlaceOrden("pendientes")">
+                                Pendientes <span class="alumnos__flecha" aria-hidden="true">@flecha("pendientes")</span>
+                            </a>
+                        </th>
                         <th scope="col" class="alumnos__col-accion">Ficha</th>
                     </tr>
                 </thead>
@@ -170,6 +186,16 @@
                             </td>
                             <td class="alumnos__dato">@alumno.TipoTexto</td>
                             <td class="alumnos__dato">@(alumno.Comuna ?? "—")</td>
+                            <td>
+                                @if (alumno.TienePendientes)
+                                {
+                                    <span class="alumnos__estado alumnos__estado--borrador">@alumno.PendientesTexto</span>
+                                }
+                                else
+                                {
+                                    <span class="alumnos__dato">—</span>
+                                }
+                            </td>
                             <td class="alumnos__col-accion">
                                 <a class="alumnos__ver" asp-action="Detalle" asp-route-id="@alumno.Id"
                                    asp-route-anio="@Model.Anio">

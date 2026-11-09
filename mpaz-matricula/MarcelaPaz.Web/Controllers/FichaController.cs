@@ -61,7 +61,7 @@ public class FichaController : Controller
     [Authorize(Policy = "Permiso:GENERAL:LEER")]
     public async Task<IActionResult> Paso(int? id)
     {
-        var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };
+        var paso = (id ?? 1) switch { < 1 => 1, > 8 => 8, var n => n };
 
         var datos = LeerBorrador();
 
@@ -71,6 +71,10 @@ public class FichaController : Controller
         {
             return SinAnioActivo();
         }
+
+        // MAT-18: la corrección parte de la copia congelada, que se carga desde
+        // la base para no llevar el snapshot completo en una cookie.
+        await CompletarDesdeCorreccionAsync(datos);
 
         // La ficha de un estudiante ya registrado se abre con sus apoderados,
         // contactos, retiros y datos médicos tomados de la base.
@@ -122,7 +126,7 @@ public class FichaController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Guardar(int? id, Models.FichaForm form)
     {
-        var paso = (id ?? 1) switch { < 1 => 1, > 7 => 7, var n => n };
+        var paso = (id ?? 1) switch { < 1 => 1, > 8 => 8, var n => n };
 
         var datos = LeerBorrador();
 
@@ -134,6 +138,10 @@ public class FichaController : Controller
         }
 
         var anio = anioActivo.Value;
+
+        // MAT-18: si el borrador viene de una corrección, se completa con la copia
+        // congelada de la ficha vigente antes de validar y guardar el paso.
+        await CompletarDesdeCorreccionAsync(datos);
 
         // Se revisan formato y reglas de bloque (documento, contactos, salud)
         // antes de escribir.
@@ -182,21 +190,11 @@ public class FichaController : Controller
                 GuardarCampo(datos, "padre: domicilio", form.Padre_Domicilio);
                 GuardarCampo(datos, "padre: correo", form.Padre_Correo);
                 GuardarCampo(datos, "restricción madre (SI/NO)", form.Restriccion_Madre);
+                GuardarCampo(datos, "restricción madre: tipo", form.Restriccion_Madre_Tipo);
+                GuardarCampo(datos, "restricción madre: detalle", form.Restriccion_Madre_Detalle);
 
-                // Regla de la ficha: se requiere completar al menos uno de los dos
-                // bloques (madre o padre). POR AHORA DESACTIVADA: el colegio está
-                // revisando estilos; volver a activarla cuando Dirección la confirme.
-                // if (
-                //     BloqueVacio(form.Madre_Nombre_Apellido, form.Madre_Cedula_Identidad, form.Madre_Telefono,
-                //                 form.Madre_Escolaridad, form.Madre_Domicilio, form.Madre_Correo)
-                //     &&
-                //     BloqueVacio(form.Padre_Nombre_Apellido, form.Padre_Cedula_Identidad, form.Padre_Telefono,
-                //                 form.Padre_Escolaridad, form.Padre_Domicilio, form.Padre_Correo))
-                // {
-                //     TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
-                //     TempData["Aviso"] = "Para continuar, complete al menos los datos de la madre o los del padre.";
-                //     return RedirectToAction(nameof(Paso), new { id = 2 });
-                // }
+                // La regla «al menos un bloque de madre o padre» se exige en
+                // ValidarPaso antes de guardar.
                 break;
 
             case 3:
@@ -246,23 +244,44 @@ public class FichaController : Controller
                 GuardarCampo(datos, "contacto sanitario: nombre", form.Contacto_Sanitario_Nombre);
                 GuardarCampo(datos, "contacto sanitario: teléfono", form.Contacto_Sanitario_Telefono);
                 GuardarCampo(datos, "salida al baño (SI/NO)", form.SalidaBano);
-                GuardarCampo(datos, "autorización de paracetamol (SI/NO)", form.AutorizaParacetamol);
                 GuardarCampo(datos, "PIE: participa (SI/NO/PENDIENTE)", form.ParticipaPie);
                 GuardarCampo(datos, "PIE: diagnosticado (SI/NO)", form.PieDiagnostico);
                 GuardarCampo(datos, "PIE: apoyos o diagnóstico", form.PieApoyos);
+                break;
+
+            case 7:
+                // Las autorizaciones se responden y se guardan en su propio paso.
                 GuardarCampo(datos, "autorización de uso de imagen (SI/NO)", form.AutorizaImagen);
                 GuardarCampo(datos, "autorización de convivencia escolar (SI/NO)", form.AutorizaConvivencia);
                 break;
 
-            case 7:
+            case 8:
                 // El cierre de la ficha exige la confirmación expresa de que se leyó.
                 if (!form.Confirmo_Revision)
                 {
                     ModelState.AddModelError(nameof(FichaForm.Confirmo_Revision),
                         "Para guardar la ficha, marque la confirmación de que revisó todos los datos.");
-                    MostrarPaso(7, datos);
+                    MostrarPaso(8, datos);
                     TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
-                    return View("Paso7", form);
+                    return View("Paso8", form);
+                }
+
+                // MAT-18: sobre una ficha ya generada sólo se avanza creando una
+                // versión nueva y con motivo escrito. La anterior no se toca.
+                var esCorreccion = datos.ContainsKey("corrección: versión base");
+
+                if (esCorreccion && string.IsNullOrWhiteSpace(form.Motivo_Correccion))
+                {
+                    ModelState.AddModelError(nameof(FichaForm.Motivo_Correccion),
+                        "Indique el motivo de la corrección: se guardará una versión nueva y la anterior se conserva.");
+                    MostrarPaso(8, datos);
+                    TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
+                    return View("Paso8", form);
+                }
+
+                if (esCorreccion)
+                {
+                    datos["corrección: motivo"] = form.Motivo_Correccion!.Trim();
                 }
 
                 // Cierre (MAT-08): congela los datos en ficha_version, obtiene el
@@ -272,14 +291,20 @@ public class FichaController : Controller
                 if (funcionarioId is null)
                 {
                     TempData["Aviso"] = "Inicie sesión como funcionario para generar la ficha con folio.";
-                    return RedirectToAction(nameof(Paso), new { id = 7 });
+                    return RedirectToAction(nameof(Paso), new { id = 8 });
                 }
 
                 RegistroFicha.CierreFicha? cierre = null;
 
+                // El año del borrador identifica la matrícula que se cierra; en una
+                // corrección puede ser un año anterior al activo (MAT-18).
+                var anioCierre = int.TryParse(datos.GetValueOrDefault("año escolar"), out var anioBorrador)
+                    ? anioBorrador
+                    : anio;
+
                 await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
                 {
-                    cierre = await _registro.CerrarFichaAsync(datos, anio, funcionarioId.Value, ct);
+                    cierre = await _registro.CerrarFichaAsync(datos, anioCierre, funcionarioId.Value, ct);
                 }, HttpContext.RequestAborted);
 
                 var cerrada = cierre;
@@ -306,7 +331,7 @@ public class FichaController : Controller
 
         await _escritura.EjecutarAsync(
             FuncionarioId() ?? 0,
-            async ct => aviso = await _registro.AplicarAsync(paso, datos, anio, ct),
+            async ct => aviso = await _registro.AplicarAsync(paso, datos, anio, FuncionarioId(), ct),
             HttpContext.RequestAborted);
 
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
@@ -317,6 +342,112 @@ public class FichaController : Controller
         }
 
         return RedirectToAction(nameof(Paso), new { id = paso + 1 });
+    }
+
+    /// <summary>
+    /// MAT-18: abre la corrección de una ficha ya generada. El borrador se llena
+    /// con la copia congelada de la versión vigente y al cerrar se crea una
+    /// versión nueva con motivo; la anterior queda como REEMPLAZADA y no se edita.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = "Permiso:GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Corregir(int matriculaId)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == matriculaId);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var ficha = await _db.FichaVersiones
+            .AsNoTracking()
+            .Where(v => v.MatriculaId == matriculaId && v.Estado == "VIGENTE")
+            .OrderByDescending(v => v.NumeroVersion)
+            .FirstOrDefaultAsync();
+
+        if (ficha is null)
+        {
+            TempData["Aviso"] = "La matrícula no tiene una ficha vigente que corregir.";
+            return RedirectToAction("Detalle", "Alumnos", new { id = matricula.EstudianteId });
+        }
+
+        // El borrador lleva sólo la referencia: los campos se cargan desde el
+        // snapshot en cada paso, sin una cookie de varios kilobytes.
+        var datos = new Dictionary<string, string>
+        {
+            ["modo"] = "Corrección",
+            ["modo: detalle"] =
+                $"Corrección de la ficha {ficha.Folio} (versión {ficha.NumeroVersion}): la versión anterior se conserva.",
+            ["año escolar"] = matricula.Anio.ToString(),
+            ["corrección: versión base"] = ficha.NumeroVersion.ToString(),
+            ["corrección: ficha"] = ficha.Id.ToString(),
+        };
+
+        TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
+
+        await _auditoria.RegistrarAsync(
+            "REEMPLAZAR",
+            "MATRICULA",
+            "ficha_version",
+            detalle: $"{{\"evento\":\"abrir_correccion\",\"folio\":\"{ficha.Folio}\",\"version\":{ficha.NumeroVersion}}}",
+            estudianteId: matricula.EstudianteId,
+            recursoId: ficha.Id);
+
+        return RedirectToAction(nameof(Paso), new { id = 1 });
+    }
+
+    /// <summary>
+    /// MAT-14: descarga una versión histórica de la ficha desde su copia
+    /// congelada, con su folio y número de versión. No edita nada.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
+    public async Task<IActionResult> Version(int id, bool descargar = true)
+    {
+        var ficha = await _db.FichaVersiones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (ficha is null)
+        {
+            return NotFound();
+        }
+
+        var anio = await AnioDeFichaAsync(ficha);
+
+        if (anio is null)
+        {
+            return NotFound();
+        }
+
+        var documento = FichaImpresion.DesdeBorrador(
+            DatosImprimibles(RegistroFicha.DatosDesdeSnapshot(ficha.DatosSnapshot)),
+            anio.Value,
+            ficha.GeneradaEn.LocalDateTime,
+            LogoInstitucional(),
+            $"versión {ficha.NumeroVersion} · {ficha.Estado.ToLowerInvariant()}",
+            ficha.Folio);
+
+        if (descargar)
+        {
+            await _auditoria.RegistrarAsync(
+                "DESCARGAR",
+                "MATRICULA",
+                "ficha_version",
+                detalle: $"{{\"evento\":\"descargar_version\",\"folio\":\"{ficha.Folio}\",\"version\":{ficha.NumeroVersion}}}",
+                recursoId: ficha.Id);
+        }
+
+        var archivo = _pdf.Generar(documento);
+        var nombre = $"ficha-{ficha.Folio}-v{ficha.NumeroVersion}.pdf";
+
+        return descargar
+            ? File(archivo, "application/pdf", nombre)
+            : File(archivo, "application/pdf");
     }
 
     /// <summary>
@@ -498,6 +629,7 @@ public class FichaController : Controller
     public async Task<IActionResult> Comprobante(bool descargar = false)
     {
         var datos = LeerBorrador();
+        await CompletarDesdeCorreccionAsync(datos);
         var anioActivo = await _anios.ActivoAsync();
         var fichaCerrada = anioActivo is null
             ? null
@@ -684,7 +816,6 @@ public class FichaController : Controller
             copia.Remove("contacto sanitario: nombre");
             copia.Remove("contacto sanitario: teléfono");
             copia.Remove("salida al baño (SI/NO)");
-            copia.Remove("autorización de paracetamol (SI/NO)");
             QuitarPrefijo(copia, "situación médica ");
         }
 
@@ -707,6 +838,8 @@ public class FichaController : Controller
             QuitarPrefijo(copia, "apoderado secundario: ");
             QuitarPrefijo(copia, "contacto emergencia ");
             copia.Remove("restricción madre (SI/NO)");
+            copia.Remove("restricción madre: tipo");
+            copia.Remove("restricción madre: detalle");
         }
 
         if (!User.HasClaim("permiso", "AUTORIZACIONES:LEER"))
@@ -743,240 +876,17 @@ public class FichaController : Controller
         ViewData["ModoDetalle"] = datos.GetValueOrDefault("modo: detalle");
     }
 
-    // ── Validaciones de bloque (pasos 2 a 6) ────────────────────────────────
+    // ── Validaciones de bloque (pasos 2 a 7) ─────────────────────────────────
 
     /// <summary>
-    /// Reglas que dependen de varios campos y que no se pueden expresar con un
-    /// atributo: al menos un bloque de madre/padre, contacto de emergencia,
-    /// retiro autorizado, respuestas de salud y autorizaciones.
+    /// Reglas que dependen de varios campos (ver <see cref="Models.ValidadorFicha"/>
+    /// para las reglas y sus pruebas).
     /// </summary>
     private void ValidarPaso(int paso, FichaForm form)
     {
-        switch (paso)
+        foreach (var error in ValidadorFicha.Validar(paso, form))
         {
-            case 2:
-                var madre = ConDatos(form.Madre_Nombre_Apellido, form.Madre_Cedula_Identidad,
-                    form.Madre_Telefono, form.Madre_Escolaridad, form.Madre_Domicilio, form.Madre_Correo);
-                var padre = ConDatos(form.Padre_Nombre_Apellido, form.Padre_Cedula_Identidad,
-                    form.Padre_Telefono, form.Padre_Escolaridad, form.Padre_Domicilio, form.Padre_Correo);
-
-                if (!madre && !padre)
-                {
-                    ModelState.AddModelError(string.Empty,
-                        "Complete al menos los datos de la madre o los del padre.");
-                }
-
-                if (madre)
-                {
-                    ExigirAdulto("de la madre", form.Madre_Nombre_Apellido, form.Madre_Cedula_Identidad,
-                        form.Madre_Telefono, nameof(FichaForm.Madre_Nombre_Apellido),
-                        nameof(FichaForm.Madre_Cedula_Identidad), nameof(FichaForm.Madre_Telefono));
-                }
-
-                if (padre)
-                {
-                    ExigirAdulto("del padre", form.Padre_Nombre_Apellido, form.Padre_Cedula_Identidad,
-                        form.Padre_Telefono, nameof(FichaForm.Padre_Nombre_Apellido),
-                        nameof(FichaForm.Padre_Cedula_Identidad), nameof(FichaForm.Padre_Telefono));
-                }
-
-                break;
-
-            case 3:
-                ExigirAdulto("del apoderado principal", form.Principal_Nombre_Apellido,
-                    form.Principal_Cedula_Identidad, form.Principal_Telefono,
-                    nameof(FichaForm.Principal_Nombre_Apellido),
-                    nameof(FichaForm.Principal_Cedula_Identidad), nameof(FichaForm.Principal_Telefono));
-
-                if (string.IsNullOrWhiteSpace(form.Principal_Vinculo))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.Principal_Vinculo),
-                        "Indique el vínculo del apoderado principal.");
-                }
-
-                if (ConDatos(form.Secundario_Nombre_Apellido, form.Secundario_Cedula_Identidad,
-                        form.Secundario_Telefono, form.Secundario_Vinculo, form.Secundario_Correo))
-                {
-                    ExigirAdulto("del apoderado secundario", form.Secundario_Nombre_Apellido,
-                        form.Secundario_Cedula_Identidad, form.Secundario_Telefono,
-                        nameof(FichaForm.Secundario_Nombre_Apellido),
-                        nameof(FichaForm.Secundario_Cedula_Identidad), nameof(FichaForm.Secundario_Telefono));
-
-                    if (string.IsNullOrWhiteSpace(form.Secundario_Vinculo))
-                    {
-                        ModelState.AddModelError(nameof(FichaForm.Secundario_Vinculo),
-                            "Indique el vínculo del apoderado secundario.");
-                    }
-                }
-
-                break;
-
-            case 4:
-                var primero = ConDatos(form.Contacto1_Identificacion, form.Contacto1_Telefono, form.Contacto1_Vinculo);
-                var segundo = ConDatos(form.Contacto2_Identificacion, form.Contacto2_Telefono, form.Contacto2_Vinculo);
-
-                if (!primero && !segundo)
-                {
-                    ModelState.AddModelError(string.Empty, "Registre al menos un contacto de emergencia.");
-                }
-
-                if (primero)
-                {
-                    ExigirContacto("1", form.Contacto1_Identificacion, form.Contacto1_Telefono,
-                        nameof(FichaForm.Contacto1_Identificacion), nameof(FichaForm.Contacto1_Telefono));
-                }
-
-                if (segundo)
-                {
-                    ExigirContacto("2", form.Contacto2_Identificacion, form.Contacto2_Telefono,
-                        nameof(FichaForm.Contacto2_Identificacion), nameof(FichaForm.Contacto2_Telefono));
-                }
-
-                break;
-
-            case 5:
-                if (string.IsNullOrWhiteSpace(form.SalidaSolo))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.SalidaSolo),
-                        "Indique si el estudiante puede salir solo al finalizar la jornada.");
-                }
-                else if (EsNo(form.SalidaSolo)
-                         && !ConDatos(form.Retiro1_Rut, form.Retiro2_Rut, form.Retiro3_Rut))
-                {
-                    ModelState.AddModelError(string.Empty,
-                        "Si el estudiante no sale solo, registre al menos una persona autorizada para retirarlo.");
-                }
-
-                ExigirRetiro("1", form.Retiro1_Rut, form.Retiro1_Vinculo,
-                    nameof(FichaForm.Retiro1_Rut), nameof(FichaForm.Retiro1_Vinculo));
-                ExigirRetiro("2", form.Retiro2_Rut, form.Retiro2_Vinculo,
-                    nameof(FichaForm.Retiro2_Rut), nameof(FichaForm.Retiro2_Vinculo));
-                ExigirRetiro("3", form.Retiro3_Rut, form.Retiro3_Vinculo,
-                    nameof(FichaForm.Retiro3_Rut), nameof(FichaForm.Retiro3_Vinculo));
-                break;
-
-            case 6:
-                if (string.IsNullOrWhiteSpace(form.TieneSituacionMedica))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.TieneSituacionMedica),
-                        "Indique si el estudiante tiene alguna situación médica.");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.Alergias))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.Alergias),
-                        "Indique las alergias o escriba «Ninguna».");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.Contacto_Sanitario_Nombre))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.Contacto_Sanitario_Nombre),
-                        "Indique la persona a quien avisar ante una urgencia sanitaria.");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.Contacto_Sanitario_Telefono))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.Contacto_Sanitario_Telefono),
-                        "Indique el teléfono del contacto sanitario.");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.ParticipaPie))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.ParticipaPie),
-                        "Indique si el estudiante participa del PIE.");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.AutorizaImagen))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.AutorizaImagen),
-                        "Responda la autorización de uso de imagen.");
-                }
-
-                if (string.IsNullOrWhiteSpace(form.AutorizaConvivencia))
-                {
-                    ModelState.AddModelError(nameof(FichaForm.AutorizaConvivencia),
-                        "Responda la autorización de Convivencia Escolar.");
-                }
-
-                if (EsSi(form.TieneSituacionMedica)
-                    && !ConDatos(form.Medica1_Identificacion, form.Medica1_Situacion,
-                        form.Medica2_Identificacion, form.Medica2_Situacion,
-                        form.Medica3_Identificacion, form.Medica3_Situacion))
-                {
-                    ModelState.AddModelError(string.Empty,
-                        "Si declara una situación médica, registre al menos una.");
-                }
-
-                break;
-        }
-    }
-
-    private void ExigirAdulto(
-        string etiqueta,
-        string? nombre,
-        string? documento,
-        string? telefono,
-        string campoNombre,
-        string campoDocumento,
-        string campoTelefono)
-    {
-        if (string.IsNullOrWhiteSpace(nombre))
-        {
-            ModelState.AddModelError(campoNombre, $"Indique el nombre {etiqueta}.");
-        }
-
-        if (string.IsNullOrWhiteSpace(documento))
-        {
-            ModelState.AddModelError(campoDocumento, $"Indique el RUN {etiqueta}.");
-        }
-        else if (!RutChileno.EsValido(documento))
-        {
-            ModelState.AddModelError(campoDocumento, $"El RUN {etiqueta} no es válido.");
-        }
-
-        if (string.IsNullOrWhiteSpace(telefono))
-        {
-            ModelState.AddModelError(campoTelefono, $"Indique el teléfono {etiqueta}.");
-        }
-    }
-
-    private void ExigirContacto(
-        string numero,
-        string? nombre,
-        string? telefono,
-        string campoNombre,
-        string campoTelefono)
-    {
-        if (string.IsNullOrWhiteSpace(nombre))
-        {
-            ModelState.AddModelError(campoNombre, $"Indique el nombre del contacto de emergencia {numero}.");
-        }
-
-        if (string.IsNullOrWhiteSpace(telefono))
-        {
-            ModelState.AddModelError(campoTelefono, $"Indique el teléfono del contacto de emergencia {numero}.");
-        }
-    }
-
-    private void ExigirRetiro(string numero, string? rut, string? vinculo, string campoRut, string campoVinculo)
-    {
-        if (string.IsNullOrWhiteSpace(rut) && string.IsNullOrWhiteSpace(vinculo))
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(rut))
-        {
-            ModelState.AddModelError(campoRut, $"Indique el RUN de la persona autorizada {numero}.");
-        }
-        else if (!RutChileno.EsValido(rut))
-        {
-            ModelState.AddModelError(campoRut, $"El RUN de la persona autorizada {numero} no es válido.");
-        }
-
-        if (string.IsNullOrWhiteSpace(vinculo))
-        {
-            ModelState.AddModelError(campoVinculo, $"Indique el vínculo de la persona autorizada {numero}.");
+            ModelState.AddModelError(error.Campo ?? string.Empty, error.Mensaje);
         }
     }
 
@@ -999,7 +909,8 @@ public class FichaController : Controller
             nameof(FichaForm.Padre_Nombre_Apellido), nameof(FichaForm.Padre_Cedula_Identidad),
             nameof(FichaForm.Padre_Telefono), nameof(FichaForm.Padre_Escolaridad),
             nameof(FichaForm.Padre_Domicilio), nameof(FichaForm.Padre_Correo),
-            nameof(FichaForm.Restriccion_Madre),
+            nameof(FichaForm.Restriccion_Madre), nameof(FichaForm.Restriccion_Madre_Tipo),
+            nameof(FichaForm.Restriccion_Madre_Detalle),
         },
         [3] = new[]
         {
@@ -1030,11 +941,13 @@ public class FichaController : Controller
             nameof(FichaForm.Medica3_Identificacion), nameof(FichaForm.Medica3_Situacion), nameof(FichaForm.Medica3_Tratamiento),
             nameof(FichaForm.Alergias), nameof(FichaForm.Contacto_Sanitario_Nombre),
             nameof(FichaForm.Contacto_Sanitario_Telefono), nameof(FichaForm.SalidaBano),
-            nameof(FichaForm.AutorizaParacetamol), nameof(FichaForm.ParticipaPie),
-            nameof(FichaForm.PieDiagnostico), nameof(FichaForm.PieApoyos),
+            nameof(FichaForm.ParticipaPie), nameof(FichaForm.PieDiagnostico), nameof(FichaForm.PieApoyos),
+        },
+        [7] = new[]
+        {
             nameof(FichaForm.AutorizaImagen), nameof(FichaForm.AutorizaConvivencia),
         },
-        [7] = new[] { nameof(FichaForm.Confirmo_Revision) },
+        [8] = new[] { nameof(FichaForm.Motivo_Correccion), nameof(FichaForm.Confirmo_Revision) },
     };
 
     /// <summary>
@@ -1060,15 +973,6 @@ public class FichaController : Controller
             }
         }
     }
-
-    private static bool ConDatos(params string?[] valores) =>
-        valores.Any(valor => !string.IsNullOrWhiteSpace(valor));
-
-    private static bool EsSi(string? valor) =>
-        !string.IsNullOrWhiteSpace(valor) && valor.Trim().StartsWith("S", StringComparison.OrdinalIgnoreCase);
-
-    private static bool EsNo(string? valor) =>
-        !string.IsNullOrWhiteSpace(valor) && valor.Trim().StartsWith("N", StringComparison.OrdinalIgnoreCase);
 
     // ── Apoyo del cierre y de la búsqueda por documento ─────────────────────
 
@@ -1207,6 +1111,35 @@ public class FichaController : Controller
     }
 
     /// <summary>
+    /// MAT-18: completa el borrador con la copia congelada de la ficha que se está
+    /// corrigiendo. Sólo rellena lo que falta y no escribe en la ficha original.
+    /// </summary>
+    private async Task CompletarDesdeCorreccionAsync(Dictionary<string, string> datos)
+    {
+        if (!datos.TryGetValue("corrección: ficha", out var valor) || !int.TryParse(valor, out var fichaId))
+        {
+            return;
+        }
+
+        var ficha = await _db.FichaVersiones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == fichaId);
+
+        if (ficha is null)
+        {
+            return;
+        }
+
+        foreach (var (clave, contenido) in RegistroFicha.DatosDesdeSnapshot(ficha.DatosSnapshot))
+        {
+            if (!datos.ContainsKey(clave))
+            {
+                datos[clave] = contenido;
+            }
+        }
+    }
+
+    /// <summary>
     /// Completa los pasos 2 a 6 del borrador con lo que ya está guardado del
     /// estudiante (madre, padre, apoderados, contactos de emergencia, retiros y
     /// datos médicos). Sólo rellena lo que falta: nunca pisa lo escrito en el
@@ -1268,6 +1201,26 @@ public class FichaController : Controller
         if (vinculos.Any(v => v.TieneRestriccion == true))
         {
             agregados += PonerSiFalta(datos, "restricción madre (SI/NO)", "Si");
+
+            // Se precarga el detalle de la última restricción vigente de la madre.
+            var vinculoMadre = vinculos.FirstOrDefault(v => v.Parentesco == "MADRE");
+
+            if (vinculoMadre is not null)
+            {
+                var restriccion = await _db.RestriccionesFamiliares
+                    .AsNoTracking()
+                    .Where(r => r.EstudiantePersonaId == vinculoMadre.Id)
+                    .OrderByDescending(r => r.VigenteHasta == null)
+                    .ThenByDescending(r => r.Id)
+                    .FirstOrDefaultAsync();
+
+                if (restriccion is not null)
+                {
+                    agregados += PonerSiFalta(datos, "restricción madre: tipo",
+                        restriccion.Tipo == "JUDICIAL" ? "Judicial" : "Familiar");
+                    agregados += PonerSiFalta(datos, "restricción madre: detalle", restriccion.Descripcion);
+                }
+            }
         }
         else if (vinculos.Any(v => v.TieneRestriccion == false))
         {
@@ -1493,6 +1446,8 @@ public class FichaController : Controller
         Padre_Correo = datos.GetValueOrDefault("padre: correo"),
 
         Restriccion_Madre = datos.GetValueOrDefault("restricción madre (SI/NO)"),
+        Restriccion_Madre_Tipo = datos.GetValueOrDefault("restricción madre: tipo"),
+        Restriccion_Madre_Detalle = datos.GetValueOrDefault("restricción madre: detalle"),
 
         Principal_Nombre_Apellido = datos.GetValueOrDefault("apoderado principal: nombre apellido"),
         Principal_Cedula_Identidad = RutChileno.Formatear(datos.GetValueOrDefault("apoderado principal: cédula identidad")),
@@ -1544,7 +1499,6 @@ public class FichaController : Controller
         Contacto_Sanitario_Telefono = datos.GetValueOrDefault("contacto sanitario: teléfono"),
 
         SalidaBano = datos.GetValueOrDefault("salida al baño (SI/NO)"),
-        AutorizaParacetamol = datos.GetValueOrDefault("autorización de paracetamol (SI/NO)"),
 
         ParticipaPie = datos.GetValueOrDefault("PIE: participa (SI/NO/PENDIENTE)"),
         PieDiagnostico = datos.GetValueOrDefault("PIE: diagnosticado (SI/NO)"),
@@ -1552,11 +1506,8 @@ public class FichaController : Controller
 
         AutorizaImagen = datos.GetValueOrDefault("autorización de uso de imagen (SI/NO)"),
         AutorizaConvivencia = datos.GetValueOrDefault("autorización de convivencia escolar (SI/NO)"),
+
+        Motivo_Correccion = datos.GetValueOrDefault("corrección: motivo"),
     };
 
-    /// <summary>Un bloque (madre o padre) queda vacío cuando no se escribió nada en él.</summary>
-    private static bool BloqueVacio(params string?[] campos)
-    {
-        return campos.All(string.IsNullOrWhiteSpace);
-    }
 }

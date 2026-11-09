@@ -19,6 +19,9 @@ public class FiltroAlumnos
 
     public string? Estado { get; set; }
 
+    /// <summary>Muestra sólo las matrículas con ficha o documentos pendientes (MAT-11).</summary>
+    public bool SoloPendientes { get; set; }
+
     /// <summary>Columna por la que está ordenado el listado.</summary>
     public string Orden { get; set; } = "nombre";
 
@@ -34,5 +37,6 @@ public class FiltroAlumnos
     public bool TieneFiltros =>
         !string.IsNullOrWhiteSpace(Texto)
         || !string.IsNullOrWhiteSpace(Curso)
-        || !string.IsNullOrWhiteSpace(Estado);
+        || !string.IsNullOrWhiteSpace(Estado)
+        || SoloPendientes;
 }

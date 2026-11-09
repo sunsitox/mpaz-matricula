@@ -32,6 +32,7 @@ public class RegistroFicha
         int paso,
         IReadOnlyDictionary<string, string> datos,
         int anio,
+        int? funcionarioId = null,
         CancellationToken ct = default)
     {
         var avisos = new List<string>();
@@ -41,7 +42,7 @@ public class RegistroFicha
             switch (paso)
             {
                 case 1:
-                    await Paso1Async(datos, anio, avisos, ct);
+                    await Paso1Async(datos, anio, funcionarioId, avisos, ct);
                     break;
                 case 2:
                     await Paso2Async(datos, anio, avisos, ct);
@@ -57,6 +58,9 @@ public class RegistroFicha
                     break;
                 case 6:
                     await Paso6Async(datos, avisos, ct);
+                    break;
+                case 7:
+                    await Paso7Async(datos, avisos, ct);
                     break;
             }
 
@@ -75,6 +79,7 @@ public class RegistroFicha
     private async Task Paso1Async(
         IReadOnlyDictionary<string, string> datos,
         int anio,
+        int? funcionarioId,
         List<string> avisos,
         CancellationToken ct)
     {
@@ -154,6 +159,7 @@ public class RegistroFicha
                 Anio = (short)anio,
                 Tipo = tipo,
                 Estado = "BORRADOR",
+                CreadaPor = funcionarioId,
             };
 
             _db.Matriculas.Add(matricula);
@@ -207,11 +213,19 @@ public class RegistroFicha
 
         if (restriccion == true && vigentes.Count == 0)
         {
+            // El tipo y el detalle los declara el apoderado en el paso 2; si el
+            // borrador es anterior a esos campos, se conserva el texto genérico.
+            var tipo = Texto(datos, "restricción madre: tipo");
+            var detalle = Texto(datos, "restricción madre: detalle");
+
             _db.RestriccionesFamiliares.Add(new RestriccionFamiliar
             {
                 EstudiantePersona = vinculoMadre,
-                Tipo = "FAMILIAR",
-                Descripcion = $"Restricción declarada en la ficha {anio}: la madre no puede vincularse con el o la estudiante.",
+                Tipo = tipo is not null && tipo.StartsWith("J", StringComparison.OrdinalIgnoreCase)
+                    ? "JUDICIAL"
+                    : "FAMILIAR",
+                Descripcion = detalle
+                    ?? $"Restricción declarada en la ficha {anio}: la madre no puede vincularse con el o la estudiante.",
                 VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
             });
         }
@@ -440,7 +454,8 @@ public class RegistroFicha
                 EstudianteId = estudiante.Id,
                 Tipo = "CONDICION",
                 Descripcion = descripcion,
-                EnTratamiento = tratamiento,
+                // La columna es NOT NULL: sin respuesta se guarda FALSE.
+                EnTratamiento = tratamiento ?? false,
                 VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
             });
         }
@@ -472,6 +487,7 @@ public class RegistroFicha
                     EstudianteId = estudiante.Id,
                     Tipo = "ALERGIA",
                     Descripcion = alergias,
+                    EnTratamiento = false,
                     VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
                 });
             }
@@ -512,6 +528,21 @@ public class RegistroFicha
             {
                 apoyo.ApoyosInformados = apoyosPie;
             }
+        }
+
+    }
+
+    // ── Paso 7 · Autorizaciones del apoderado ────────────────────────────────
+
+    private async Task Paso7Async(
+        IReadOnlyDictionary<string, string> datos,
+        List<string> avisos,
+        CancellationToken ct)
+    {
+        var estudiante = await EstudianteActualAsync(datos, avisos, ct);
+        if (estudiante is null)
+        {
+            return;
         }
 
         await GuardarAutorizacionesAsync(datos, estudiante, avisos, ct);
@@ -570,7 +601,21 @@ public class RegistroFicha
                 await _db.SaveChangesAsync(ct);
             }
 
-            var autorizacion = await _db.Autorizaciones
+            // uk_autorizacion_otorgada admite una sola OTORGADA por estudiante y
+            // tipo, sin mirar la vigencia. Al otorgar se reutiliza esa fila aunque
+            // figure cerrada; si no existe, se toma la vigente o se crea una nueva.
+            Autorizacion? autorizacion = null;
+
+            if (respuesta.Value)
+            {
+                autorizacion = await _db.Autorizaciones
+                    .Include(a => a.Alcances)
+                    .FirstOrDefaultAsync(
+                        a => a.EstudianteId == estudiante.Id && a.Tipo == tipo && a.Estado == "OTORGADA",
+                        ct);
+            }
+
+            autorizacion ??= await _db.Autorizaciones
                 .Include(a => a.Alcances)
                 .FirstOrDefaultAsync(
                     a => a.EstudianteId == estudiante.Id && a.Tipo == tipo && a.VigenteHasta == null,
@@ -619,6 +664,18 @@ public class RegistroFicha
                         Otorgado = respuesta.Value,
                     });
                 }
+            }
+
+            // Sólo una autorización actual por tipo: las demás filas abiertas del
+            // mismo tipo quedan cerradas con la fecha de hoy.
+            var otrasVigentes = await _db.Autorizaciones
+                .Where(a => a.EstudianteId == estudiante.Id && a.Tipo == tipo
+                    && a.Id != autorizacion.Id && a.VigenteHasta == null)
+                .ToListAsync(ct);
+
+            foreach (var otra in otrasVigentes)
+            {
+                otra.VigenteHasta = hoy;
             }
         }
     }
@@ -884,6 +941,9 @@ public class RegistroFicha
             .MaxAsync(v => (short?)v.NumeroVersion, ct) ?? 0;
 
         var version = (short)(ultimaVersion + 1);
+
+        // MAT-18: desde la versión 2 la base exige el motivo de la corrección.
+        var motivo = version > 1 ? Texto(datos, "corrección: motivo") : null;
         // siguiente_folio recibe SMALLINT: sin el cast, PostgreSQL no resuelve
         // la función al enviar el año como integer.
         var folio = await _db.Database
@@ -905,6 +965,7 @@ public class RegistroFicha
             NumeroVersion = version,
             Folio = folio,
             Estado = "VIGENTE",
+            MotivoCorreccion = motivo,
             DatosSnapshot = JsonSerializer.Serialize(new
             {
                 campos = new SortedDictionary<string, string>(
@@ -924,6 +985,22 @@ public class RegistroFicha
         }
 
         await _db.SaveChangesAsync(ct);
+
+        // MAT-14: cada autorización queda ligada a la ficha en que se firmó. Las
+        // que ya estaban ligadas a una versión anterior conservan ese vínculo.
+        var autorizaciones = await _db.Autorizaciones
+            .Where(a => a.EstudianteId == estudiante.Id && a.VigenteHasta == null && a.FichaVersionId == null)
+            .ToListAsync(ct);
+
+        foreach (var autorizacion in autorizaciones)
+        {
+            autorizacion.FichaVersionId = ficha.Id;
+        }
+
+        if (autorizaciones.Count > 0)
+        {
+            await _db.SaveChangesAsync(ct);
+        }
 
         return new CierreFicha(estudiante.Id, matricula.Id, ficha.Id, folio, version);
     }
@@ -1044,6 +1121,156 @@ public class RegistroFicha
         matricula.ConfirmadaEn = DateTimeOffset.UtcNow;
         matricula.ConfirmadaPor = funcionarioId;
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Anula la matrícula del año (BORRADOR, FICHA_GENERADA o FIRMADA →
+    /// ANULADA). La anulación exige motivo, que queda en las observaciones, y
+    /// permite iniciar una matrícula nueva porque el índice único de la base
+    /// ignora las anuladas. La matrícula confirmada no se anula por esta vía.
+    /// </summary>
+    public async Task<string?> AnularAsync(int matriculaId, string? motivo, CancellationToken ct = default)
+    {
+        var matricula = await _db.Matriculas.FirstOrDefaultAsync(m => m.Id == matriculaId, ct);
+
+        if (matricula is null)
+        {
+            return "No se encontró la matrícula seleccionada.";
+        }
+
+        if (matricula.Estado == "ANULADA")
+        {
+            return null;
+        }
+
+        if (matricula.Estado == "CONFIRMADA")
+        {
+            return "La matrícula confirmada no se puede anular: solicite el procedimiento de Dirección.";
+        }
+
+        if (matricula.Estado is not ("BORRADOR" or "FICHA_GENERADA" or "FIRMADA"))
+        {
+            return "Sólo se anula una matrícula en borrador, con ficha generada o firmada.";
+        }
+
+        if (string.IsNullOrWhiteSpace(motivo))
+        {
+            return "Indique el motivo de la anulación.";
+        }
+
+        matricula.Estado = "ANULADA";
+        matricula.Observaciones = motivo.Trim();
+        matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Validación institucional de Dirección (MAT-12): acto distinto de
+    /// confirmar, con fecha y responsable. Sólo sobre matrícula formalizada
+    /// (FIRMADA o CONFIRMADA); es idempotente y queda auditada por trigger.
+    /// </summary>
+    public async Task<string?> ValidarAsync(int matriculaId, int funcionarioId, CancellationToken ct = default)
+    {
+        var matricula = await _db.Matriculas.FirstOrDefaultAsync(m => m.Id == matriculaId, ct);
+
+        if (matricula is null)
+        {
+            return "No se encontró la matrícula seleccionada.";
+        }
+
+        if (matricula.ValidadaEn is not null)
+        {
+            return null;
+        }
+
+        if (matricula.Estado is not ("FIRMADA" or "CONFIRMADA"))
+        {
+            return "Sólo se valida una matrícula firmada o confirmada.";
+        }
+
+        matricula.ValidadaEn = DateTimeOffset.UtcNow;
+        matricula.ValidadaPor = funcionarioId;
+        matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        return null;
+    }
+
+    /// <summary>
+    /// MAT-04: pasa a VENCIDA las autorizaciones otorgadas cuyo plazo terminó.
+    /// Devuelve cuántas cambió, para registrar el evento sólo cuando hubo algo.
+    /// </summary>
+    public async Task<int> MarcarVencidasAsync(int estudianteId, DateOnly hoy, CancellationToken ct = default)
+    {
+        var vencidas = await _db.Autorizaciones
+            .Where(a => a.EstudianteId == estudianteId
+                        && a.Estado == "OTORGADA"
+                        && a.VigenteHasta != null
+                        && a.VigenteHasta < hoy)
+            .ToListAsync(ct);
+
+        foreach (var autorizacion in vencidas)
+        {
+            autorizacion.Estado = "VENCIDA";
+        }
+
+        if (vencidas.Count > 0)
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return vencidas.Count;
+    }
+
+    /// <summary>
+    /// MAT-04: revoca una autorización otorgada. Se conserva la firma y la fecha
+    /// originales y se registra el motivo, quién la revocó y desde cuándo rige.
+    /// </summary>
+    public async Task<string?> RevocarAutorizacionAsync(
+        int autorizacionId,
+        int estudianteId,
+        string? motivo,
+        int funcionarioId,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(motivo))
+        {
+            return "Indique el motivo de la revocación.";
+        }
+
+        var autorizacion = await _db.Autorizaciones
+            .FirstOrDefaultAsync(a => a.Id == autorizacionId && a.EstudianteId == estudianteId, ct);
+
+        if (autorizacion is null)
+        {
+            return "No se encontró la autorización seleccionada.";
+        }
+
+        if (autorizacion.Estado == "REVOCADA")
+        {
+            return null;
+        }
+
+        if (autorizacion.Estado != "OTORGADA")
+        {
+            return "Sólo se revoca una autorización otorgada y vigente.";
+        }
+
+        var hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        autorizacion.Estado = "REVOCADA";
+        autorizacion.RevocadaEn = DateTimeOffset.UtcNow;
+        autorizacion.RevocadaPor = funcionarioId;
+        autorizacion.MotivoRevocacion = motivo.Trim();
+        autorizacion.VigenteHasta = autorizacion.VigenteDesde is DateOnly desde && desde > hoy ? desde : hoy;
 
         await _db.SaveChangesAsync(ct);
 

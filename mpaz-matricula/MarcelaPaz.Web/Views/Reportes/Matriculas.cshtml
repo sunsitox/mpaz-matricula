@@ -1,0 +1,85 @@
+@model MarcelaPaz.Web.Models.ReporteMatriculas
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Reporte de matrículas {Model.Anio}";
+}
+<section class="admin__tarjeta">
+    <div class="alumnos__encabezado">
+        <div>
+            <h1 class="admin__titulo-seccion">Reporte de matrículas @Model.Anio</h1>
+            <p class="admin__ayuda">
+                Estado de cada estudiante del año: matrícula, folio vigente y documentos pendientes.
+                El CSV descarga exactamente esta tabla.
+            </p>
+        </div>
+        <span class="alumnos__insignia">Año escolar @Model.Anio</span>
+    </div>
+
+    <form method="get" asp-controller="Reportes" asp-action="Matriculas" class="alumnos__filtros">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="anio">Año escolar</label>
+            <select class="acceso__input" id="anio" name="anio" onchange="this.form.submit()">
+                @foreach (var anio in Model.Anios)
+                {
+                    <option value="@anio" selected="@(anio == Model.Anio ? "selected" : null)">@anio</option>
+                }
+            </select>
+        </div>
+        @if (User.HasClaim("permiso", "GENERAL:EXPORTAR"))
+        {
+            <a class="admin__boton admin__boton--primario" asp-controller="Reportes" asp-action="MatriculasCsv"
+               asp-route-anio="@Model.Anio">Descargar CSV</a>
+        }
+        <a class="admin__boton" asp-controller="Reportes" asp-action="Faltantes"
+           asp-route-anio="@Model.Anio">Ver faltantes documentales</a>
+    </form>
+
+    <div>
+        @foreach (var grupo in Model.Resumen)
+        {
+            <span class="admin__chip">@grupo.Estado: @grupo.Total</span>
+        }
+    </div>
+</section>
+
+<section class="admin__tarjeta">
+    <div class="alumnos__tabla-envoltura" tabindex="0">
+        <table class="admin__tabla alumnos__tabla">
+            <caption class="sr-only">
+                Matrículas del año escolar @Model.Anio con curso, estado, folio y documentos pendientes.
+            </caption>
+            <thead>
+                <tr>
+                    <th scope="col">Alumno</th>
+                    <th scope="col">Documento</th>
+                    <th scope="col">Curso</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Matrícula</th>
+                    <th scope="col">Folio</th>
+                    <th scope="col">Docs. pendientes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    <tr>
+                        <td>
+                            <a class="alumnos__nombre" asp-controller="Alumnos" asp-action="Detalle"
+                               asp-route-id="@fila.EstudianteId" asp-route-anio="@Model.Anio">
+                                @fila.Estudiante
+                            </a>
+                        </td>
+                        <td class="alumnos__dato">@fila.Rut</td>
+                        <td class="alumnos__dato">@(fila.Curso ?? "—")</td>
+                        <td class="alumnos__dato">@fila.Estado</td>
+                        <td class="alumnos__dato">@fila.Tipo</td>
+                        <td class="alumnos__dato">@(fila.Folio ?? "—")</td>
+                        <td class="alumnos__dato">
+                            @(fila.DocsPendientes > 0 ? fila.DocsPendientes.ToString() : "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

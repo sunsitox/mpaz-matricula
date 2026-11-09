@@ -49,7 +49,7 @@ public class AlumnosController : Controller
     private bool Puede(string area) => User.HasClaim("permiso", $"{area}:LEER");
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir, int? anio)
+    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir, int? anio, bool pendientes = false)
     {
         var anios = await _anios.ListarAsync();
         var anioConsulta = await _anios.ResolverAsync(anio);
@@ -74,6 +74,7 @@ public class AlumnosController : Controller
             .Where(m => m.Anio == anioConsulta)
             .Select(m => new
             {
+                m.Id,
                 m.EstudianteId,
                 m.Estado,
                 m.Tipo,
@@ -85,26 +86,59 @@ public class AlumnosController : Controller
             .GroupBy(m => m.EstudianteId)
             .ToDictionary(grupo => grupo.Key, grupo => grupo.First());
 
+        // MAT-11: se marca como pendiente la matrícula sin ficha vigente o con
+        // requisitos documentales todavía en PENDIENTE. Las dos consultas se
+        // hacen en bloque para no repetir una por alumno.
+        var idsMatriculas = delAnio.Values.Select(m => m.Id).ToList();
+
+        var conFicha = idsMatriculas.Count == 0
+            ? new HashSet<int>()
+            : (await _db.FichaVersiones
+                .AsNoTracking()
+                .Where(v => idsMatriculas.Contains(v.MatriculaId) && v.Estado == "VIGENTE")
+                .Select(v => v.MatriculaId)
+                .Distinct()
+                .ToListAsync())
+            .ToHashSet();
+
+        var documentosPendientes = idsMatriculas.Count == 0
+            ? new Dictionary<int, int>()
+            : await _db.RequisitosDocumentales
+                .AsNoTracking()
+                .Where(r => idsMatriculas.Contains(r.MatriculaId) && r.Estado == "PENDIENTE")
+                .GroupBy(r => r.MatriculaId)
+                .Select(grupo => new { MatriculaId = grupo.Key, Total = grupo.Count() })
+                .ToDictionaryAsync(fila => fila.MatriculaId, fila => fila.Total);
+
         var todos = estudiantes
             .Select(estudiante =>
             {
                 delAnio.TryGetValue(estudiante.Id, out var matricula);
 
+                var documentos = matricula is null ? 0 : documentosPendientes.GetValueOrDefault(matricula.Id);
+
                 return new AlumnoListado
                 {
                     Id = estudiante.Id,
                     Nombre = estudiante.NombreCompleto,
-                    Rut = RutChileno.Formatear(estudiante.Identificador),
+                    TipoIdentificador = estudiante.TipoIdentificador,
+                    Identificador = estudiante.Identificador,
+                    // Sólo el RUN se formatea: un IPE o IPA no tiene dígito verificador.
+                    Rut = string.Equals(estudiante.TipoIdentificador, "RUN", StringComparison.OrdinalIgnoreCase)
+                        ? RutChileno.Formatear(estudiante.Identificador)
+                        : estudiante.Identificador.ToUpperInvariant(),
                     Curso = matricula?.Curso,
                     Estado = matricula?.Estado,
                     Tipo = matricula?.Tipo,
                     Comuna = estudiante.Comuna?.Nombre,
+                    SinFicha = matricula is not null && !conFicha.Contains(matricula.Id),
+                    DocumentosPendientes = documentos,
                 };
             })
             .ToList();
 
         // Sólo se aceptan las columnas conocidas; cualquier otra vuelve a nombre.
-        var columnas = new[] { "nombre", "rut", "curso", "estado", "tipo", "comuna" };
+        var columnas = new[] { "nombre", "rut", "curso", "estado", "tipo", "comuna", "pendientes" };
         var ordenPedido = (orden ?? string.Empty).ToLowerInvariant();
         var ordenValido = columnas.Contains(ordenPedido) ? ordenPedido : "nombre";
         var descendente = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
@@ -116,6 +150,7 @@ public class AlumnosController : Controller
             Texto = q?.Trim(),
             Curso = string.IsNullOrWhiteSpace(curso) ? null : curso,
             Estado = string.IsNullOrWhiteSpace(estado) ? null : estado,
+            SoloPendientes = pendientes,
             Orden = ordenValido,
             Direccion = descendente ? "desc" : "asc",
             Cursos = todos
@@ -143,12 +178,19 @@ public class AlumnosController : Controller
         {
             // Sin tildes y en mayúsculas: «gonzalez» encuentra «González».
             var texto = SinTildes(filtro.Texto).ToUpperInvariant();
-            var soloRut = filtro.Texto.Replace(".", string.Empty).Replace("-", string.Empty).ToUpperInvariant();
+            var soloDocumento = filtro.Texto
+                .Replace(".", string.Empty)
+                .Replace("-", string.Empty)
+                .Replace(" ", string.Empty)
+                .ToUpperInvariant();
 
             filas = filas.Where(a =>
                 SinTildes(a.Nombre).ToUpperInvariant().Contains(texto, StringComparison.Ordinal)
-                || a.Rut.Replace(".", string.Empty).Replace("-", string.Empty)
-                    .StartsWith(soloRut, StringComparison.OrdinalIgnoreCase));
+                || a.Identificador
+                    .Replace(".", string.Empty)
+                    .Replace("-", string.Empty)
+                    .Replace(" ", string.Empty)
+                    .StartsWith(soloDocumento, StringComparison.OrdinalIgnoreCase));
         }
 
         if (filtro.Curso is not null)
@@ -159,6 +201,11 @@ public class AlumnosController : Controller
         if (filtro.Estado is not null)
         {
             filas = filas.Where(a => a.EstadoTexto == filtro.Estado);
+        }
+
+        if (filtro.SoloPendientes)
+        {
+            filas = filas.Where(a => a.TienePendientes);
         }
 
         filtro.Alumnos = Ordenar(filas, filtro.Orden, filtro.Direccion == "desc").ToList();
@@ -217,18 +264,31 @@ public class AlumnosController : Controller
         var puedeFamilia = Puede("FAMILIA");
         var puedeRetiro = Puede("RETIRO");
         var puedeSalud = Puede("SALUD");
+        var puedePie = Puede("PIE");
         var puedeAutorizaciones = Puede("AUTORIZACIONES");
         var puedeDocumentos = Puede("DOCUMENTOS");
         var puedeSubirDocumentos = User.HasClaim("permiso", "DOCUMENTOS:CREAR");
+        var puedeEditarAutorizaciones = User.HasClaim("permiso", "AUTORIZACIONES:EDITAR");
+        var puedeCrearMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
 
-        var vinculos = puedeFamilia
+        // MAT-03 / MAT-14: se leen también los vínculos cerrados, para mostrar los
+        // cambios de apoderado sin perder el historial.
+        var vinculosTodos = puedeFamilia
             ? await _db.EstudiantesPersonas
                 .AsNoTracking()
                 .Include(v => v.Persona)
-                .Where(v => v.EstudianteId == id && v.VigenteHasta == null)
+                .Where(v => v.EstudianteId == id)
                 .OrderBy(v => v.Id)
                 .ToListAsync()
             : new List<EstudiantePersona>();
+
+        var vinculos = vinculosTodos.Where(v => v.VigenteHasta == null).ToList();
+        var vinculosAnteriores = vinculosTodos
+            .Where(v => v.VigenteHasta is not null)
+            .OrderByDescending(v => v.VigenteHasta)
+            .ThenBy(v => v.Id)
+            .ToList();
 
         var idsVinculos = vinculos.Select(v => v.Id).ToList();
 
@@ -261,6 +321,12 @@ public class AlumnosController : Controller
                 .FirstOrDefaultAsync(a => a.EstudianteId == id)
             : null;
 
+        var apoyo = puedePie
+            ? await _db.AntecedentesApoyo
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.EstudianteId == id)
+            : null;
+
         var situaciones = puedeSalud
             ? await _db.SituacionesMedicas
                 .AsNoTracking()
@@ -279,13 +345,105 @@ public class AlumnosController : Controller
                 .OrderByDescending(v => v.NumeroVersion)
                 .FirstOrDefaultAsync();
 
+        // MAT-14: historial completo de versiones de la matrícula consultada.
+        var versiones = vigente is null
+            ? new List<FichaVersion>()
+            : await _db.FichaVersiones
+                .AsNoTracking()
+                .Where(v => v.MatriculaId == vigente.Id)
+                .OrderByDescending(v => v.NumeroVersion)
+                .ToListAsync();
+
+        var idsGeneradores = versiones.Select(v => v.GeneradaPor).Distinct().ToList();
+
+        var nombresFuncionarios = idsGeneradores.Count == 0
+            ? new Dictionary<int, string>()
+            : await _db.Funcionarios
+                .AsNoTracking()
+                .Where(f => idsGeneradores.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, f => f.Nombre);
+
+        // Última actualización del expediente: la escribe el trigger de
+        // auditoría en cada cambio de la matrícula, con el funcionario de la
+        // sesión. Sin historial se muestra updated_at y quien la creó.
+        var ultimoCambio = vigente is null
+            ? null
+            : await _db.HistorialCambios
+                .AsNoTracking()
+                .Where(h => h.Tabla == "matricula_anual" && h.RegistroId == vigente.Id)
+                .OrderByDescending(h => h.CambiadoEn)
+                .FirstOrDefaultAsync();
+
+        var idsResponsables = new List<int>();
+
+        if (vigente?.CreadaPor is int creadaPor)
+        {
+            idsResponsables.Add(creadaPor);
+        }
+
+        if (vigente?.ConfirmadaPor is int confirmadaPor)
+        {
+            idsResponsables.Add(confirmadaPor);
+        }
+
+        if (vigente?.ValidadaPor is int validadaPor)
+        {
+            idsResponsables.Add(validadaPor);
+        }
+
+        if (ultimoCambio?.FuncionarioId is int responsableId)
+        {
+            idsResponsables.Add(responsableId);
+        }
+
+        var nombresResponsables = idsResponsables.Count == 0
+            ? new Dictionary<int, string>()
+            : await _db.Funcionarios
+                .AsNoTracking()
+                .Where(f => idsResponsables.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, f => f.Nombre);
+
+        // MAT-04: antes de listar, las autorizaciones otorgadas cuyo plazo ya
+        // terminó pasan a VENCIDA en la base (sólo cuando hay alguna).
+        if (puedeAutorizaciones
+            && int.TryParse(User.FindFirstValue("funcionario_id"), out var funcionarioLectura))
+        {
+            var hayVencidas = await _db.Autorizaciones
+                .AsNoTracking()
+                .AnyAsync(a => a.EstudianteId == id
+                               && a.Estado == "OTORGADA"
+                               && a.VigenteHasta != null
+                               && a.VigenteHasta < hoy);
+
+            if (hayVencidas)
+            {
+                await _escritura.EjecutarAsync(
+                    funcionarioLectura,
+                    ct => _registro.MarcarVencidasAsync(id, hoy, ct),
+                    HttpContext.RequestAborted);
+            }
+        }
+
+        // MAT-04 / MAT-14: se listan todas las autorizaciones, no sólo las
+        // vigentes, para conservar el historial de respuestas y revocaciones.
         var autorizaciones = puedeAutorizaciones
             ? await _db.Autorizaciones
                 .AsNoTracking()
-                .Where(a => a.EstudianteId == id && a.VigenteHasta == null)
+                .Where(a => a.EstudianteId == id)
                 .OrderBy(a => a.Tipo)
+                .ThenByDescending(a => a.VigenteDesde)
+                .ThenByDescending(a => a.Id)
                 .ToListAsync()
             : new List<Autorizacion>();
+
+        var idsAutorizaciones = autorizaciones.Select(a => a.Id).ToList();
+
+        var alcances = idsAutorizaciones.Count == 0
+            ? new List<AutorizacionAlcance>()
+            : await _db.AutorizacionesAlcance
+                .AsNoTracking()
+                .Where(a => idsAutorizaciones.Contains(a.AutorizacionId))
+                .ToListAsync();
 
         // MAT-06/07/09: requisitos de la matrícula del año. Sin DOCUMENTOS:LEER no
         // se consultan ni se proyectan.
@@ -379,17 +537,82 @@ public class AlumnosController : Controller
             Restricciones = restricciones
                 .Select(r => $"{r.Tipo.ToLowerInvariant()}: {r.Descripcion}")
                 .ToList(),
+            ApoderadosAnteriores = vinculosAnteriores
+                .Where(v => v.Persona is not null)
+                .Select(v => new PerfilAlumno.ApoderadoPerfil
+                {
+                    Nombre = NombrePersona(v.Persona!),
+                    Rut = RutChileno.Formatear(v.Persona!.Identificador),
+                    Vinculo = EtiquetaVinculo(v),
+                    Telefono = v.Persona!.Telefono,
+                    Correo = v.Persona!.Correo,
+                    TieneRestriccion = v.TieneRestriccion == true,
+                    Hasta = v.VigenteHasta,
+                })
+                .ToList(),
+            PieParticipa = apoyo?.ParticipaPie,
+            PieDiagnostico = apoyo?.TieneDiagnostico,
+            PieApoyos = apoyo?.ApoyosInformados,
+            Alergias = situaciones
+                .Where(s => s.Tipo == "ALERGIA")
+                .Select(s => s.Descripcion)
+                .FirstOrDefault(),
+            ContactoSanitarioNombre = salud?.ContactoSanitarioNombre,
+            ContactoSanitarioTelefono = salud?.ContactoSanitarioTelefono,
+            Versiones = versiones
+                .Select(v => new PerfilAlumno.VersionPerfil
+                {
+                    Id = v.Id,
+                    Numero = v.NumeroVersion,
+                    Folio = v.Folio,
+                    Estado = v.Estado,
+                    GeneradaEn = v.GeneradaEn,
+                    GeneradaPor = nombresFuncionarios.GetValueOrDefault(v.GeneradaPor),
+                    MotivoCorreccion = v.MotivoCorreccion,
+                })
+                .ToList(),
             FolioFicha = ficha?.Folio,
             VersionFicha = ficha?.NumeroVersion,
             MatriculaId = vigente?.Id,
             PuedeConfirmar = vigente?.Estado is "FICHA_GENERADA" or "FIRMADA",
+            PuedeAnular = vigente?.Estado is "BORRADOR" or "FICHA_GENERADA" or "FIRMADA",
+            PuedeValidar = vigente?.Estado is "FIRMADA" or "CONFIRMADA"
+                && vigente.ValidadaEn is null
+                && User.HasClaim("permiso", "GENERAL:VALIDAR"),
             Autorizaciones = autorizaciones
-                .Select(a => $"{EtiquetaAutorizacion(a.Tipo)}: {(a.Estado == "OTORGADA" ? "autorizada" : "rechazada")}")
+                .Select(a =>
+                {
+                    var estado = Autorizaciones.EstadoEfectivo(a.Estado, a.VigenteHasta, hoy);
+
+                    return new PerfilAlumno.AutorizacionPerfil
+                    {
+                        Id = a.Id,
+                        Tipo = a.Tipo,
+                        Etiqueta = EtiquetaAutorizacion(a.Tipo),
+                        Estado = estado,
+                        EstadoEtiqueta = Autorizaciones.EtiquetaEstado(estado),
+                        FechaFirma = a.FechaFirma,
+                        VigenteDesde = a.VigenteDesde,
+                        VigenteHasta = a.VigenteHasta,
+                        RevocadaEn = a.RevocadaEn,
+                        MotivoRevocacion = a.MotivoRevocacion,
+                        Alcances = alcances
+                            .Where(x => x.AutorizacionId == a.Id)
+                            .Select(x => $"{EtiquetaAlcance(x.Alcance)}: {(x.Otorgado ? "sí" : "no")}")
+                            .ToList(),
+                    };
+                })
                 .ToList(),
             PuedeVerFamilia = puedeFamilia,
             PuedeVerRetiro = puedeRetiro,
             PuedeVerSalud = puedeSalud,
+            PuedeVerPie = puedePie,
             PuedeVerAutorizaciones = puedeAutorizaciones,
+            PuedeEditarAutorizaciones = puedeEditarAutorizaciones,
+            PuedeCorregirFicha = puedeCrearMatricula && ficha is not null,
+            // Tras una anulación se permite iniciar una matrícula nueva: el
+            // índice único de la base ignora las anuladas.
+            PuedeRenovarAnio = puedeCrearMatricula && (vigente is null || vigente.Estado == "ANULADA"),
             PuedeVerDocumentos = puedeDocumentos,
             PuedeSubirDocumentos = puedeSubirDocumentos,
             FichaFirmadaDocumentoId = fichaFirmada?.Id,
@@ -400,12 +623,12 @@ public class AlumnosController : Controller
                 {
                     RequisitoId = r.Id,
                     Tipo = r.TipoDocumento,
-                    Etiqueta = EtiquetaDocumento(r.TipoDocumento),
+                    Etiqueta = CatalogoDocumentos.Etiqueta(r.TipoDocumento),
                     Estado = r.Estado,
                     DocumentoId = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.Id,
                     NombreArchivo = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.NombreOriginal,
                     SubidoEn = documentos.FirstOrDefault(d => d.Id == r.DocumentoId)?.SubidoEn,
-                    Sensibilidad = SensibilidadDocumento(r.TipoDocumento),
+                    Sensibilidad = CatalogoDocumentos.Sensibilidad(r.TipoDocumento),
                     Observacion = r.Observacion,
                 })
                 .ToList(),
@@ -449,6 +672,17 @@ public class AlumnosController : Controller
         {
             perfil.CursoActual = vigente.Curso?.Nombre;
             perfil.EstadoActual = vigente.Estado;
+            perfil.ActualizadaEn = ultimoCambio?.CambiadoEn ?? vigente.UpdatedAt;
+
+            var responsableActual = ultimoCambio?.FuncionarioId ?? vigente.CreadaPor;
+
+            perfil.ActualizadaPor = responsableActual is int responsable
+                ? nombresResponsables.GetValueOrDefault(responsable)
+                : null;
+            perfil.ValidadaEn = vigente.ValidadaEn;
+            perfil.ValidadaPor = vigente.ValidadaPor is int validador
+                ? nombresResponsables.GetValueOrDefault(validador)
+                : null;
         }
 
         return View(perfil);
@@ -492,6 +726,101 @@ public class AlumnosController : Controller
         if (error is null)
         {
             TempData["Notificacion"] = "Matrícula confirmada según el procedimiento oficial.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+    }
+
+    /// <summary>
+    /// Anula la matrícula del año (BORRADOR, FICHA_GENERADA o FIRMADA →
+    /// ANULADA). Exige motivo y permite iniciar una matrícula nueva.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Anular(int id, string? motivo)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para anular la matrícula.";
+            return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+        }
+
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            error = await _registro.AnularAsync(id, motivo, ct);
+        }, HttpContext.RequestAborted);
+
+        if (error is null)
+        {
+            TempData["Notificacion"] = "Matrícula anulada. Puede iniciar una matrícula nueva para el año.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+    }
+
+    /// <summary>
+    /// Validación institucional de Dirección (MAT-12): acto distinto de
+    /// confirmar, sobre matrícula firmada o confirmada. Deja fecha y
+    /// responsable, auditados por trigger.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:VALIDAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Validar(int id)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para validar la matrícula.";
+            return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+        }
+
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            error = await _registro.ValidarAsync(id, funcionarioId.Value, ct);
+        }, HttpContext.RequestAborted);
+
+        if (error is null)
+        {
+            TempData["Notificacion"] = "Matrícula validada por Dirección.";
         }
         else
         {
@@ -595,7 +924,7 @@ public class AlumnosController : Controller
                     EstudianteId = id,
                     MatriculaId = requisito.MatriculaId,
                     Tipo = requisito.TipoDocumento,
-                    Sensibilidad = SensibilidadDocumento(requisito.TipoDocumento),
+                    Sensibilidad = CatalogoDocumentos.Sensibilidad(requisito.TipoDocumento),
                     NombreOriginal = guardado.Nombre,
                     MimeType = guardado.Mime,
                     TamanoBytes = guardado.Tamano,
@@ -656,7 +985,7 @@ public class AlumnosController : Controller
             estudianteId: id,
             recursoId: documentoId);
 
-        TempData["Notificacion"] = $"Documento «{EtiquetaDocumento(requisito.TipoDocumento)}» recibido.";
+        TempData["Notificacion"] = $"Documento «{CatalogoDocumentos.Etiqueta(requisito.TipoDocumento)}» recibido.";
         return RedirectToAction(nameof(Detalle), new { id });
     }
 
@@ -715,7 +1044,7 @@ public class AlumnosController : Controller
             estudianteId: id,
             recursoId: requisito.Id);
 
-        TempData["Notificacion"] = $"«{EtiquetaDocumento(requisito.TipoDocumento)}» quedó {(estado == "NO_APLICA" ? "como no aplica" : "pendiente")}.";
+        TempData["Notificacion"] = $"«{CatalogoDocumentos.Etiqueta(requisito.TipoDocumento)}» quedó {(estado == "NO_APLICA" ? "como no aplica" : "pendiente")}.";
         return RedirectToAction(nameof(Detalle), new { id });
     }
 
@@ -890,35 +1219,54 @@ public class AlumnosController : Controller
         return RedirectToAction(nameof(Detalle), new { id });
     }
 
-    private bool PuedeVerSensibilidad(string sensibilidad) => sensibilidad switch
+    /// <summary>
+    /// MAT-04: revoca una autorización otorgada. Exige motivo y conserva la firma
+    /// y la fecha originales; la difusión queda bloqueada desde ese momento.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "AUTORIZACIONES:EDITAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RevocarAutorizacion(int id, int autorizacionId, string? motivo)
     {
-        "SALUD" => Puede("SALUD"),
-        "PIE" => Puede("PIE"),
-        "JUDICIAL" => Puede("JUDICIAL"),
-        _ => true,
-    };
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
 
-    private static string SensibilidadDocumento(string tipo) => tipo switch
-    {
-        "ORDEN_MEDICA" or "RESPALDO_SALUD" => "SALUD",
-        "CERTIFICADO_PIE" => "PIE",
-        "DOCUMENTO_JUDICIAL" => "JUDICIAL",
-        _ => "GENERAL",
-    };
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para revocar una autorización.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
 
-    private static string EtiquetaDocumento(string tipo) => tipo switch
-    {
-        "CEDULA_IDENTIDAD" => "Cédula de identidad",
-        "CERTIFICADO_NACIMIENTO" => "Certificado de nacimiento",
-        "PODER_TERCERO" => "Poder de tercero",
-        "ORDEN_MEDICA" => "Orden médica",
-        "RESPALDO_SALUD" => "Respaldo de salud",
-        "CERTIFICADO_PIE" => "Certificado PIE",
-        "DOCUMENTO_JUDICIAL" => "Documento judicial",
-        "FICHA_FIRMADA" => "Ficha firmada",
-        "FICHA_PDF" => "Ficha en PDF",
-        _ => "Otro documento",
-    };
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            error = await _registro.RevocarAutorizacionAsync(autorizacionId, id, motivo, funcionarioId.Value, ct);
+        }, HttpContext.RequestAborted);
+
+        if (error is null)
+        {
+            await _auditoria.RegistrarAsync(
+                "REEMPLAZAR",
+                "AUTORIZACIONES",
+                "autorizacion",
+                detalle: "{\"evento\":\"revocar_autorizacion\"}",
+                estudianteId: id,
+                recursoId: autorizacionId);
+
+            TempData["Notificacion"] = "Autorización revocada. Se conserva la firma y la fecha originales.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    private bool PuedeVerSensibilidad(string sensibilidad) =>
+        CatalogoDocumentos.VisiblePara(sensibilidad, area => Puede(area));
 
     private static string EtiquetaAutorizacion(string tipo) => tipo switch
     {
@@ -926,6 +1274,15 @@ public class AlumnosController : Controller
         "CONVIVENCIA" => "Convivencia Escolar",
         "MEDICACION" => "Medicación",
         _ => tipo,
+    };
+
+    private static string EtiquetaAlcance(string alcance) => alcance switch
+    {
+        "CAPTACION_INTERNA" => "Captación interna",
+        "SITIO_INSTITUCIONAL" => "Sitio institucional",
+        "REDES_SOCIALES" => "Redes sociales",
+        "OTROS_MEDIOS" => "Otros medios",
+        _ => alcance,
     };
 
     /// <summary>
@@ -956,6 +1313,9 @@ public class AlumnosController : Controller
             "comuna" => descendente
                 ? filas.OrderByDescending(a => ConValor(a.Comuna), StringComparer.CurrentCulture)
                 : filas.OrderBy(a => ConValor(a.Comuna), StringComparer.CurrentCulture),
+            "pendientes" => descendente
+                ? filas.OrderByDescending(a => a.Pendientes)
+                : filas.OrderBy(a => a.Pendientes),
             _ => descendente
                 ? filas.OrderByDescending(a => a.Nombre, StringComparer.CurrentCulture)
                 : filas.OrderBy(a => a.Nombre, StringComparer.CurrentCulture),

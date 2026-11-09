@@ -1,84 +1,58 @@
 @model MarcelaPaz.Web.Models.FichaForm
 @{
     Layout = "_WizardLayout";
-    // La ficha se muestra a tamaño real: este paso ocupa más ancho que el resto.
-    ViewData["AnchoAmplio"] = true;
-    var datos = (Dictionary<string, string>)(ViewData["Borrador"] ?? new Dictionary<string, string>());
-
-    var orden = new[]
-    {
-        "curso: nivel", "curso: letra", "año escolar",
-        "nombres", "apellido paterno", "apellido materno", "cédula de identidad",
-        "fecha nacimiento", "nacionalidad", "domicilio", "comuna",
-        "madre: nombre apellido", "madre: cédula identidad", "madre: teléfono",
-        "madre: escolaridad", "madre: domicilio", "madre: correo",
-        "restricción madre (SI/NO)",
-        "padre: nombre apellido", "padre: cédula identidad", "padre: teléfono",
-        "padre: escolaridad", "padre: domicilio", "padre: correo",
-    };
 }
-<h2 class="wizard__titulo-paso">Paso 7 · Revisar y confirmar</h2>
+<h2 class="wizard__titulo-paso">Paso 7 · Autorizaciones del apoderado</h2>
 <p class="wizard__ayuda">
-    Estos son los datos del borrador. Al guardar y finalizar se genera la ficha definitiva con
-    folio institucional y una copia congelada de estos datos; la vista previa de abajo es un borrador
-    sin folio hasta ese momento.
+    Cada autorización se responde por separado y queda registrada con su fecha. El apoderado puede
+    revocarlas por escrito en cualquier momento desde la ficha del estudiante.
 </p>
 
-@* El formulario envuelve el resumen y la vista previa: así la barra de acciones
-   queda fija al pie desde el inicio del paso, sin tener que bajar hasta el final. *@
-<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post"
-      data-ux-envio="Guardando la ficha…">
+<form asp-controller="Ficha" asp-action="Guardar" asp-route-id="7" method="post">
+
     <partial name="_ResumenValidacion" />
 
-    @if (datos.Count == 0)
-    {
-        <div class="acceso__aviso">
-            Aun no hay datos en el borrador. Vuelva a un paso anterior antes de confirmar.
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Autorización de uso de imagen</legend>
+        <p class="wizard__restriccion-pregunta">
+            Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales (captación interna,
+            sitio web y redes sociales del establecimiento), sin exponer datos sensibles. Puedo revocar esta
+            autorización por escrito en cualquier momento.
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="AutorizaImagen" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="AutorizaImagen" type="radio" value="No" />
+                <span>No</span>
+            </label>
         </div>
-    }
-    else
-    {
-        <div class="wizard__revision">
-            <dl class="wizard__resumen">
-                @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
-                {
-                    <div class="wizard__resumen-item">
-                        <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
-                        <dd>@valor</dd>
-                    </div>
-                }
-            </dl>
+        <span asp-validation-for="AutorizaImagen" class="acceso__error"></span>
+    </fieldset>
 
-            <aside class="wizard__pdf">
-                <h2 class="wizard__subtitulo">Ficha para firma</h2>
-                <div class="wizard__pdf-caja">
-                    <div class="wizard__pdf-cargando" aria-hidden="true">
-                        <span class="wizard__pdf-spinner"></span>
-                        Preparando la vista previa…
-                    </div>
-                    <iframe class="wizard__pdf-marco"
-                            src="@Url.Action("Comprobante", "Ficha")"
-                            title="Vista previa de la ficha de matrícula"></iframe>
-                </div>
-            </aside>
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Autorización para el trabajo con Convivencia Escolar</legend>
+        <p class="wizard__restriccion-pregunta">
+            Autorizo que el equipo de Convivencia Escolar acompañe e intervenga con mi hijo/a cuando sea
+            necesario, con comunicación previa a la familia y posibilidad de revocar esta autorización por escrito.
+        </p>
+        <div class="wizard__radios">
+            <label class="acceso__radio">
+                <input asp-for="AutorizaConvivencia" type="radio" value="Si" />
+                <span>Si</span>
+            </label>
+            <label class="acceso__radio">
+                <input asp-for="AutorizaConvivencia" type="radio" value="No" />
+                <span>No</span>
+            </label>
         </div>
-    }
+        <span asp-validation-for="AutorizaConvivencia" class="acceso__error"></span>
+    </fieldset>
 
-    <label class="wizard__confirmacion">
-        <input asp-for="Confirmo_Revision" type="checkbox" required />
-        <span>
-            Confirmo que revisé con el apoderado todos los datos de esta ficha, incluidas las autorizaciones,
-            y que la información es fiel a lo declarado.
-        </span>
-    </label>
-
-    <div class="wizard__botones wizard__botones--paso7">
+    <div class="wizard__botones">
         <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Paso" asp-route-id="6">Volver</a>
-        @if (datos.Count > 0)
-        {
-            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" asp-route-descargar="true">Descargar PDF</a>
-            <a class="acceso__boton-secundario" asp-controller="Ficha" asp-action="Comprobante" target="_blank" rel="noopener">Abrir en otra pestaña</a>
-        }
-        <button type="submit" class="acceso__boton wizard__guardar">Guardar y finalizar</button>
+        <button type="submit" class="acceso__boton wizard__guardar">Guardar y continuar</button>
     </div>
 </form>

@@ -6,7 +6,8 @@
     var puedeMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
 }
 
-<div class="admin__tarjeta">
+<div class="perfil">
+<div class="admin__tarjeta perfil__presentacion">
     <div class="perfil__cabecera">
         <div>
             <a class="alumnos__volver" asp-action="Index" asp-route-anio="@Model.Anio">← Volver al listado</a>
@@ -30,6 +31,14 @@
                     <span class="admin__chip admin__chip--alerta">Restricción vigente</span>
                 }
             </div>
+            @if (Model.ActualizadaEn is DateTimeOffset actualizada)
+            {
+                <p class="admin__ayuda">
+                    Última actualización:
+                    @actualizada.ToLocalTime().ToString("dd-MM-yyyy HH:mm")@if (Model.ActualizadaPor is string responsable)
+                    {<text> · @responsable</text>}
+                </p>
+            }
         </div>
 
         <div class="alumnos__acciones">
@@ -44,12 +53,46 @@
                 <a class="admin__boton"
                    asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
             }
+            @if (Model.PuedeRenovarAnio)
+            {
+                <form method="post" asp-controller="Ficha" asp-action="Renovar" asp-route-id="@Model.Id"
+                      data-ux-envio="Abriendo la matrícula del año…">
+                    <button type="submit" class="admin__boton admin__boton--primario">
+                        Iniciar matrícula @Model.Anio
+                    </button>
+                </form>
+            }
         </div>
     </div>
 </div>
 
-<section class="admin__tarjeta">
-    <h2 class="admin__titulo-seccion">Ficha de matrícula y autorizaciones</h2>
+@* Pestañas con acceso condicionado (sección 9 del requerimiento): cada pestaña
+   muestra solo lo que el rol puede ver; sin el permiso, el panel explica la
+   ausencia en vez de mostrar una lista vacía (S-02). Sin JS, todo queda visible. *@
+<nav class="perfil__pestanas" aria-label="Secciones de la ficha" data-ux-pestanas>
+    <div role="tablist" aria-label="Secciones de la ficha">
+        <button type="button" role="tab" id="pestana-general" class="perfil__pestana"
+                data-ux-pestana="general" aria-selected="true"
+                aria-controls="panel-general-ficha panel-general-datos panel-general-apoderados panel-general-contactos">General</button>
+        <button type="button" role="tab" id="pestana-autorizaciones" class="perfil__pestana"
+                data-ux-pestana="autorizaciones" aria-selected="false" tabindex="-1"
+                aria-controls="panel-autorizaciones">Autorizaciones</button>
+        <button type="button" role="tab" id="pestana-documentos" class="perfil__pestana"
+                data-ux-pestana="documentos" aria-selected="false" tabindex="-1"
+                aria-controls="panel-documentos">Documentos</button>
+        <button type="button" role="tab" id="pestana-salud" class="perfil__pestana"
+                data-ux-pestana="salud" aria-selected="false" tabindex="-1"
+                aria-controls="panel-salud">Salud</button>
+        <button type="button" role="tab" id="pestana-pie" class="perfil__pestana"
+                data-ux-pestana="pie" aria-selected="false" tabindex="-1"
+                aria-controls="panel-pie">PIE</button>
+    </div>
+    <p class="admin__ayuda">Salud, PIE y documentos muestran solo lo que su rol puede ver.</p>
+</nav>
+
+<section class="admin__tarjeta" data-ux-grupo="general" role="tabpanel" id="panel-general-ficha"
+         aria-labelledby="pestana-general" tabindex="0">
+    <h2 class="admin__titulo-seccion">Ficha de matrícula</h2>
 
     @if (!string.IsNullOrWhiteSpace(Model.FolioFicha))
     {
@@ -61,21 +104,142 @@
         <p class="admin__ayuda">Sin ficha generada para el año: se genera al finalizar el asistente de matrícula.</p>
     }
 
+    @if (Model.PuedeCorregirFicha && Model.MatriculaId is int correccionMatriculaId)
+    {
+        <form method="post" asp-controller="Ficha" asp-action="Corregir"
+              asp-route-matriculaId="@correccionMatriculaId" data-ux-envio="Abriendo la corrección…">
+            <button type="submit" class="admin__boton">Corregir ficha (nueva versión)</button>
+        </form>
+        <p class="admin__ayuda">
+            La corrección parte de la copia congelada de la ficha vigente y exige un motivo. Al cerrarla se crea
+            una versión nueva: la anterior queda como reemplazada y no se modifica.
+        </p>
+    }
+
+    @if (Model.Versiones.Count > 0)
+    {
+        <h3 class="admin__titulo-seccion">Versiones de la ficha</h3>
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Versiones de la ficha de matrícula, con folio, estado y motivo de corrección.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Versión</th>
+                        <th scope="col">Folio</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Generada</th>
+                        <th scope="col">Motivo de la corrección</th>
+                        <th scope="col">PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var version in Model.Versiones)
+                    {
+                        <tr>
+                            <td>@version.Numero</td>
+                            <td>@version.Folio</td>
+                            <td>@(version.Estado == "VIGENTE" ? "Vigente" : "Reemplazada")</td>
+                            <td>
+                                @version.GeneradaEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                @if (!string.IsNullOrWhiteSpace(version.GeneradaPor))
+                                {
+                                    <span class="admin__ayuda"> · @version.GeneradaPor</span>
+                                }
+                            </td>
+                            <td>@(version.MotivoCorreccion ?? "—")</td>
+                            <td>
+                                <a asp-controller="Ficha" asp-action="Version" asp-route-id="@version.Id">Descargar</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</section>
+
+<section class="admin__tarjeta" data-ux-grupo="autorizaciones" role="tabpanel" id="panel-autorizaciones"
+         aria-labelledby="pestana-autorizaciones" tabindex="0">
+    <h2 class="admin__titulo-seccion">Autorizaciones del apoderado</h2>
+
     @if (!Model.PuedeVerAutorizaciones)
     {
         <p class="admin__ayuda">Su rol no incluye la consulta de autorizaciones del apoderado.</p>
     }
-    else if (Model.Autorizaciones.Count > 0)
-    {
-        <div class="perfil__dato">
-            <span>Autorizaciones vigentes</span>
-            <strong>@string.Join(" · ", Model.Autorizaciones)</strong>
-        </div>
-    }
-    else
+    else if (Model.Autorizaciones.Count == 0)
     {
         <p class="admin__ayuda">Sin autorizaciones registradas.</p>
     }
+    else
+    {
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Autorizaciones del apoderado, su estado, vigencia y revocación.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Autorización</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Firmada</th>
+                        <th scope="col">Vigencia</th>
+                        <th scope="col">Alcances</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var autorizacion in Model.Autorizaciones)
+                    {
+                        <tr>
+                            <td>@autorizacion.Etiqueta</td>
+                            <td>
+                                @autorizacion.EstadoEtiqueta
+                                @if (!string.IsNullOrWhiteSpace(autorizacion.MotivoRevocacion))
+                                {
+                                    <span class="admin__ayuda"> · @autorizacion.MotivoRevocacion</span>
+                                }
+                            </td>
+                            <td>@(autorizacion.FechaFirma?.ToString("dd-MM-yyyy") ?? "—")</td>
+                            <td>
+                                @(autorizacion.VigenteDesde?.ToString("dd-MM-yyyy") ?? "—")
+                                @if (autorizacion.VigenteHasta is DateOnly hasta)
+                                {
+                                    <span> → @hasta.ToString("dd-MM-yyyy")</span>
+                                }
+                            </td>
+                            <td>
+                                @(autorizacion.Alcances.Count == 0 ? "—" : string.Join(" · ", autorizacion.Alcances))
+                            </td>
+                            <td>
+                                @if (Model.PuedeEditarAutorizaciones && autorizacion.Estado == "OTORGADA")
+                                {
+                                    <form method="post" asp-action="RevocarAutorizacion" asp-route-id="@Model.Id"
+                                          data-ux-envio="Revocando la autorización…">
+                                        <input type="hidden" name="autorizacionId" value="@autorizacion.Id" />
+                                        <label class="sr-only" for="motivo-@autorizacion.Id">
+                                            Motivo de la revocación de @autorizacion.Etiqueta
+                                        </label>
+                                        <input class="acceso__input" id="motivo-@autorizacion.Id" name="motivo"
+                                               type="text" maxlength="500" required placeholder="Motivo de la revocación" />
+                                        <button type="submit" class="admin__boton">Revocar</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="admin__ayuda">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</section>
+
+<section class="admin__tarjeta" data-ux-grupo="documentos" role="tabpanel" id="panel-documentos"
+         aria-labelledby="pestana-documentos" tabindex="0">
+    <h2 class="admin__titulo-seccion">Documentos del expediente</h2>
 
     @if (Model.EstadoActual == "FICHA_GENERADA" && Model.MatriculaId is int fichaMatriculaId && puedeMatricula)
     {
@@ -106,11 +270,44 @@
             Confirme sólo cuando la ficha esté firmada y revisada según el procedimiento oficial.
         </p>
     }
-</section>
-
-<section class="admin__tarjeta">
-    <h2 class="admin__titulo-seccion">Documentos del expediente</h2>
-
+    @if (Model.PuedeAnular && Model.MatriculaId is int anulableId && puedeMatricula)
+    {
+        <form method="post" asp-action="Anular" asp-route-id="@anulableId"
+              data-ux-envio="Anulando la matrícula…">
+            <div class="acceso__campo">
+                <label class="acceso__etiqueta" for="motivo-anulacion">Motivo de la anulación</label>
+                <textarea class="acceso__input" id="motivo-anulacion" name="motivo" rows="2" maxlength="500"
+                          placeholder="Ej: matrícula duplicada, retiro del estudiante"></textarea>
+            </div>
+            <button type="submit" class="admin__boton"
+                    data-ux-confirmar="¿Anular esta matrícula? La anulación exige motivo y queda registrada.">
+                Anular matrícula
+            </button>
+        </form>
+        <p class="admin__ayuda">
+            La anulación libera el año: después puede iniciar una matrícula nueva. La confirmada no se anula por esta vía.
+        </p>
+    }
+    @if (Model.ValidadaEn is DateTimeOffset validada)
+    {
+        <p class="admin__ayuda">
+            Validada por Dirección@(Model.ValidadaPor is string validador ? $" ({validador})" : "")
+            el @validada.ToLocalTime().ToString("dd-MM-yyyy HH:mm").
+        </p>
+    }
+    else if (Model.PuedeValidar && Model.MatriculaId is int validableId)
+    {
+        <form method="post" asp-action="Validar" asp-route-id="@validableId"
+              data-ux-envio="Validando la matrícula…">
+            <button type="submit" class="admin__boton"
+                    data-ux-confirmar="¿Validar esta matrícula? Queda registrada con su nombre y la fecha actual.">
+                Validar matrícula
+            </button>
+        </form>
+        <p class="admin__ayuda">
+            La validación es el acto institucional de Dirección, distinto de confirmar. Solo sobre matrícula firmada o confirmada.
+        </p>
+    }
     @if (!Model.PuedeVerDocumentos)
     {
         <p class="admin__ayuda">Su rol no incluye la consulta de los documentos del expediente.</p>
@@ -129,7 +326,7 @@
         else
         {
             <div class="tabla-envoltura" tabindex="0">
-                <table class="admin__tabla">
+                <table class="admin__tabla expediente__tabla">
                     <caption class="sr-only">Documentos requeridos para la matrícula del año, su estado y archivo.</caption>
                     <thead>
                         <tr>
@@ -143,16 +340,18 @@
                         @foreach (var documento in Model.Documentos)
                         {
                             <tr>
-                                <td>@documento.Etiqueta</td>
-                                <td>
+                                <td data-etiqueta="Documento"><strong>@documento.Etiqueta</strong></td>
+                                <td data-etiqueta="Estado">
+                                    <span class="expediente__estado @(documento.Estado == "RECIBIDO" ? "expediente__estado--recibido" : documento.Estado == "NO_APLICA" ? "expediente__estado--no-aplica" : "expediente__estado--pendiente")">
                                     @(documento.Estado switch
                                     {
                                         "RECIBIDO" => "Recibido",
                                         "NO_APLICA" => "No aplica",
                                         _ => "Pendiente",
                                     })
+                                    </span>
                                 </td>
-                                <td>
+                                <td data-etiqueta="Archivo">
                                     @if (documento.DocumentoId is int archivoId)
                                     {
                                         <a asp-action="DescargarDocumento" asp-route-id="@Model.Id"
@@ -164,10 +363,10 @@
                                     }
                                     else
                                     {
-                                        <span class="admin__ayuda">—</span>
+                                        <span class="admin__ayuda">Sin archivo adjunto</span>
                                     }
                                 </td>
-                                <td>
+                                <td data-etiqueta="Acciones">
                                     @if (Model.PuedeSubirDocumentos)
                                     {
                                         <div class="admin__acciones">
@@ -204,6 +403,7 @@
         @if (Model.PuedeSubirDocumentos && Model.MatriculaId is int matriculaFirmada
              && Model.EstadoActual is "FICHA_GENERADA" or "FIRMADA")
         {
+            <div class="expediente__escaneo">
             <h3 class="admin__titulo-seccion">Escaneo de la ficha firmada</h3>
             <p class="admin__ayuda">
                 Adjunte el PDF o la foto de la ficha firmada por el apoderado. Queda asociada a la matrícula y
@@ -231,11 +431,13 @@
                 </div>
                 <button type="submit" class="admin__boton">Subir ficha firmada</button>
             </form>
+            </div>
         }
     }
 </section>
 
-<div class="perfil__grid">
+<div class="perfil__grid" data-ux-grupo="general" role="tabpanel" id="panel-general-datos"
+     aria-labelledby="pestana-general" tabindex="0">
     <section class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Datos personales</h2>
 
@@ -291,7 +493,8 @@
     </section>
 </div>
 
-<section class="admin__tarjeta">
+<section class="admin__tarjeta" data-ux-grupo="general" role="tabpanel" id="panel-general-apoderados"
+         aria-labelledby="pestana-general" tabindex="0">
     <h2 class="admin__titulo-seccion">Apoderados</h2>
 
     @if (!Model.PuedeVerFamilia)
@@ -337,9 +540,38 @@
             </table>
         </div>
     }
+    @if (Model.PuedeVerFamilia && Model.ApoderadosAnteriores.Count > 0)
+    {
+        <h3 class="admin__titulo-seccion">Apoderados anteriores</h3>
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Vínculos familiares ya cerrados, con su fecha de término.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">RUN</th>
+                        <th scope="col">Vínculo</th>
+                        <th scope="col">Vigente hasta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var apoderado in Model.ApoderadosAnteriores)
+                    {
+                        <tr>
+                            <td>@apoderado.Nombre</td>
+                            <td>@apoderado.Rut</td>
+                            <td>@apoderado.Vinculo</td>
+                            <td>@(apoderado.Hasta?.ToString("dd-MM-yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </section>
 
-<div class="perfil__grid">
+<div class="perfil__grid" data-ux-grupo="general" role="tabpanel" id="panel-general-contactos"
+     aria-labelledby="pestana-general" tabindex="0">
     <section class="admin__tarjeta">
         <h2 class="admin__titulo-seccion">Contactos de emergencia</h2>
 
@@ -417,7 +649,8 @@
     </section>
 </div>
 
-<section class="admin__tarjeta">
+<section class="admin__tarjeta" data-ux-grupo="salud" role="tabpanel" id="panel-salud"
+         aria-labelledby="pestana-salud" tabindex="0">
     <h2 class="admin__titulo-seccion">Salud y restricciones</h2>
 
     @if (!Model.PuedeVerSalud && !Model.PuedeVerFamilia)
@@ -434,6 +667,20 @@
     <div class="perfil__dato">
         <span>Necesidades de atención</span>
         <strong>@(Model.NecesidadesAtencion ?? "—")</strong>
+    </div>
+    <div class="perfil__dato">
+        <span>Alergias</span>
+        <strong>@(Model.Alergias ?? "Sin alergias declaradas")</strong>
+    </div>
+    <div class="perfil__dato">
+        <span>Contacto ante urgencia sanitaria</span>
+        <strong>
+            @(Model.ContactoSanitarioNombre ?? "—")
+            @if (!string.IsNullOrWhiteSpace(Model.ContactoSanitarioTelefono))
+            {
+                <span> · @Model.ContactoSanitarioTelefono</span>
+            }
+        </strong>
     </div>
     }
 
@@ -476,3 +723,36 @@
         </div>
     }
 </section>
+
+<section class="admin__tarjeta" data-ux-grupo="pie" role="tabpanel" id="panel-pie"
+         aria-labelledby="pestana-pie" tabindex="0">
+    <h2 class="admin__titulo-seccion">PIE y apoyos</h2>
+
+    @if (Model.PuedeVerPie)
+    {
+        <div class="perfil__dato">
+            <span>Participa del PIE</span>
+            <strong>
+                @(Model.PieParticipa switch
+                {
+                    "SI" => "Sí",
+                    "NO" => "No",
+                    _ => "Pendiente",
+                })
+            </strong>
+        </div>
+        <div class="perfil__dato">
+            <span>Cuenta con diagnóstico</span>
+            <strong>@(Model.PieDiagnostico is bool tiene ? (tiene ? "Sí" : "No") : "—")</strong>
+        </div>
+        <div class="perfil__dato">
+            <span>Apoyos informados</span>
+            <strong>@(Model.PieApoyos ?? "—")</strong>
+        </div>
+    }
+    else
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de los apoyos del PIE.</p>
+    }
+</section>
+</div>

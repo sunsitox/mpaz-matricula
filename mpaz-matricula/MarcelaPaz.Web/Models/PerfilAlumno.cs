@@ -37,6 +37,9 @@ public class PerfilAlumno
 
     public List<ApoderadoPerfil> Apoderados { get; set; } = new();
 
+    /// <summary>Vínculos familiares ya cerrados, con la fecha en que terminaron (MAT-14).</summary>
+    public List<ApoderadoPerfil> ApoderadosAnteriores { get; set; } = new();
+
     public List<ContactoPerfil> Contactos { get; set; } = new();
 
     public List<RetiroPerfil> Retiros { get; set; } = new();
@@ -57,11 +60,46 @@ public class PerfilAlumno
 
     public int? MatriculaId { get; set; }
 
+    /// <summary>Última modificación del expediente y funcionario responsable.
+    /// Viene del trigger de auditoría; sin historial muestra updated_at y
+    /// quien creó la matrícula.</summary>
+    public DateTimeOffset? ActualizadaEn { get; set; }
+
+    public string? ActualizadaPor { get; set; }
+
     /// <summary>La matrícula tiene ficha generada y puede confirmarse (MAT-04).</summary>
     public bool PuedeConfirmar { get; set; }
 
-    /// <summary>Autorizaciones vigentes, ya formateadas para mostrar.</summary>
-    public List<string> Autorizaciones { get; set; } = new();
+    /// <summary>La matrícula está en un estado anulable (BORRADOR, FICHA_GENERADA o FIRMADA).</summary>
+    public bool PuedeAnular { get; set; }
+
+    /// <summary>La sesión puede validar institucionalmente (Dirección) y la
+    /// matrícula está formalizada sin validar.</summary>
+    public bool PuedeValidar { get; set; }
+
+    /// <summary>Fecha y responsable de la validación institucional (MAT-12).</summary>
+    public DateTimeOffset? ValidadaEn { get; set; }
+
+    public string? ValidadaPor { get; set; }
+
+    /// <summary>Autorizaciones del apoderado con su estado e historial (MAT-04).</summary>
+    public List<AutorizacionPerfil> Autorizaciones { get; set; } = new();
+
+    /// <summary>Versiones de la ficha de la matrícula consultada (MAT-14).</summary>
+    public List<VersionPerfil> Versiones { get; set; } = new();
+
+    /// <summary>PIE y apoyos declarados (MAT-03).</summary>
+    public string? PieParticipa { get; set; }
+
+    public bool? PieDiagnostico { get; set; }
+
+    public string? PieApoyos { get; set; }
+
+    public string? Alergias { get; set; }
+
+    public string? ContactoSanitarioNombre { get; set; }
+
+    public string? ContactoSanitarioTelefono { get; set; }
 
     /// <summary>Requisitos documentales de la matrícula del año (MAT-06/07/09).</summary>
     public List<DocumentoPerfil> Documentos { get; set; } = new();
@@ -75,7 +113,17 @@ public class PerfilAlumno
 
     public bool PuedeVerSalud { get; set; }
 
+    public bool PuedeVerPie { get; set; }
+
     public bool PuedeVerAutorizaciones { get; set; }
+
+    public bool PuedeEditarAutorizaciones { get; set; }
+
+    /// <summary>Hay una ficha vigente y la sesión puede generar versiones (MAT-18).</summary>
+    public bool PuedeCorregirFicha { get; set; }
+
+    /// <summary>El año consultado no tiene matrícula y la sesión puede crearla (MAT-01).</summary>
+    public bool PuedeRenovarAnio { get; set; }
 
     public bool PuedeVerDocumentos { get; set; }
 
@@ -112,6 +160,52 @@ public class PerfilAlumno
         public string? Correo { get; set; }
 
         public bool TieneRestriccion { get; set; }
+
+        /// <summary>Fin del vínculo, cuando ya no está vigente.</summary>
+        public DateOnly? Hasta { get; set; }
+    }
+
+    public class AutorizacionPerfil
+    {
+        public int Id { get; set; }
+
+        public string Tipo { get; set; } = string.Empty;
+
+        public string Etiqueta { get; set; } = string.Empty;
+
+        /// <summary>PENDIENTE, OTORGADA, RECHAZADA, REVOCADA, VENCIDA o REEMPLAZADA.</summary>
+        public string Estado { get; set; } = "PENDIENTE";
+
+        public string EstadoEtiqueta { get; set; } = "Pendiente";
+
+        public DateOnly? FechaFirma { get; set; }
+
+        public DateOnly? VigenteDesde { get; set; }
+
+        public DateOnly? VigenteHasta { get; set; }
+
+        public DateTimeOffset? RevocadaEn { get; set; }
+
+        public string? MotivoRevocacion { get; set; }
+
+        public List<string> Alcances { get; set; } = new();
+    }
+
+    public class VersionPerfil
+    {
+        public int Id { get; set; }
+
+        public short Numero { get; set; }
+
+        public string Folio { get; set; } = string.Empty;
+
+        public string Estado { get; set; } = string.Empty;
+
+        public DateTimeOffset GeneradaEn { get; set; }
+
+        public string? GeneradaPor { get; set; }
+
+        public string? MotivoCorreccion { get; set; }
     }
 
     public class ContactoPerfil
