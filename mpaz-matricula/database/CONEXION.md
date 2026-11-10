@@ -87,26 +87,20 @@ ejecutor a una base vacía ya creada:
 3. Alternativa: si las tablas de Identity se aplican con el bundle de EF Core,
    usar `--sin-identidad` y ejecutar `efbundle` después del DDL.
 
-## Base que ya existe (pasarla al esquema dedicado)
+## Base que ya existe
 
-Una base creada antes del esquema dedicado tiene las tablas institucionales en
-`public` y las de Identity en `auth`. Para moverla sin perder datos:
+Las bases con el diseño anterior (`public`/`auth`, una por sistema) ya se
+migraron y eliminaron. La ruta de migración (`90-migrar-bases-existentes.sql`)
+se retiró del repositorio; su historial queda en git. Para mover datos basta
+un volcado y carga entre esquemas:
 
 ```bash
 # 1. Respaldo
-pg_dump -Fc -d <base> -f respaldo-antes-esquema.dump
+pg_dump -Fc -d <base-origen> -f respaldo.dump
 
-# 2. Mover todos los objetos a mpaz_matricula (idempotente)
-psql -U <propietario> -d <base> -f database/modulos/matricula/mantenimiento/90-migrar-bases-existentes.sql
-
-# 3. Registrar la migración en EF (no vuelve a mover nada)
-dotnet ef database update --project mpaz-matricula/MarcelaPaz.Infrastructure \
-  --startup-project mpaz-matricula/MarcelaPaz.Web
+# 2. Cargar en la base destino (mismo esquema mpaz_matricula)
+pg_restore -d <base-destino> respaldo.dump
 ```
-
-El script mueve tablas, secuencias, vistas y funciones; conserva los datos, los
-índices, los triggers y el historial de migraciones, y elimina el esquema `auth`
-cuando queda vacío. También ajusta el `search_path` del rol `mpaz_app` si existe.
 
 ## Servidor
 

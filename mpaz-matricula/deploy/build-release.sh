@@ -27,14 +27,17 @@ rm -f \
   "$STAGE/app/appsettings.Development.json" \
   "$STAGE/app/"*.pdb
 
-mkdir -p "$STAGE/database/comun/pasos" \
-  "$STAGE/database/modulos/matricula/instalacion" \
-  "$STAGE/database/modulos/matricula/pasos" \
-  "$STAGE/database/modulos/matricula/mantenimiento"
+mkdir -p "$STAGE/database/comun/pasos"
 cp "$PROJECT/database/comun/pasos/"*.sql "$STAGE/database/comun/pasos/"
-cp "$PROJECT/database/modulos/matricula/instalacion/"*.sql "$STAGE/database/modulos/matricula/instalacion/"
-cp "$PROJECT/database/modulos/matricula/pasos/"*.sql "$STAGE/database/modulos/matricula/pasos/"
-cp "$PROJECT/database/modulos/matricula/mantenimiento/"*.sql "$STAGE/database/modulos/matricula/mantenimiento/"
+for m in "$PROJECT"/database/modulos/*/; do
+  nombre=$(basename "$m")
+  [[ "$nombre" == "_plantilla-modulo" ]] && continue
+  for sub in instalacion pasos; do
+    [[ -d "$m/$sub" ]] || continue
+    mkdir -p "$STAGE/database/modulos/$nombre/$sub"
+    cp "$m/$sub/"*.sql "$STAGE/database/modulos/$nombre/$sub/"
+  done
+done
 cp "$PROJECT/database/aplicar.sh" "$STAGE/database/"
 cp "$PROJECT/database/DESPLIEGUE.md" "$STAGE/database/"
 cp "$PROJECT/deploy/mpaz-matriculas.service" "$STAGE/"

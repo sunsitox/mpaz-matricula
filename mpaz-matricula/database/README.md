@@ -5,7 +5,9 @@ propia carpeta en `modulos/` con la misma estructura interna.
 
 ```text
 database/
-  aplicar.sh            Ejecutor: aplica comun/ + el módulo indicado.
+  aplicar.sh            Ejecutor: aplica comun/ + los módulos indicados
+                        (--modulo repetible, --todos para todos, --neon
+                        para Neon). Identity (02) corre al final.
   CONEXION.md           Cómo se conecta el portal.
   DESPLIEGUE.md         Cómo aplicar cada recorrido.
   comun/                Rol de aplicación e Identity (compartidos).
@@ -13,9 +15,9 @@ database/
   modulos/
     matricula/          Esquema de matrícula (implementado).
       instalacion/      01-estructura, 02-PL, 03-datos. Base nueva, en orden.
-      pasos/            01, 03, 04, 05, 06. Fuente de mantenimiento.
-      mantenimiento/    90-migrar-bases-existentes.sql. Sólo bases antiguas.
+      pasos/            01, 03, 04, 05, 06, 07. Fuente de mantenimiento.
       datos-prueba/     Sólo desarrollo: mocks y restablecer-a-usuarios.sql.
+    asistencia/         Esquema de asistencia (semilla DDL, paso 10).
     _plantilla-modulo/  Esqueleto para copiar cuando se defina un módulo nuevo.
 ```
 
@@ -29,4 +31,4 @@ Reglas:
 - Los archivos de `instalacion/` son SQL PostgreSQL sin variables ni
   metacomandos de `psql`.
 - Los pasos de cada módulo se numeran desde `10` para no chocar con los de
-  `comun/` (`00`, `02`). Matrícula es la excepción histórica (`01`–`06`).
+  `comun/` (`00`, `02`). Matrícula es la excepción histórica (`01`–`07`).

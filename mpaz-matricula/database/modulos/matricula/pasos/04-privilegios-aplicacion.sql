@@ -1,9 +1,9 @@
 -- =====================================================================
 -- MPAZ Web · Privilegios del rol de aplicación en producción
 --
--- Todos los objetos del portal viven en el esquema matricula
--- (ver 90-migrar-bases-existentes.sql). El esquema public sólo aloja la extensión
--- pg_trgm, compartida con otras bases del mismo servidor.
+-- Todos los objetos del portal viven en el esquema mpaz_matricula.
+-- El esquema public sólo aloja la extensión pg_trgm,
+-- compartida con otras bases del mismo servidor.
 --
 -- Prerrequisitos:
 --   1. El rol mpaz_app ya existe.

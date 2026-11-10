@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 # =====================================================================
-# MPAZ Web · Aplicación ordenada del esquema
+# MPAZ Web · Aplicación ordenada del esquema (una base, un esquema por módulo)
 #
 # Uso:
-#   ./aplicar.sh <base> [--modulo NOMBRE] [opciones]
+#   ./aplicar.sh <base> [--modulo NOMBRE]... [--todos] [opciones]
 #
-# Aplica primero los pasos comunes (comun/pasos) y después los pasos del
-# módulo indicado (modulos/<nombre>/pasos), en orden numérico.
+# Aplica primero los pasos comunes (comun/pasos), después los pasos de cada
+# módulo indicado (modulos/<nombre>/pasos), en orden numérico, y al final
+# las tablas de Identity (comun/02-identidad.sql).
+#
+# El orden importa: 02 corre ÚLTIMO porque otros pasos pre-sellan el
+# historial de migraciones de EF y, si 02 va antes, no crea nada.
 #
 # Opciones:
-#   --modulo NOMBRE    módulo a aplicar                 (por defecto matricula)
+#   --modulo NOMBRE    módulo a aplicar (repetible; por defecto matricula)
+#   --todos            aplica todos los módulos con pasos/ (sin plantilla)
 #   --host HOST        servidor PostgreSQL        (por defecto localhost)
 #   --puerto PUERTO    puerto                     (por defecto 5432)
 #   --usuario USUARIO  usuario administrador      (por defecto postgres)
@@ -18,14 +23,16 @@
 #   --sin-privilegios  no aplica los privilegios del rol (04)
 #   --sin-identidad    omite las tablas de Identity (comun/02), por ejemplo si
 #                      se aplican con el bundle de EF Core
+#   --neon             adapta a Neon: omite el rol mpaz_app (00 y 04, Neon no
+#                      permite CREATE ROLE por SQL) y deja el search_path por
+#                      defecto en la base en vez del rol
 #   --datos ARCHIVO    carga datos de prueba después del esquema
-#   --migrar           base que YA existe: sólo corre el mantenimiento 90
-#                      del módulo
 #
 # Ejemplos:
 #   ./aplicar.sh mpaz_matricula --clave-app 'secreto' --con-permisos
+#   ./aplicar.sh mpaz --todos --neon            # base única con todo
 #   ./aplicar.sh mpaz_verify --modulo matricula --clave-app 'secreto'
-#   ./aplicar.sh mpaz_matricula --migrar
+#   ./aplicar.sh mpaz --modulo asistencia --modulo notas --neon
 #
 # La contraseña del administrador se toma de PGPASSWORD o de ~/.pgpass.
 # =====================================================================
@@ -35,7 +42,8 @@ AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PSQL="${PSQL:-psql}"
 
 BASE=""
-MODULO="matricula"
+MODULOS=()
+TODOS=0
 HOST="localhost"
 PUERTO="5432"
 USUARIO="postgres"
@@ -43,12 +51,13 @@ CLAVE_APP=""
 PERMISOS=0
 PRIVILEGIOS=1
 IDENTIDAD=1
+NEON=0
 DATOS=""
-MIGRAR=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --modulo)          MODULO="$2"; shift 2 ;;
+        --modulo)          MODULOS+=("$2"); shift 2 ;;
+        --todos)           TODOS=1; shift ;;
         --host)            HOST="$2"; shift 2 ;;
         --puerto)          PUERTO="$2"; shift 2 ;;
         --usuario)         USUARIO="$2"; shift 2 ;;
@@ -56,8 +65,8 @@ while [[ $# -gt 0 ]]; do
         --con-permisos)    PERMISOS=1; shift ;;
         --sin-privilegios) PRIVILEGIOS=0; shift ;;
         --sin-identidad)   IDENTIDAD=0; shift ;;
+        --neon)            NEON=1; shift ;;
         --datos)           DATOS="$2"; shift 2 ;;
-        --migrar)          MIGRAR=1; shift ;;
         -h|--help)
             sed -n '2,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
             exit 0 ;;
@@ -74,12 +83,26 @@ if [[ -z "$BASE" ]]; then
     exit 2
 fi
 
-R_MODULO="$AQUI/modulos/$MODULO"
-
-if [[ ! -d "$R_MODULO/pasos" ]]; then
-    echo "No existe el módulo '$MODULO' en modulos/." >&2
-    exit 2
+if [[ "$TODOS" -eq 1 ]]; then
+    MODULOS=()
+    for d in "$AQUI"/modulos/*/; do
+        nombre=$(basename "$d")
+        [[ "$nombre" == "_plantilla-modulo" ]] && continue
+        [[ -d "$d/pasos" ]] || continue
+        MODULOS+=("$nombre")
+    done
 fi
+
+if [[ "${#MODULOS[@]}" -eq 0 ]]; then
+    MODULOS=(matricula)
+fi
+
+for m in "${MODULOS[@]}"; do
+    if [[ ! -d "$AQUI/modulos/$m/pasos" ]]; then
+        echo "No existe el módulo '$m' en modulos/." >&2
+        exit 2
+    fi
+done
 
 if ! command -v "$PSQL" >/dev/null 2>&1; then
     echo "No se encontró psql. Instale el cliente de PostgreSQL o defina PSQL." >&2
@@ -94,45 +117,41 @@ ejecutar() {
         -v ON_ERROR_STOP=1 -v base="$BASE" "$@" -f "$archivo" -q
 }
 
-echo "Base: $BASE ($HOST:$PUERTO, usuario $USUARIO) · módulo: $MODULO"
+echo "Base: $BASE ($HOST:$PUERTO, usuario $USUARIO) · módulos: ${MODULOS[*]}"
 
-if [[ "$MIGRAR" -eq 1 ]]; then
-    mantenimiento=$(ls "$R_MODULO"/mantenimiento/90-*.sql 2>/dev/null | head -1 || true)
-    if [[ -z "$mantenimiento" ]]; then
-        echo "El módulo '$MODULO' no tiene script de migración 90." >&2
-        exit 2
+if [[ "$NEON" -eq 0 ]]; then
+    if [[ -z "$CLAVE_APP" ]]; then
+        echo "Aviso: sin --clave-app el rol mpaz_app se crea sin contraseña." >&2
     fi
-    ejecutar "$mantenimiento"
-    echo "Base existente migrada (módulo $MODULO)."
-    exit 0
+    ejecutar "$AQUI/comun/pasos/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
+else
+    echo "Modo Neon: se omite el rol mpaz_app (00 y 04)."
+    "$PSQL" -h "$HOST" -p "$PUERTO" -U "$USUARIO" -d "$BASE" \
+        -v ON_ERROR_STOP=1 -q \
+        -c "ALTER DATABASE \"$BASE\" SET search_path = mpaz_matricula, public;"
 fi
 
-if [[ -z "$CLAVE_APP" ]]; then
-    echo "Aviso: sin --clave-app el rol mpaz_app se crea sin contraseña." >&2
-fi
+for m in "${MODULOS[@]}"; do
+    echo "Módulo: $m"
+    for paso in "$AQUI/modulos/$m"/pasos/*.sql; do
+        nombre=$(basename "$paso")
+        # 03 requiere aprobación explícita.
+        case "$nombre" in
+            03-*) [[ "$PERMISOS" -eq 1 ]] || continue ;;
+            *privilegio*) [[ "$PRIVILEGIOS" -eq 1 && "$NEON" -eq 0 ]] || continue ;;
+        esac
+        ejecutar "$paso"
+    done
+done
 
-ejecutar "$AQUI/comun/pasos/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
+# Identity al final: otros pasos pre-sellan el historial de EF y, si este
+# paso va antes, detecta el sello y no crea las tablas.
 if [[ "$IDENTIDAD" -eq 1 ]]; then
     ejecutar "$AQUI/comun/pasos/02-identidad.sql"
 fi
-
-for paso in "$R_MODULO"/pasos/*.sql; do
-    nombre=$(basename "$paso")
-    # 00 y 02 viven en comun/; 03 requiere aprobación explícita.
-    case "$nombre" in
-        03-*) [[ "$PERMISOS" -eq 1 ]] || continue ;;
-        *privilegio*) [[ "$PRIVILEGIOS" -eq 1 ]] || continue ;;
-    esac
-    # La validación de matrícula resuelve nombres sin calificar.
-    if [[ "$nombre" == "06-"* ]]; then
-        ejecutar "$paso" -c 'SET search_path TO mpaz_matricula, public'
-    else
-        ejecutar "$paso"
-    fi
-done
 
 if [[ -n "$DATOS" ]]; then
     ejecutar "$DATOS"
 fi
 
-echo "Esquema aplicado en $BASE (módulo $MODULO)."
+echo "Esquema aplicado en $BASE (módulos: ${MODULOS[*]})."

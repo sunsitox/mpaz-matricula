@@ -6,7 +6,7 @@ Cada módulo tiene su carpeta con la misma estructura:
 <modulo>/
   instalacion/    Recorrido consolidado para bases nuevas (en orden).
   pasos/          Fuente de mantenimiento, numerada desde 10.
-  mantenimiento/  Migraciones de bases antiguas (90+).
+  mantenimiento/  (opcional) Migraciones de bases antiguas (90+).
   datos-prueba/   Sólo desarrollo. Nunca en producción.
 ```
 
