@@ -294,6 +294,31 @@ TO mpaz_app;
 -- Que el rol resuelva los nombres sin calificar de triggers y vistas.
 ALTER ROLE mpaz_app SET search_path = mpaz_matricula, public;
 
+-- Las funciones usan tablas sin calificar: fijarles el search_path las hace
+-- independientes de la sesión que dispare el trigger (paso 07).
+ALTER FUNCTION mpaz_matricula.normalizar_rut(TEXT)
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.rut_valido(TEXT)
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_actualizar_version()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_solo_insercion()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_bloquear_delete()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.siguiente_folio(SMALLINT)
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_ficha_asignar_folio()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_ficha_proteger()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_validar_administracion()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_auditar_cambio()
+    SET search_path = mpaz_matricula, public;
+ALTER FUNCTION mpaz_matricula.fn_auditar_funcionario_rol()
+    SET search_path = mpaz_matricula, public;
+
 
 
 

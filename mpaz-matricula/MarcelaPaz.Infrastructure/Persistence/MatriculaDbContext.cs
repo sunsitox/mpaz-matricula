@@ -24,6 +24,15 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
     {
     }
 
+    /// <summary>
+    /// Permite un contexto derivado con otra cadena de conexión (p. ej. el
+    /// auth central) que reutiliza exactamente este mismo modelo.
+    /// </summary>
+    protected MatriculaDbContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
 
     public DbSet<Rol> Roles => Set<Rol>();

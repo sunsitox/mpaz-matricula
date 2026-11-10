@@ -59,11 +59,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
 builder.Services.AddControllersWithViews(opciones =>
     opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
-// Base de datos: todo el portal vive en el esquema dedicado "mpaz_matricula"
-// (DDL institucional, Identity y __EFMigrationsHistory), para que la base pueda
-// convivir con otras sin mezclar tablas. La conexión, el proveedor de PostgreSQL
-// y el DbContext se configuran en Infrastructure; esta capa sólo entrega la cadena.
-builder.Services.AddPersistencia(cadenaConexion);
+// Base de datos: el dominio vive en el esquema dedicado "mpaz_matricula" y las
+// cuentas (Identity) pueden vivir en una base aparte —el auth central— que se
+// entrega en la cadena "Auth". Sin ella, todo convive en la misma conexión.
+// El proveedor de PostgreSQL y los DbContext se configuran en Infrastructure;
+// esta capa sólo entrega las cadenas.
+builder.Services.AddPersistencia(cadenaConexion, builder.Configuration.GetConnectionString("Auth"));
 
 // Documentos imprimibles (PDF) generados desde el formulario.
 builder.Services.AddDocumentos();
@@ -95,7 +96,7 @@ builder.Services
         opciones.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddSignInManager()
-    .AddEntityFrameworkStores<MatriculaDbContext>()
+    .AddEntityFrameworkStores<CuentasDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();

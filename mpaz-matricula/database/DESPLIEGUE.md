@@ -13,6 +13,7 @@ indica el paso; no hay que decidir cuál va primero.
 | 04 | `modulos/matricula/pasos/04-privilegios-aplicacion.sql` | Otorga los privilegios mínimos del rol `mpaz_app`. | Sí |
 | 05 | `modulos/matricula/pasos/05-anio-escolar.sql` | Crea `anio_escolar` (un solo año activo para matrícula) y activa el año más reciente con matrículas. | Sí |
 | 06 | `modulos/matricula/pasos/06-validacion-matricula.sql` | Agrega fecha y responsable de validación institucional. | Sí |
+| 07 | `modulos/matricula/pasos/07-search-path-funciones.sql` | Fija el `search_path` dentro de cada función, para que los triggers no dependan de la sesión que los dispara. Re-ejecutable. | Sí |
 
 `modulos/matricula/mantenimiento/90-migrar-bases-existentes.sql` pasa una base
 que ya existe a `mpaz_matricula` (mueve desde `public`/`auth`): sólo bases
@@ -116,7 +117,7 @@ central de autenticación:
 | Base | Contenido | Cómo se creó |
 |---|---|---|
 | `mpaz_asistencia` | Esquema `mpaz_asistencia`: 11 tablas + 9 enums + trigger `ck_alumno_en_curso` (movidos desde `public`) | Equipo de asistencia |
-| `mpaz_matricula` | Esquema `mpaz_matricula` sin Identity (31 tablas: 01+05+06) | `CREATE DATABASE` + pasos 01, 05, 06 |
+| `mpaz_matricula` | Esquema `mpaz_matricula` sin Identity (01, 05, 06, 07) + datos del desarrollo (889 filas, año 2027 activo) + 03 | Migración con triggers de usuario pausados, historial creado y 03 |
 | `mpaz_auth` | Central de usuarios y sesiones: 7 tablas `AspNet*` + historial EF en esquema `mpaz_matricula` | `CREATE DATABASE` + `comun/pasos/02-identidad.sql` |
 
 Adaptaciones respecto al recorrido local (Neon no permite `CREATE ROLE` por
@@ -136,6 +137,8 @@ SQL y el dueño `neondb_owner` ya tiene todos los derechos sobre sus bases):
 Las aplicaciones se conectan con el rol `neondb_owner` usando dos cadenas:
 `Default` (su base) y `Auth` (`mpaz_auth`). Las claves van en user-secrets en
 desarrollo (`ConnectionStrings:Default`, `ConnectionStrings:Auth`) y en
-variables de entorno en el servidor; nunca en archivos versionados. Conectar
-el segundo `DbContext` a `mpaz_auth` y compartir las claves de DataProtection
-entre sistemas es el paso que falta para el login único.
+variables de entorno en el servidor; nunca en archivos versionados. El portal
+ya lee ambas: `CuentasDbContext` (derivado del mismo modelo) atiende Identity
+contra `mpaz_auth`, y sin cadena `Auth` todo convive en una sola conexión
+como antes. Compartir las claves de DataProtection entre sistemas es lo que
+falta para el login único (misma cookie válida en todos).

@@ -17,11 +17,17 @@ public static class DependencyInjection
     /// </summary>
     public const string CadenaPorDefecto = "Host=localhost;Port=5432;Database=mpaz;Username=mpaz_app;Search Path=mpaz_matricula,public";
 
-    public static IServiceCollection AddPersistencia(this IServiceCollection servicios, string? cadena)
+    /// <param name="cadena">Base del dominio (tablas institucionales).</param>
+    /// <param name="cadenaCuentas">Base de las cuentas (Identity). Si se omite,
+    /// las cuentas viven junto al dominio con la misma conexión.</param>
+    public static IServiceCollection AddPersistencia(
+        this IServiceCollection servicios, string? cadena, string? cadenaCuentas = null)
     {
         var conexion = string.IsNullOrWhiteSpace(cadena) ? CadenaPorDefecto : cadena;
+        var conexionCuentas = string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas;
 
         servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(conexion));
+        servicios.AddDbContext<CuentasDbContext>(opciones => opciones.UseNpgsql(conexionCuentas));
 
         return servicios;
     }
