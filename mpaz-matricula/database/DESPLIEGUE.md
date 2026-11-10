@@ -137,7 +137,10 @@ SQL y el dueño `neondb_owner` ya tiene todos los derechos sobre sus bases):
 Las aplicaciones se conectan con el rol `neondb_owner` usando dos cadenas:
 `Default` (su base) y `Auth` (`mpaz_auth`). Las claves van en user-secrets en
 desarrollo (`ConnectionStrings:Default`, `ConnectionStrings:Auth`) y en
-variables de entorno en el servidor; nunca en archivos versionados. El portal
+variables de entorno en el servidor; nunca en archivos versionados. Se aceptan
+en formato palabra-clave de Npgsql (`Host=...;Database=...`) o como URI tal
+como la entrega Neon (`postgresql://...`); `AddPersistencia` normaliza la URI
+sola, porque Npgsql no la entiende directo. El portal
 ya lee ambas: `CuentasDbContext` (derivado del mismo modelo) atiende Identity
 contra `mpaz_auth`, y sin cadena `Auth` todo convive en una sola conexión
 como antes. Compartir las claves de DataProtection entre sistemas es lo que

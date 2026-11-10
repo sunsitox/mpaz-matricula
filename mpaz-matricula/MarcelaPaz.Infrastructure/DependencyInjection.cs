@@ -23,13 +23,53 @@ public static class DependencyInjection
     public static IServiceCollection AddPersistencia(
         this IServiceCollection servicios, string? cadena, string? cadenaCuentas = null)
     {
-        var conexion = string.IsNullOrWhiteSpace(cadena) ? CadenaPorDefecto : cadena;
-        var conexionCuentas = string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas;
+        var conexion = NormalizarConexion(string.IsNullOrWhiteSpace(cadena) ? CadenaPorDefecto : cadena);
+        var conexionCuentas = NormalizarConexion(string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas);
 
         servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(conexion));
         servicios.AddDbContext<CuentasDbContext>(opciones => opciones.UseNpgsql(conexionCuentas));
 
         return servicios;
+    }
+
+    /// <summary>
+    /// Neon entrega las conexiones como URI (postgresql://usuario:clave@host/db?...),
+    /// pero Npgsql sólo entiende formato palabra-clave (Host=...;Database=...).
+    /// La URI se convierte aquí, así pegar la cadena tal como la da Neon funciona.
+    /// Las cadenas que ya vienen en formato palabra-clave pasan intactas.
+    /// </summary>
+    private static string NormalizarConexion(string conexion)
+    {
+        if (!Uri.TryCreate(conexion, UriKind.Absolute, out var uri)
+            || (uri.Scheme != "postgresql" && uri.Scheme != "postgres"))
+            return conexion;
+
+        var credenciales = uri.UserInfo.Split(':', 2);
+        var usuario = credenciales.Length > 0 ? Uri.UnescapeDataString(credenciales[0]) : string.Empty;
+        var clave = credenciales.Length > 1
+            ? Uri.UnescapeDataString(credenciales[1]).Replace("'", "''")
+            : string.Empty;
+
+        var parametros = uri.Query.TrimStart('?')
+            .Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Split('=', 2))
+            .Where(p => p.Length == 2)
+            .ToDictionary(p => p[0].ToLowerInvariant(), p => Uri.UnescapeDataString(p[1]));
+
+        var ssl = parametros.TryGetValue("sslmode", out var modo) ? modo : "require";
+        var partes = new List<string>
+        {
+            $"Host={uri.Host}",
+            $"Port={(uri.Port > 0 ? uri.Port : 5432)}",
+            $"Database={uri.AbsolutePath.Trim('/')}",
+            $"Username={usuario}",
+            $"Password='{clave}'",
+            $"Ssl Mode={ssl}",
+        };
+        if (parametros.TryGetValue("channel_binding", out var canal))
+            partes.Add($"Channel Binding={canal}");
+
+        return string.Join(';', partes);
     }
 
     /// <summary>Generación de documentos imprimibles (PDF).</summary>
