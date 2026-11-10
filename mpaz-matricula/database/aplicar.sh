@@ -3,22 +3,28 @@
 # MPAZ Web · Aplicación ordenada del esquema
 #
 # Uso:
-#   ./aplicar.sh <base> [opciones]
+#   ./aplicar.sh <base> [--modulo NOMBRE] [opciones]
+#
+# Aplica primero los pasos comunes (comun/pasos) y después los pasos del
+# módulo indicado (modulos/<nombre>/pasos), en orden numérico.
 #
 # Opciones:
-#   --host HOST          servidor PostgreSQL        (por defecto localhost)
-#   --puerto PUERTO      puerto                     (por defecto 5432)
-#   --usuario USUARIO    usuario administrador      (por defecto postgres)
-#   --clave-app CLAVE    contraseña de mpaz_app     (sólo si hay que crearlo)
-#   --con-permisos       aplica la matriz propuesta de permisos (03)
-#   --sin-privilegios    no aplica los privilegios del rol (04)
-#   --datos ARCHIVO      carga datos de prueba después del esquema
-#   --sin-identidad      omite las tablas de Identity (02), por ejemplo si
-#                        se aplican con el bundle de EF Core
-#   --migrar             base que YA existe: sólo la pasa a mpaz_matricula (90)
+#   --modulo NOMBRE    módulo a aplicar                 (por defecto matricula)
+#   --host HOST        servidor PostgreSQL        (por defecto localhost)
+#   --puerto PUERTO    puerto                     (por defecto 5432)
+#   --usuario USUARIO  usuario administrador      (por defecto postgres)
+#   --clave-app CLAVE  contraseña de mpaz_app     (sólo si hay que crearlo)
+#   --con-permisos     aplica la matriz propuesta de permisos (03)
+#   --sin-privilegios  no aplica los privilegios del rol (04)
+#   --sin-identidad    omite las tablas de Identity (comun/02), por ejemplo si
+#                      se aplican con el bundle de EF Core
+#   --datos ARCHIVO    carga datos de prueba después del esquema
+#   --migrar           base que YA existe: sólo corre el mantenimiento 90
+#                      del módulo
 #
 # Ejemplos:
 #   ./aplicar.sh mpaz_matricula --clave-app 'secreto' --con-permisos
+#   ./aplicar.sh mpaz_verify --modulo matricula --clave-app 'secreto'
 #   ./aplicar.sh mpaz_matricula --migrar
 #
 # La contraseña del administrador se toma de PGPASSWORD o de ~/.pgpass.
@@ -29,6 +35,7 @@ AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PSQL="${PSQL:-psql}"
 
 BASE=""
+MODULO="matricula"
 HOST="localhost"
 PUERTO="5432"
 USUARIO="postgres"
@@ -41,6 +48,7 @@ MIGRAR=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --modulo)          MODULO="$2"; shift 2 ;;
         --host)            HOST="$2"; shift 2 ;;
         --puerto)          PUERTO="$2"; shift 2 ;;
         --usuario)         USUARIO="$2"; shift 2 ;;
@@ -66,6 +74,13 @@ if [[ -z "$BASE" ]]; then
     exit 2
 fi
 
+R_MODULO="$AQUI/modulos/$MODULO"
+
+if [[ ! -d "$R_MODULO/pasos" ]]; then
+    echo "No existe el módulo '$MODULO' en modulos/." >&2
+    exit 2
+fi
+
 if ! command -v "$PSQL" >/dev/null 2>&1; then
     echo "No se encontró psql. Instale el cliente de PostgreSQL o defina PSQL." >&2
     exit 1
@@ -74,16 +89,21 @@ fi
 ejecutar() {
     local archivo="$1"
     shift
-    echo "→ $(basename "$archivo")"
+    echo "→ $(realpath --relative-to="$AQUI" "$archivo")"
     "$PSQL" -h "$HOST" -p "$PUERTO" -U "$USUARIO" -d "$BASE" \
         -v ON_ERROR_STOP=1 -v base="$BASE" "$@" -f "$archivo" -q
 }
 
-echo "Base: $BASE ($HOST:$PUERTO, usuario $USUARIO)"
+echo "Base: $BASE ($HOST:$PUERTO, usuario $USUARIO) · módulo: $MODULO"
 
 if [[ "$MIGRAR" -eq 1 ]]; then
-    ejecutar "$AQUI/mantenimiento/90-migrar-bases-existentes.sql"
-    echo "Base existente movida a mpaz_matricula."
+    mantenimiento=$(ls "$R_MODULO"/mantenimiento/90-*.sql 2>/dev/null | head -1 || true)
+    if [[ -z "$mantenimiento" ]]; then
+        echo "El módulo '$MODULO' no tiene script de migración 90." >&2
+        exit 2
+    fi
+    ejecutar "$mantenimiento"
+    echo "Base existente migrada (módulo $MODULO)."
     exit 0
 fi
 
@@ -91,22 +111,28 @@ if [[ -z "$CLAVE_APP" ]]; then
     echo "Aviso: sin --clave-app el rol mpaz_app se crea sin contraseña." >&2
 fi
 
-ejecutar "$AQUI/pasos/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
-ejecutar "$AQUI/pasos/01-ddl-institucional.sql"
+ejecutar "$AQUI/comun/pasos/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
 if [[ "$IDENTIDAD" -eq 1 ]]; then
-    ejecutar "$AQUI/pasos/02-identidad.sql"
+    ejecutar "$AQUI/comun/pasos/02-identidad.sql"
 fi
-if [[ "$PERMISOS" -eq 1 ]]; then
-    ejecutar "$AQUI/pasos/03-permisos-iniciales.sql"
-fi
-if [[ "$PRIVILEGIOS" -eq 1 ]]; then
-    ejecutar "$AQUI/pasos/04-privilegios-aplicacion.sql"
-fi
-# Año escolar configurable: debe correr después de 04 para quedar con privilegios.
-ejecutar "$AQUI/pasos/05-anio-escolar.sql"
-ejecutar "$AQUI/pasos/06-validacion-matricula.sql" -c 'SET search_path TO mpaz_matricula, public'
+
+for paso in "$R_MODULO"/pasos/*.sql; do
+    nombre=$(basename "$paso")
+    # 00 y 02 viven en comun/; 03 requiere aprobación explícita.
+    case "$nombre" in
+        03-*) [[ "$PERMISOS" -eq 1 ]] || continue ;;
+        *privilegio*) [[ "$PRIVILEGIOS" -eq 1 ]] || continue ;;
+    esac
+    # La validación de matrícula resuelve nombres sin calificar.
+    if [[ "$nombre" == "06-"* ]]; then
+        ejecutar "$paso" -c 'SET search_path TO mpaz_matricula, public'
+    else
+        ejecutar "$paso"
+    fi
+done
+
 if [[ -n "$DATOS" ]]; then
     ejecutar "$DATOS"
 fi
 
-echo "Esquema aplicado en $BASE."
+echo "Esquema aplicado en $BASE (módulo $MODULO)."

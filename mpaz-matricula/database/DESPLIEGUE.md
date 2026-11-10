@@ -1,25 +1,28 @@
 # Despliegue del esquema
 
-Los scripts de `pasos/` se aplican **en orden numérico** con `aplicar.sh`. El
-prefijo indica el paso; no hay que decidir cuál va primero.
+`aplicar.sh` aplica primero `comun/pasos/` y después los pasos del módulo
+indicado (`--modulo`, por defecto `matricula`), en orden numérico. El prefijo
+indica el paso; no hay que decidir cuál va primero.
 
-| Paso | Archivo en `pasos/` | Qué hace | Obligatorio |
+| Paso | Archivo | Qué hace | Obligatorio |
 |---|---|---|---|
-| 00 | `00-rol-aplicacion.sql` | Crea el rol `mpaz_app` y deja el `search_path` de la base en `mpaz_matricula, public`. | Sí |
-| 01 | `01-ddl-institucional.sql` | Crea el esquema `mpaz_matricula` con las 27 tablas, funciones, vistas y triggers del DDL. | Sí |
-| 02 | `02-identidad.sql` | Crea las 7 tablas de ASP.NET Identity y el historial de migraciones en `mpaz_matricula`. | Sí, salvo que se use el bundle de EF Core |
-| 03 | `03-permisos-iniciales.sql` | Carga la matriz propuesta de `rol_permiso`. | Sólo con aprobación del colegio |
-| 04 | `04-privilegios-aplicacion.sql` | Otorga los privilegios mínimos del rol `mpaz_app`. | Sí |
-| 05 | `05-anio-escolar.sql` | Crea `anio_escolar` (un solo año activo para matrícula) y activa el año más reciente con matrículas. | Sí |
-| 06 | `06-validacion-matricula.sql` | Agrega fecha y responsable de validación institucional. | Sí |
+| 00 | `comun/pasos/00-rol-aplicacion.sql` | Crea el rol `mpaz_app` y deja el `search_path` de la base en `mpaz_matricula, public`. | Sí |
+| 02 | `comun/pasos/02-identidad.sql` | Crea las 7 tablas de ASP.NET Identity y el historial de migraciones en `mpaz_matricula`. | Sí, salvo que se use el bundle de EF Core |
+| 01 | `modulos/matricula/pasos/01-ddl-institucional.sql` | Crea el esquema `mpaz_matricula` con las 27 tablas, funciones, vistas y triggers del DDL. | Sí |
+| 03 | `modulos/matricula/pasos/03-permisos-iniciales.sql` | Carga la matriz propuesta de `rol_permiso`. | Sólo con aprobación del colegio |
+| 04 | `modulos/matricula/pasos/04-privilegios-aplicacion.sql` | Otorga los privilegios mínimos del rol `mpaz_app`. | Sí |
+| 05 | `modulos/matricula/pasos/05-anio-escolar.sql` | Crea `anio_escolar` (un solo año activo para matrícula) y activa el año más reciente con matrículas. | Sí |
+| 06 | `modulos/matricula/pasos/06-validacion-matricula.sql` | Agrega fecha y responsable de validación institucional. | Sí |
 
-`mantenimiento/90-migrar-bases-existentes.sql` pasa una base que ya existe a
-`mpaz_matricula` (mueve desde `public`/`auth`): sólo bases antiguas.
+`modulos/matricula/mantenimiento/90-migrar-bases-existentes.sql` pasa una base
+que ya existe a `mpaz_matricula` (mueve desde `public`/`auth`): sólo bases
+antiguas.
 
-Los datos de prueba están en `datos-prueba/` y **no** se aplican en producción.
-`restablecer-a-usuarios.sql` vacía todo el movimiento y deja sólo usuarios
-(funcionarios, sus roles y cuentas): sin fichas ni nada más. Después hay que
-reconfigurar año escolar, cursos y plantillas desde el portal.
+Los datos de prueba están en `modulos/matricula/datos-prueba/` y **no** se
+aplican en producción. `restablecer-a-usuarios.sql` vacía todo el movimiento
+y deja sólo usuarios (funcionarios, sus roles y cuentas): sin fichas ni nada
+más. Después hay que reconfigurar año escolar, cursos y plantillas desde el
+portal.
 
 ## Instalación nueva: tres partes separadas
 
@@ -28,14 +31,14 @@ Ejecutar completos, en este orden, usando pgAdmin, otro cliente PostgreSQL o psq
 
 | Orden | Archivo | Contenido |
 |---|---|---|
-| 1 · BD | `instalacion/01-estructura-bd.sql` | Esquema, extensión pg_trgm, tablas institucionales e Identity, claves, índices, vistas y comentarios. Sin carga de datos. |
-| 2 · PL | `instalacion/02-programacion-pl.sql` | Funciones PL/pgSQL, triggers, validaciones RUN dependientes de funciones y seguridad del rol de aplicación. |
-| 3 · Datos | `instalacion/03-datos-iniciales.sql` | Perfiles institucionales, historial técnico EF Core y recuperación de años existentes. Sin estudiantes ni cuentas. |
+| 1 · BD | `modulos/matricula/instalacion/01-estructura-bd.sql` | Esquema, extensión pg_trgm, tablas institucionales e Identity, claves, índices, vistas y comentarios. Sin carga de datos. |
+| 2 · PL | `modulos/matricula/instalacion/02-programacion-pl.sql` | Funciones PL/pgSQL, triggers, validaciones RUN dependientes de funciones y seguridad del rol de aplicación. |
+| 3 · Datos | `modulos/matricula/instalacion/03-datos-iniciales.sql` | Perfiles institucionales, historial técnico EF Core y recuperación de años existentes. Sin estudiantes ni cuentas. |
 
 ```bash
-psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f instalacion/01-estructura-bd.sql
-psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f instalacion/02-programacion-pl.sql
-psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f instalacion/03-datos-iniciales.sql
+psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f modulos/matricula/instalacion/01-estructura-bd.sql
+psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f modulos/matricula/instalacion/02-programacion-pl.sql
+psql -X -v ON_ERROR_STOP=1 -U postgres -d mpaz_matricula -f modulos/matricula/instalacion/03-datos-iniciales.sql
 ```
 
 Los tres archivos son SQL PostgreSQL sin variables ni metacomandos de psql.
@@ -51,7 +54,7 @@ conserva su contraseña. No se guardan claves en los archivos.
 En Datos, la matriz de permisos está desactivada con `IF FALSE THEN`: cambiar
 únicamente ese valor a TRUE cuando el colegio la apruebe. El año escolar no se
 fija por calendario: configúrelo desde el portal. Los datos ficticios siguen
-separados en `datos-prueba/` y no se ejecutan en producción.
+separados en `modulos/matricula/datos-prueba/` y no se ejecutan en producción.
 
 Estos archivos son para PostgreSQL: dbdiagram puede no admitir vistas, índices
 especiales, extensión o restricciones. PL y Datos no se importan como diagrama.
@@ -73,17 +76,8 @@ PGPASSWORD='<clave admin>' ./aplicar.sh mpaz_matricula \
   --con-permisos          # omitir hasta que el colegio apruebe la matriz
 ```
 
-Equivale a:
-
-```bash
-psql -d mpaz_matricula -v clave_app='<clave>' -f pasos/00-rol-aplicacion.sql
-psql -d mpaz_matricula -f pasos/01-ddl-institucional.sql
-psql -d mpaz_matricula -f pasos/02-identidad.sql
-psql -d mpaz_matricula -f pasos/03-permisos-iniciales.sql   # opcional
-psql -d mpaz_matricula -f pasos/04-privilegios-aplicacion.sql
-psql -d mpaz_matricula -f pasos/05-anio-escolar.sql
-psql -d mpaz_matricula -c 'SET search_path TO mpaz_matricula, public' -f pasos/06-validacion-matricula.sql
-```
+Equivale a `comun/pasos/00`, `comun/pasos/02` y después, en orden,
+`modulos/matricula/pasos/01`, `03` (opcional), `04`, `05` y `06`.
 
 El año con `activo_matricula = true` es el único que usa el módulo de Matrícula.
 Se cambia desde **Configuración → Año escolar** (Secretaría o Dirección), no por
@@ -92,21 +86,23 @@ fecha del sistema.
 Si las tablas de Identity se aplican con el bundle de EF Core
 (`efbundle --connection '...'`), usar `--sin-identidad` para no duplicar el paso.
 
+Para otro módulo definido en `modulos/`, agregar `--modulo <nombre>`.
+
 ## Base que ya existe
 
 ```bash
 ./aplicar.sh mpaz_matricula --migrar
 ```
 
-`mantenimiento/90-migrar-bases-existentes.sql` es idempotente, conserva los datos y mueve
+`90-migrar-bases-existentes.sql` es idempotente, conserva los datos y mueve
 tablas, secuencias, vistas, funciones y el historial de migraciones. Si la base
 venía con el esquema `matricula`, lo renombra.
 
 ## Orden en el artefacto de despliegue
 
-`deploy/build-release.sh` copia esta carpeta completa (sin `datos-prueba/`) en
-`database/` del release, así que en el servidor los pasos quedan disponibles con
-la misma numeración:
+`deploy/build-release.sh` copia `comun/` y la carpeta del módulo (sin
+`datos-prueba/`) en `database/` del release, así que en el servidor los pasos
+quedan disponibles con la misma numeración:
 
 ```bash
 /opt/mpaz-matriculas/releases/<release>/database/aplicar.sh mpaz_matricula ...

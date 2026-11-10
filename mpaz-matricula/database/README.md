@@ -1,16 +1,32 @@
 # Base de datos
 
-| Carpeta | Contenido | Cuándo se usa |
-|---|---|---|
-| `instalacion/` | `01-estructura-bd.sql` → `02-programacion-pl.sql` → `03-datos-iniciales.sql`. Instalación nueva en ese orden, sobre una base vacía. | Crear la base desde cero |
-| `pasos/` | Scripts numerados `00`–`06` (fuente de mantenimiento) + `aplicar.sh` en la raíz que los ejecuta. | Cambios paso a paso o vía ejecutor |
-| `mantenimiento/` | `90-migrar-bases-existentes.sql`: pasa una base antigua al esquema `mpaz_matricula` sin perder datos. | Bases que ya existen |
-| `datos-prueba/` | Sólo desarrollo: `restablecer-a-usuarios.sql` (vacía el movimiento y deja sólo usuarios) y los mocks de ejemplo. | Probar sin datos reales |
+Una carpeta por módulo. Lo compartido vive en `comun/`; cada módulo tiene su
+propia carpeta en `modulos/` con la misma estructura interna.
 
-Documentación: `DESPLIEGUE.md` (cómo aplicar) y `CONEXION.md` (cómo se conecta el portal).
+```text
+database/
+  aplicar.sh            Ejecutor: aplica comun/ + el módulo indicado.
+  CONEXION.md           Cómo se conecta el portal.
+  DESPLIEGUE.md         Cómo aplicar cada recorrido.
+  comun/                Rol de aplicación e Identity (compartidos).
+    pasos/              00-rol-aplicacion.sql, 02-identidad.sql
+  modulos/
+    matricula/          Esquema de matrícula (implementado).
+      instalacion/      01-estructura, 02-PL, 03-datos. Base nueva, en orden.
+      pasos/            01, 03, 04, 05, 06. Fuente de mantenimiento.
+      mantenimiento/    90-migrar-bases-existentes.sql. Sólo bases antiguas.
+      datos-prueba/     Sólo desarrollo: mocks y restablecer-a-usuarios.sql.
+    _plantilla-modulo/  Esqueleto para copiar cuando se defina un módulo nuevo.
+```
 
 Reglas:
 
-- `instalacion/` se genera desde `pasos/`: si cambia un paso, actualizar la parte consolidada correspondiente. No ejecutar ambos recorridos sobre la misma base.
-- `datos-prueba/` nunca va a producción (el release la excluye y falla si encuentra mocks).
-- Los tres archivos de `instalacion/` son SQL PostgreSQL sin variables ni metacomandos de `psql`.
+- `instalacion/` se genera desde `pasos/`: si cambia un paso, actualizar la
+  parte consolidada correspondiente. No ejecutar ambos recorridos sobre la
+  misma base.
+- `datos-prueba/` nunca va a producción (el release la excluye y falla si
+  encuentra mocks).
+- Los archivos de `instalacion/` son SQL PostgreSQL sin variables ni
+  metacomandos de `psql`.
+- Los pasos de cada módulo se numeran desde `10` para no chocar con los de
+  `comun/` (`00`, `02`). Matrícula es la excepción histórica (`01`–`06`).

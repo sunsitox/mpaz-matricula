@@ -51,21 +51,23 @@ de entorno.
 }
 ```
 
-La contraseña quedó versionada a propósito, para que la configuración sea
-auditable. Antes de publicar el repositorio, reemplazarla por una credencial
-propia de desarrollo.
+La contraseña no está versionada: vive en user-secrets (`dotnet user-secrets set "ConnectionStrings:Default"
+"<cadena>"`) y sobrescribe al archivo. Antes de publicar el repositorio,
+verificar que ningún archivo versionado traiga una clave real.
 
 ## Instalación nueva
 
-La instalación está dividida en tres partes, en `database/instalacion/`:
+La instalación está dividida en tres partes, en
+`database/modulos/matricula/instalacion/`:
 `01-estructura-bd.sql` (estructura), `02-programacion-pl.sql` (funciones,
 triggers y seguridad) y `03-datos-iniciales.sql` (datos iniciales). Crear
 primero una base vacía y aplicarlos en ese orden, conectado a ella. Comandos
 y precauciones en `database/DESPLIEGUE.md`. No utilizarlos para actualizar
 una base existente.
 
-Como alternativa, los scripts de `database/pasos/` están numerados y pueden
-aplicarse con el ejecutor a una base vacía ya creada:
+Como alternativa, los scripts de `database/comun/pasos/` y de
+`database/modulos/matricula/pasos/` están numerados y pueden aplicarse con el
+ejecutor a una base vacía ya creada:
 
 1. Crear la base vacía.
 2. Aplicar la secuencia completa con un solo comando:
@@ -76,8 +78,10 @@ aplicarse con el ejecutor a una base vacía ya creada:
      --clave-app '<clave de mpaz_app>'
    ```
 
-   Ejecuta `pasos/00-rol-aplicacion.sql`, `pasos/01-ddl-institucional.sql`,
-   `pasos/02-identidad.sql` y `pasos/04-privilegios-aplicacion.sql`. Agregar
+   Ejecuta `comun/pasos/00-rol-aplicacion.sql`,
+   `modulos/matricula/pasos/01-ddl-institucional.sql`,
+   `comun/pasos/02-identidad.sql` y
+   `modulos/matricula/pasos/04-privilegios-aplicacion.sql`. Agregar
    `--con-permisos` sólo cuando el colegio apruebe la matriz.
 
 3. Alternativa: si las tablas de Identity se aplican con el bundle de EF Core,
@@ -93,7 +97,7 @@ Una base creada antes del esquema dedicado tiene las tablas institucionales en
 pg_dump -Fc -d <base> -f respaldo-antes-esquema.dump
 
 # 2. Mover todos los objetos a mpaz_matricula (idempotente)
-psql -U <propietario> -d <base> -f database/mantenimiento/90-migrar-bases-existentes.sql
+psql -U <propietario> -d <base> -f database/modulos/matricula/mantenimiento/90-migrar-bases-existentes.sql
 
 # 3. Registrar la migración en EF (no vuelve a mover nada)
 dotnet ef database update --project mpaz-matricula/MarcelaPaz.Infrastructure \
