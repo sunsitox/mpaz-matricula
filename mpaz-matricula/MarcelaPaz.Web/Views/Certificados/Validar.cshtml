@@ -21,6 +21,13 @@
 </head>
 <body>
     <h1>Validar certificado de alumno regular</h1>
+    <form method="get" class="tarjeta" style="margin-bottom: 1rem;">
+        <label>Folio<br /><input type="text" name="folio" value="@Model.Folio" required style="width: 100%;" /></label>
+        <br /><br />
+        <label>Código de verificación<br /><input type="text" name="codigo" required style="width: 100%;" /></label>
+        <br /><br />
+        <button type="submit">Validar</button>
+    </form>
     <div class="tarjeta">
         @if (Model.Valido)
         {

@@ -50,6 +50,57 @@ public class CertificadosController : Controller
     }
 
     /// <summary>
+    /// Historial de certificados emitidos, los más recientes primero.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
+    public async Task<IActionResult> Index()
+    {
+        var emitidos = await _db.CertificadosEmitidos
+            .AsNoTracking()
+            .OrderByDescending(c => c.Id)
+            .Take(50)
+            .ToListAsync();
+
+        var idsEstudiantes = emitidos.Select(c => c.EstudianteId).Distinct().ToList();
+        var idsMatriculas = emitidos.Select(c => c.MatriculaId).Distinct().ToList();
+        var idsFuncionarios = emitidos
+            .Where(c => c.EmitidoPor is not null)
+            .Select(c => c.EmitidoPor!.Value)
+            .Distinct()
+            .ToList();
+
+        var nombres = await _db.Estudiantes
+            .AsNoTracking()
+            .Where(e => idsEstudiantes.Contains(e.Id))
+            .ToDictionaryAsync(e => e.Id, e => e.NombreCompleto);
+
+        var cursos = await _db.Matriculas
+            .AsNoTracking()
+            .Where(m => idsMatriculas.Contains(m.Id))
+            .Select(m => new { m.Id, Curso = m.Curso != null ? m.Curso.Nombre : null })
+            .ToDictionaryAsync(m => m.Id, m => m.Curso);
+
+        var funcionarios = idsFuncionarios.Count == 0
+            ? new Dictionary<int, string>()
+            : await _db.Funcionarios
+                .AsNoTracking()
+                .Where(f => idsFuncionarios.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, f => f.Nombre);
+
+        return View(emitidos.Select(c => new CertificadoResumen
+        {
+            Folio = c.Folio,
+            AlumnoNombre = nombres.GetValueOrDefault(c.EstudianteId, $"#{c.EstudianteId}"),
+            Curso = cursos.GetValueOrDefault(c.MatriculaId),
+            Anio = c.Anio,
+            EmitidoEn = c.EmitidoEn,
+            EmitidoPor = c.EmitidoPor is int por ? funcionarios.GetValueOrDefault(por) : null,
+            Anulado = c.AnuladoEn is not null,
+        }).ToList());
+    }
+
+    /// <summary>
     /// Emite el certificado del alumno para el año activo. Exige matrícula
     /// vigente apta: firmada, confirmada o validada por Dirección (nunca
     /// borrador ni anulada).

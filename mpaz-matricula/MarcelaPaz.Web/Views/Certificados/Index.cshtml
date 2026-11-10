@@ -1,0 +1,53 @@
+@model IReadOnlyList<MarcelaPaz.Web.Models.CertificadoResumen>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Certificados de alumno regular";
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Certificados de alumno regular</h1>
+    <p class="admin__ayuda">
+        Se emiten desde la ficha de cada alumno con matrícula apta (firmada,
+        confirmada o validada). Cada emisión queda con folio único y código
+        de verificación.
+        <a asp-action="Validar">Validar un certificado</a>
+    </p>
+
+    @if (Model.Count == 0)
+    {
+        <p class="admin__ayuda">Aún no se ha emitido ningún certificado.</p>
+    }
+    else
+    {
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Certificados emitidos, los más recientes primero</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Folio</th>
+                        <th scope="col">Alumno(a)</th>
+                        <th scope="col">Curso</th>
+                        <th scope="col">Año</th>
+                        <th scope="col">Emitido</th>
+                        <th scope="col">Por</th>
+                        <th scope="col">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var certificado in Model)
+                    {
+                        <tr>
+                            <td data-etiqueta="Folio"><strong>@certificado.Folio</strong></td>
+                            <td data-etiqueta="Alumno">@certificado.AlumnoNombre</td>
+                            <td data-etiqueta="Curso">@(certificado.Curso ?? "—")</td>
+                            <td data-etiqueta="Año">@certificado.Anio</td>
+                            <td data-etiqueta="Emitido">@certificado.EmitidoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                            <td data-etiqueta="Por">@(certificado.EmitidoPor ?? "—")</td>
+                            <td data-etiqueta="Estado">@(certificado.Anulado ? "Anulado" : "Vigente")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
