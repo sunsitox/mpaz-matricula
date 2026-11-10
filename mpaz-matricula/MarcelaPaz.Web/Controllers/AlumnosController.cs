@@ -610,6 +610,9 @@ public class AlumnosController : Controller
             PuedeVerAutorizaciones = puedeAutorizaciones,
             PuedeEditarAutorizaciones = puedeEditarAutorizaciones,
             PuedeCorregirFicha = puedeCrearMatricula && ficha is not null,
+            PuedeEmitirCertificado = vigente is not null
+                && vigente.Estado != "ANULADA"
+                && (vigente.Estado is "FIRMADA" or "CONFIRMADA" || vigente.ValidadaEn is not null),
             // Tras una anulación se permite iniciar una matrícula nueva: el
             // índice único de la base ignora las anuladas.
             PuedeRenovarAnio = puedeCrearMatricula && (vigente is null || vigente.Estado == "ANULADA"),

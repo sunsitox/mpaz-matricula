@@ -18,6 +18,7 @@ Con `--neon` se adapta a Neon (sin `CREATE ROLE`: omite 00 y 04 y deja el
 | 05 | `modulos/matricula/pasos/05-anio-escolar.sql` | Crea `anio_escolar` (un solo año activo para matrícula) y activa el año más reciente con matrículas. | Sí |
 | 06 | `modulos/matricula/pasos/06-validacion-matricula.sql` | Agrega fecha y responsable de validación institucional. Trae su propio `SET search_path`. | Sí |
 | 07 | `modulos/matricula/pasos/07-search-path-funciones.sql` | Fija el `search_path` dentro de cada función, para que los triggers no dependan de la sesión que los dispara. Re-ejecutable. | Sí |
+| 08 | `modulos/matricula/pasos/08-certificados-emitidos.sql` | Crea `certificado_emitido`: folio único y hash del código por cada certificado de alumno regular emitido. Tabla nueva, re-ejecutable. | Sí |
 | 10 | `modulos/asistencia/pasos/10-ddl-asistencia.sql` | Crea el esquema `mpaz_asistencia` (11 tablas + 9 enums del equipo de asistencia). | Sí, si se usa ese módulo |
 | 02 | `comun/pasos/02-identidad.sql` | Crea las 7 tablas de ASP.NET Identity y el historial de migraciones en `mpaz_matricula`. Corre ÚLTIMO. | Sí, salvo que se use el bundle de EF Core |
 

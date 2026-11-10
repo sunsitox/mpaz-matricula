@@ -76,6 +76,7 @@ public static class DependencyInjection
     public static IServiceCollection AddDocumentos(this IServiceCollection servicios)
     {
         servicios.AddSingleton<FichaMatriculaPdf>();
+        servicios.AddSingleton<CertificadoAlumnoRegularPdf>();
 
         return servicios;
     }

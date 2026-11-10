@@ -68,6 +68,7 @@ builder.Services.AddPersistencia(cadenaConexion, builder.Configuration.GetConnec
 
 // Documentos imprimibles (PDF) generados desde el formulario.
 builder.Services.AddDocumentos();
+builder.Services.Configure<DatosInstitucion>(builder.Configuration.GetSection("Institucion"));
 
 // Guardado del asistente en las tablas del DDL institucional.
 builder.Services.AddScoped<RegistroFicha>();

@@ -79,6 +79,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<RequisitoDocumental> RequisitosDocumentales => Set<RequisitoDocumental>();
 
+    public DbSet<CertificadoEmitido> CertificadosEmitidos => Set<CertificadoEmitido>();
+
     /// <summary>Auditoría de cambios (solo lectura: la escribe el trigger).</summary>
     public DbSet<HistorialCambio> HistorialCambios => Set<HistorialCambio>();
 
@@ -446,6 +448,26 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.AutorizacionId).HasColumnName("autorizacion_id");
             e.Property(x => x.Alcance).HasColumnName("alcance").HasMaxLength(60).IsRequired();
             e.Property(x => x.Otorgado).HasColumnName("otorgado");
+        });
+
+        // Certificados de alumno regular emitidos (pasos/08): los crea el
+        // portal al emitir; la anulación les quita validez en /Validar.
+        builder.Entity<CertificadoEmitido>(e =>
+        {
+            e.ToTable("certificado_emitido", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Folio).HasColumnName("folio").HasMaxLength(30).IsRequired();
+            e.Property(x => x.CodigoHash).HasColumnName("codigo_hash").HasMaxLength(64).IsRequired();
+            e.Property(x => x.MatriculaId).HasColumnName("matricula_id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Anio).HasColumnName("anio");
+            e.Property(x => x.EmitidoPor).HasColumnName("emitido_por");
+            e.Property(x => x.EmitidoEn).HasColumnName("emitido_en");
+            e.Property(x => x.Proposito).HasColumnName("proposito");
+            e.Property(x => x.AnuladoEn).HasColumnName("anulado_en");
+            e.Property(x => x.AnuladoPor).HasColumnName("anulado_por");
+            e.HasIndex(x => x.Folio).IsUnique();
         });
     }
 }

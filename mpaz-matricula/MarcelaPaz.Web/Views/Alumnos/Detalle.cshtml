@@ -53,6 +53,12 @@
                 <a class="admin__boton"
                    asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
             }
+            @if (Model.PuedeEmitirCertificado)
+            {
+                <a class="admin__boton"
+                   asp-controller="Certificados" asp-action="Emitir" asp-route-id="@Model.Id"
+                   data-ux-cargando>Certificado alumno regular</a>
+            }
             @if (Model.PuedeRenovarAnio)
             {
                 <form method="post" asp-controller="Ficha" asp-action="Renovar" asp-route-id="@Model.Id"

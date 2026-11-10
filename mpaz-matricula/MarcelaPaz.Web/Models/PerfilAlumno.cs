@@ -129,6 +129,10 @@ public class PerfilAlumno
 
     public bool PuedeSubirDocumentos { get; set; }
 
+    /// <summary>La matrícula del año está apta para certificar alumno regular
+    /// (firmada, confirmada o validada). Habilita el botón de emisión.</summary>
+    public bool PuedeEmitirCertificado { get; set; }
+
     /// <summary>Escaneo vigente de la ficha firmada (MAT-09), si existe.</summary>
     public int? FichaFirmadaDocumentoId { get; set; }
 

@@ -1,0 +1,47 @@
+@model MarcelaPaz.Web.Models.ValidacionCertificado
+@{
+    // Página pública sin menú del portal: la usa quien recibe el papel.
+    Layout = null;
+    ViewData["Title"] = "Validar certificado de alumno regular";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body { font-family: system-ui, sans-serif; color: #1f2933; max-width: 36rem; margin: 3rem auto; padding: 0 1rem; }
+        .tarjeta { border: 1px solid #c9d1dc; border-radius: .5rem; padding: 1.5rem; }
+        .valido { color: #0a5c2f; font-weight: 700; }
+        .invalido { color: #8f1d1d; font-weight: 700; }
+        dl { display: grid; grid-template-columns: auto 1fr; gap: .25rem 1rem; }
+        dt { color: #52606d; } dd { margin: 0; }
+    </style>
+</head>
+<body>
+    <h1>Validar certificado de alumno regular</h1>
+    <div class="tarjeta">
+        @if (Model.Valido)
+        {
+            <p class="valido">Documento válido.</p>
+            <dl>
+                <dt>Folio</dt><dd>@Model.Folio</dd>
+                <dt>Establecimiento</dt><dd>@Model.Establecimiento</dd>
+                <dt>Alumno(a)</dt><dd>@Model.AlumnoNombre</dd>
+                <dt>Curso</dt><dd>@Model.Curso</dd>
+                <dt>Año académico</dt><dd>@Model.Anio</dd>
+                @if (Model.EmitidoEn is DateTimeOffset emitido)
+                {
+                    <dt>Emitido</dt><dd>@emitido.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
+                }
+            </dl>
+        }
+        else
+        {
+            <p class="invalido">Documento no válido.</p>
+            <p>El folio y el código no corresponden a un certificado vigente. Revise que estén bien escritos o pida un ejemplar nuevo en el establecimiento.</p>
+        }
+    </div>
+</body>
+</html>
