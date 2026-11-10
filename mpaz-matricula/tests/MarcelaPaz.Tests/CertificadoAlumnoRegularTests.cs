@@ -39,6 +39,7 @@ public class CertificadoAlumnoRegularTests
     [Fact]
     public void Pdf_SeGeneraConMembreteYVerificacion()
     {
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
         var pdf = new CertificadoAlumnoRegularPdf();
         var qr = GeneradorQr.Png("https://ejemplo.cl/validar?folio=CAR-2027-000001");
 
@@ -63,7 +64,7 @@ public class CertificadoAlumnoRegularTests
             Codigo = "ABCD-EFGH-IJKL",
             UrlValidacion = "https://ejemplo.cl/validar?folio=CAR-2027-000001",
             Qr = qr,
-        });
+        }).Generar();
 
         Assert.True(archivo.Length > 1000);
         Assert.Equal("%PDF"u8.ToArray(), archivo[..4]);

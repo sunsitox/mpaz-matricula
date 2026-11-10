@@ -13,6 +13,10 @@ using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Documentos internos del establecimiento (ficha, certificado): licencia
+// comunitaria de QuestPDF, configurada una sola vez al iniciar.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var cadenaConexion = builder.Configuration.GetConnectionString("Default");
 if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(cadenaConexion))
 {

@@ -225,7 +225,7 @@ public class CertificadosController : Controller
             Logo = LogoInstitucional(),
         };
 
-        var archivo = _pdf.Generar(documento);
+        var archivo = _pdf.Generar(documento).Generar();
 
         return descargar
             ? File(archivo, "application/pdf", $"certificado-alumno-regular-{emitido.Folio}.pdf")
