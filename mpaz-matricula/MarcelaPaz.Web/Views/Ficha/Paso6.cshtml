@@ -5,7 +5,8 @@
 <h2 class="wizard__titulo-paso">Paso 6 · Salud y PIE</h2>
 <p class="wizard__ayuda">
     Información médica y de apoyo PIE relevante para la atención escolar, con cada situación en un bloque
-    desplegable. Las alergias, el contacto sanitario y la respuesta sobre el PIE son obligatorios.
+    desplegable. El contacto sanitario y la respuesta sobre el PIE son obligatorios. Las alergias son
+    opcionales: si no hay, se dejan en blanco y no aparecen en la ficha.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="6" method="post">
@@ -33,24 +34,38 @@
                 <span>Pendiente</span>
             </label>
         </div>
-        <p class="wizard__restriccion-pregunta">¿Cuenta con diagnóstico o documentación PIE?</p>
-        <div class="wizard__radios">
-            <label class="acceso__radio">
-                <input asp-for="PieDiagnostico" type="radio" value="Si" />
-                <span>Si</span>
-            </label>
-            <label class="acceso__radio">
-                <input asp-for="PieDiagnostico" type="radio" value="No" />
-                <span>No</span>
-            </label>
-        </div>
-        <div class="acceso__campo">
-            <label asp-for="PieApoyos" class="acceso__etiqueta">Apoyos informados o diagnóstico</label>
-            <input asp-for="PieApoyos" class="acceso__input" autocomplete="off" />
+        @* El diagnóstico y los apoyos solo aparecen cuando participa o está pendiente. *@
+        <div data-ux-condicional="ParticipaPie:Si,Pendiente">
+            <p class="wizard__restriccion-pregunta">¿Cuenta con diagnóstico o documentación PIE?</p>
+            <div class="wizard__radios">
+                <label class="acceso__radio">
+                    <input asp-for="PieDiagnostico" type="radio" value="Si" />
+                    <span>Si</span>
+                </label>
+                <label class="acceso__radio">
+                    <input asp-for="PieDiagnostico" type="radio" value="No" />
+                    <span>No</span>
+                </label>
+            </div>
+            <div class="acceso__campo">
+                <label asp-for="PieApoyos" class="acceso__etiqueta">Apoyos informados o diagnóstico</label>
+                <input asp-for="PieApoyos" class="acceso__input" autocomplete="off" />
+            </div>
         </div>
     </fieldset>
 
     <h2 class="wizard__seccion-titulo">Salud y datos médicos</h2>
+    <p class="wizard__ayuda">Si responde Sí, aparecen los registros médicos para completarlos; si responde No, se ocultan. Los registros adicionales pueden quedar completamente vacíos. Para quitar una respuesta de «¿En tratamiento?», vuelva a pulsar la opción marcada (o use la barra espaciadora).</p>
+
+    <fieldset class="wizard__restriccion">
+        <legend class="acceso__etiqueta">Autorización de paracetamol</legend>
+        <p class="wizard__restriccion-pregunta">@FichaImpresion.TextoParacetamol</p>
+        <div class="wizard__radios">
+            <label class="acceso__radio"><input asp-for="AutorizaParacetamol" type="radio" value="Si" /><span>Sí</span></label>
+            <label class="acceso__radio"><input asp-for="AutorizaParacetamol" type="radio" value="No" /><span>No</span></label>
+        </div>
+        <span asp-validation-for="AutorizaParacetamol" class="acceso__error"></span>
+    </fieldset>
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Situación médica (SI/NO)</legend>
@@ -72,8 +87,8 @@
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Alergias y contacto sanitario</legend>
         <div class="acceso__campo">
-            <label asp-for="Alergias" class="acceso__etiqueta">Alergias declaradas *</label>
-            <input asp-for="Alergias" class="acceso__input" placeholder="Ej: penicilina, frutos secos. Si no tiene, escriba «Ninguna»" autocomplete="off" aria-required="true" />
+            <label asp-for="Alergias" class="acceso__etiqueta">Alergias declaradas</label>
+            <input asp-for="Alergias" class="acceso__input" placeholder="Ej: penicilina, frutos secos. Si no tiene, déjelo en blanco" autocomplete="off" />
             <span asp-validation-for="Alergias" class="acceso__error"></span>
         </div>
         <div class="wizard__fila">
@@ -90,6 +105,8 @@
         </div>
     </fieldset>
 
+    @* Los registros médicos solo aparecen cuando se responde Sí. *@
+    <div data-ux-condicional="TieneSituacionMedica:Si">
     <details class="wizard__desplegable" open>
         <summary class="wizard__desplegable-resumen">
             Registro 01 · Situación médica
@@ -106,7 +123,7 @@
                     <input asp-for="Medica1_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <fieldset class="acceso__campo wizard__grupo-radio">
+            <fieldset class="acceso__campo wizard__grupo-radio" data-ux-radio-desmarcable>
                 <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
@@ -138,7 +155,7 @@
                     <input asp-for="Medica2_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <fieldset class="acceso__campo wizard__grupo-radio">
+            <fieldset class="acceso__campo wizard__grupo-radio" data-ux-radio-desmarcable>
                 <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
@@ -170,7 +187,7 @@
                     <input asp-for="Medica3_Situacion" class="acceso__input" autocomplete="off" />
                 </div>
             </div>
-            <fieldset class="acceso__campo wizard__grupo-radio">
+            <fieldset class="acceso__campo wizard__grupo-radio" data-ux-radio-desmarcable>
                 <legend class="acceso__etiqueta">¿En tratamiento?</legend>
                 <div class="wizard__radios">
                     <label class="acceso__radio">
@@ -185,6 +202,8 @@
             </fieldset>
         </div>
     </details>
+
+    </div>
 
     <fieldset class="wizard__restriccion">
         <legend class="acceso__etiqueta">Uso de baños (SI/NO)</legend>

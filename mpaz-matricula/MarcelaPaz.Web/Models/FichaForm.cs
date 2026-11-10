@@ -172,6 +172,8 @@ public class FichaForm
     // ¿Cuenta con alguna situación médica? (Si / No)
     public string? TieneSituacionMedica { get; set; }
 
+    public string? AutorizaParacetamol { get; set; }
+
     public string? Medica1_Identificacion { get; set; }
     public string? Medica1_Situacion { get; set; }
     public string? Medica1_Tratamiento { get; set; }
@@ -184,7 +186,7 @@ public class FichaForm
     public string? Medica3_Situacion { get; set; }
     public string? Medica3_Tratamiento { get; set; }
 
-    /// <summary>Alergias declaradas. Se escribe «Ninguna» cuando no las hay.</summary>
+    /// <summary>Alergias declaradas. Opcional: en blanco no aparece en la ficha impresa.</summary>
     [StringLength(255, ErrorMessage = "Las alergias no pueden superar los 255 caracteres.")]
     public string? Alergias { get; set; }
 

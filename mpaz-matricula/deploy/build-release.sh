@@ -27,7 +27,10 @@ rm -f \
   "$STAGE/app/appsettings.Development.json" \
   "$STAGE/app/"*.pdb
 
-cp "$PROJECT/database/"*.sql "$STAGE/database/"
+mkdir -p "$STAGE/database/instalacion" "$STAGE/database/pasos" "$STAGE/database/mantenimiento"
+cp "$PROJECT/database/instalacion/"*.sql "$STAGE/database/instalacion/"
+cp "$PROJECT/database/pasos/"*.sql "$STAGE/database/pasos/"
+cp "$PROJECT/database/mantenimiento/"*.sql "$STAGE/database/mantenimiento/"
 cp "$PROJECT/database/aplicar.sh" "$STAGE/database/"
 cp "$PROJECT/database/DESPLIEGUE.md" "$STAGE/database/"
 cp "$PROJECT/deploy/mpaz-matriculas.service" "$STAGE/"

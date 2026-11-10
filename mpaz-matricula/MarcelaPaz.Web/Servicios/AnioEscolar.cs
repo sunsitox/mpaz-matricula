@@ -11,7 +11,7 @@ public sealed record AnioEscolarOpcion(int Anio, bool Activo, DateOnly? Apertura
 
 /// <summary>
 /// Año escolar con el que trabaja el módulo de Matrícula. Se lee de la tabla
-/// <c>anio_escolar</c> (la define <c>database/05-anio-escolar.sql</c>) y nunca se
+/// <c>anio_escolar</c> (la define <c>database/pasos/05-anio-escolar.sql</c>) y nunca se
 /// deduce de la fecha del sistema: el periodo de matrícula no coincide con el
 /// calendario y en enero y febrero se sigue matriculando el año en curso.
 /// Cambiar el año activo desde Configuración basta para que todo lo nuevo salga

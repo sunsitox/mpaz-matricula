@@ -82,7 +82,7 @@ ejecutar() {
 echo "Base: $BASE ($HOST:$PUERTO, usuario $USUARIO)"
 
 if [[ "$MIGRAR" -eq 1 ]]; then
-    ejecutar "$AQUI/90-migrar-bases-existentes.sql"
+    ejecutar "$AQUI/mantenimiento/90-migrar-bases-existentes.sql"
     echo "Base existente movida a mpaz_matricula."
     exit 0
 fi
@@ -91,19 +91,20 @@ if [[ -z "$CLAVE_APP" ]]; then
     echo "Aviso: sin --clave-app el rol mpaz_app se crea sin contraseña." >&2
 fi
 
-ejecutar "$AQUI/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
-ejecutar "$AQUI/01-ddl-institucional.sql"
+ejecutar "$AQUI/pasos/00-rol-aplicacion.sql" -v clave_app="${CLAVE_APP:-}"
+ejecutar "$AQUI/pasos/01-ddl-institucional.sql"
 if [[ "$IDENTIDAD" -eq 1 ]]; then
-    ejecutar "$AQUI/02-identidad.sql"
+    ejecutar "$AQUI/pasos/02-identidad.sql"
 fi
 if [[ "$PERMISOS" -eq 1 ]]; then
-    ejecutar "$AQUI/03-permisos-iniciales.sql"
+    ejecutar "$AQUI/pasos/03-permisos-iniciales.sql"
 fi
 if [[ "$PRIVILEGIOS" -eq 1 ]]; then
-    ejecutar "$AQUI/04-privilegios-aplicacion.sql"
+    ejecutar "$AQUI/pasos/04-privilegios-aplicacion.sql"
 fi
 # Año escolar configurable: debe correr después de 04 para quedar con privilegios.
-ejecutar "$AQUI/05-anio-escolar.sql"
+ejecutar "$AQUI/pasos/05-anio-escolar.sql"
+ejecutar "$AQUI/pasos/06-validacion-matricula.sql" -c 'SET search_path TO mpaz_matricula, public'
 if [[ -n "$DATOS" ]]; then
     ejecutar "$DATOS"
 fi

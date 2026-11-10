@@ -317,7 +317,7 @@ public class FichaEtapa1Tests
     }
 
     [Fact]
-    public void Pdf_YaNoIncluyeParacetamol()
+    public void Pdf_IncluyeRespuestaParacetamolSinHabilitarAdministracion()
     {
         var datos = new Dictionary<string, string>
         {
@@ -330,7 +330,122 @@ public class FichaEtapa1Tests
 
         Assert.DoesNotContain(documento.Secciones.SelectMany(seccion => seccion.Campos),
             campo => campo.Etiqueta.Contains("aracetamol"));
-        Assert.Equal(2, documento.Autorizaciones.Count);
+        Assert.Equal(3, documento.Autorizaciones.Count);
+        var paracetamol = Assert.Single(documento.Autorizaciones,
+            a => a.Titulo == "Autorización de paracetamol");
+        Assert.True(paracetamol.Respuesta);
+        Assert.Contains("indicación médica", paracetamol.Texto);
+        Assert.Contains("protocolo TENS aprobado", paracetamol.Texto);
+    }
+
+    [Fact]
+    public void Salud_UnaSituacionNoExigeRegistrosAdicionales()
+    {
+        var errores = ValidadorFicha.Validar(6, new FichaForm
+        {
+            TieneSituacionMedica = "Si",
+            Medica1_Identificacion = "Asma",
+            Medica1_Situacion = "Controlada",
+            Medica1_Tratamiento = "Si",
+            Alergias = "Ninguna",
+            Contacto_Sanitario_Nombre = "Apoderado",
+            Contacto_Sanitario_Telefono = "+56912345678",
+            ParticipaPie = "No",
+        });
+
+        Assert.Empty(errores);
+    }
+
+    [Fact]
+    public async Task Salud_PrecargaNoRellenaCasillasVaciasDeUnBorradorExistente()
+    {
+        var opciones = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<MarcelaPaz.Infrastructure.Persistence.MatriculaDbContext>();
+        Microsoft.EntityFrameworkCore.InMemoryDbContextOptionsExtensions.UseInMemoryDatabase(opciones, Guid.NewGuid().ToString());
+        using var db = new MarcelaPaz.Infrastructure.Persistence.MatriculaDbContext(opciones.Options);
+        var estudiante = new MarcelaPaz.Domain.Entidades.Estudiante
+        {
+            TipoIdentificador = "RUN", Identificador = "12345678-5",
+            Nombres = "Prueba", ApellidoPaterno = "Salud",
+        };
+        db.Estudiantes.Add(estudiante);
+        await db.SaveChangesAsync();
+        foreach (var descripcion in new[] { "Asma: Controlada", "Otra: Antigua", "Asma: Controlada" })
+        {
+            db.SituacionesMedicas.Add(new MarcelaPaz.Domain.Entidades.SituacionMedica
+            {
+                EstudianteId = estudiante.Id, Tipo = "CONDICION", Descripcion = descripcion,
+                EnTratamiento = false, VigenteDesde = new DateOnly(2026, 1, 1),
+            });
+        }
+        await db.SaveChangesAsync();
+        var controller = new MarcelaPaz.Web.Controllers.FichaController(db, null!, null!, new RegistroFicha(db), null!, null!, null!);
+        var precargar = typeof(MarcelaPaz.Web.Controllers.FichaController).GetMethod(
+            "CompletarDesdeBaseAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var datos = new Dictionary<string, string>
+        {
+            ["cédula de identidad"] = "12345678-5",
+            ["situación médica 01: identificación"] = "Asma",
+            ["situación médica 01: detalle"] = "Controlada",
+            ["situación médica 01: en tratamiento"] = "No",
+        };
+
+        for (var visita = 0; visita < 2; visita++)
+        {
+            await (Task<bool>)precargar.Invoke(controller, [datos])!;
+            Assert.DoesNotContain(datos.Keys, clave => clave.StartsWith("situación médica 02:"));
+            Assert.DoesNotContain(datos.Keys, clave => clave.StartsWith("situación médica 03:"));
+            Assert.Equal("Asma", datos["situación médica 01: identificación"]);
+        }
+    }
+
+    [Fact]
+    public void Impresion_OmiteDetalleCuandoLaRespuestaEsNo()
+    {
+        var datos = new Dictionary<string, string>
+        {
+            ["nombres"] = "Antonia",
+            ["alergias"] = "Ninguna",
+            ["restricción madre (SI/NO)"] = "No",
+            ["restricción madre: tipo"] = "Judicial",
+            ["situación médica (SI/NO)"] = "No",
+            ["situación médica 01: identificación"] = "Asma",
+            ["PIE: participa (SI/NO/PENDIENTE)"] = "No",
+            ["PIE: diagnosticado (SI/NO)"] = "No",
+            ["PIE: apoyos o diagnóstico"] = "Ninguno",
+        };
+
+        var documento = FichaImpresion.DesdeBorrador(datos, 2027, new DateTime(2026, 11, 7, 10, 30, 0));
+        var valores = documento.Secciones.SelectMany(seccion => seccion.Campos).Select(campo => campo.Valor).ToList();
+        var etiquetas = documento.Secciones.SelectMany(seccion => seccion.Campos).Select(campo => campo.Etiqueta).ToList();
+
+        Assert.DoesNotContain("Ninguna", valores);
+        Assert.DoesNotContain("Ninguno", valores);
+        Assert.DoesNotContain("Judicial", valores);
+        Assert.DoesNotContain("Asma", valores);
+        Assert.DoesNotContain(etiquetas, etiqueta => etiqueta.Contains("Alergias"));
+        Assert.DoesNotContain(etiquetas, etiqueta => etiqueta.Contains("Restricción:"));
+        Assert.Contains(etiquetas, etiqueta => etiqueta == "Restricción Madre");
+        Assert.Contains("No", valores);
+    }
+
+    [Fact]
+    public void Impresion_MuestraDetalleCuandoLaRespuestaEsSi()
+    {
+        var datos = new Dictionary<string, string>
+        {
+            ["nombres"] = "Antonia",
+            ["alergias"] = "Penicilina",
+            ["situación médica (SI/NO)"] = "Si",
+            ["situación médica 01: identificación"] = "Asma",
+            ["PIE: participa (SI/NO/PENDIENTE)"] = "Si",
+            ["PIE: diagnosticado (SI/NO)"] = "Si",
+        };
+
+        var documento = FichaImpresion.DesdeBorrador(datos, 2027, new DateTime(2026, 11, 7, 10, 30, 0));
+        var valores = documento.Secciones.SelectMany(seccion => seccion.Campos).Select(campo => campo.Valor).ToList();
+
+        Assert.Contains("Penicilina", valores);
+        Assert.Contains("Asma", valores);
     }
 
     private static bool EsValido(FichaForm formulario, string propiedad)

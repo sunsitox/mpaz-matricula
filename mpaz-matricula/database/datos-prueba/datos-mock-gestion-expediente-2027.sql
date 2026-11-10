@@ -4,7 +4,7 @@ SET search_path TO mpaz_matricula, public;
 -- Datos de prueba (parte 2) · Portal de Matrícula 2027
 -- Escuela Escritora Marcela Paz · base local mpaz-matricula
 --
--- Complementa "datos mock.sql" (estudiantes, matrículas y su ficha base)
+-- Complementa "datos-mock-alumnos-2027.sql" (estudiantes, matrículas y su ficha base)
 -- y deja TODAS las tablas del DDL con datos ficticios:
 --
 --   0. Completar apoderados, contactos, retiros, salud y PIE
@@ -26,7 +26,7 @@ SET search_path TO mpaz_matricula, public;
 -- Idempotente: se puede correr otra vez sin duplicar filas.
 -- Uso:
 --   psql "postgresql://postgres:CLAVE@localhost:5432/mpaz-matricula" \
---        -v ON_ERROR_STOP=1 -f "datos mock - tablas de gestion y expediente.sql"
+--        -v ON_ERROR_STOP=1 -f "datos-mock-gestion-expediente-2027.sql"
 -- =====================================================================
 
 begin;

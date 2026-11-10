@@ -7,7 +7,7 @@ SET search_path TO mpaz_matricula, public;
 -- Sólo para bases de desarrollo o demostración: nunca en producción.
 --
 -- Uso (con el DDL aplicado en el esquema mpaz_matricula):
---   psql -d <base> -v ON_ERROR_STOP=1 -f "datos mock.sql"
+--   psql -d <base> -v ON_ERROR_STOP=1 -f "datos-mock-alumnos-2027.sql"
 --
 -- Idempotente: se puede correr dos veces sin duplicar estudiantes, personas
 -- ni matrículas. Todo ocurre en una transacción. Requiere las funciones
@@ -15,6 +15,14 @@ SET search_path TO mpaz_matricula, public;
 -- =====================================================================
 
 begin;
+
+-- 0. Año escolar de los datos: 2027 queda activo para matrícula, para que el
+-- panel muestre los expedientes sin pasar por Configuración.
+insert into anio_escolar (anio, activo_matricula) values (2027, true)
+on conflict (anio) do update set activo_matricula = true, actualizado_en = now();
+update anio_escolar
+set activo_matricula = false, actualizado_en = now()
+where anio <> 2027 and activo_matricula;
 
 -- La ficha no pide comuna, pero el esquema la admite.
 insert into comuna (nombre) values ('San Bernardo') on conflict (nombre) do nothing;

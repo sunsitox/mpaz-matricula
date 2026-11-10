@@ -6,6 +6,33 @@
 
     document.documentElement.classList.add('ux-js');
 
+    // Grupos opcionales: repetir clic o Espacio quita la respuesta marcada.
+    document.querySelectorAll('[data-ux-radio-desmarcable]').forEach(grupo => {
+        const radios = Array.from(grupo.querySelectorAll('input[type="radio"]'));
+        let seleccionado = radios.find(radio => radio.checked) || null;
+
+        radios.forEach(radio => {
+            radio.addEventListener('click', () => {
+                if (seleccionado === radio) {
+                    radio.checked = false;
+                    seleccionado = null;
+                    radio.dispatchEvent(new Event('input', { bubbles: true }));
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    seleccionado = radio;
+                }
+            });
+            radio.addEventListener('change', () => {
+                seleccionado = radios.find(opcion => opcion.checked) || null;
+            });
+        });
+        grupo.closest('form').addEventListener('reset', () => {
+            window.setTimeout(() => {
+                seleccionado = radios.find(radio => radio.checked) || null;
+            }, 0);
+        });
+    });
+
     // Barra de progreso superior durante navegaciones y envíos.
     const barra = document.createElement('div');
     barra.id = 'ux-progreso';
@@ -372,5 +399,52 @@
         });
 
         activar(botones[0].dataset.uxPestana, false);
+    });
+
+    // Campos condicionales: el bloque solo aparece cuando el campo indicado
+    // tiene uno de los valores (ej. «Restriccion_Madre:Si» o
+    // «ParticipaPie:Si,Pendiente»). Al ocultarse por un cambio, se limpian
+    // los campos dependientes para no guardar datos de una opción
+    // descartada. Sin JS, todo queda visible y el servidor valida igual.
+    document.querySelectorAll('[data-ux-condicional]').forEach(bloque => {
+        const partes = (bloque.getAttribute('data-ux-condicional') || '').split(':');
+        const nombre = (partes[0] || '').trim();
+        const aceptados = (partes[1] || '').split(',').map(valor => valor.trim()).filter(Boolean);
+
+        if (!nombre || aceptados.length === 0) {
+            return;
+        }
+
+        const opciones = Array.from(document.querySelectorAll('input[name="' + nombre + '"]'));
+
+        if (opciones.length === 0) {
+            return;
+        }
+
+        const visible = () => {
+            const marcado = opciones.find(opcion => opcion.checked);
+            return marcado !== undefined && aceptados.includes(marcado.value);
+        };
+
+        const aplicar = limpiar => {
+            const mostrar = visible();
+            bloque.hidden = !mostrar;
+
+            if (!mostrar && limpiar) {
+                bloque.querySelectorAll('input, textarea, select').forEach(campo => {
+                    if (campo.type === 'radio' || campo.type === 'checkbox') {
+                        if (campo.checked) {
+                            campo.checked = false;
+                            campo.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    } else {
+                        campo.value = '';
+                    }
+                });
+            }
+        };
+
+        opciones.forEach(opcion => opcion.addEventListener('change', () => aplicar(true)));
+        aplicar(false);
     });
 })();

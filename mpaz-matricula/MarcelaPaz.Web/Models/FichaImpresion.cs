@@ -72,6 +72,11 @@ public static class FichaImpresion
     };
 
     /// <summary>Textos de las autorizaciones mientras Dirección aprueba los definitivos.</summary>
+    public const string TextoParacetamol =
+        "Autorizo que se administre paracetamol a mi hijo/a en el establecimiento, únicamente con "
+        + "indicación médica y conforme al protocolo TENS aprobado. Esta respuesta no constituye una orden médica "
+        + "ni habilita su administración sin esos requisitos.";
+
     public const string TextoImagen =
         "Autorizo el registro y uso de imágenes de mi hijo/a con fines institucionales "
         + "(registro interno, sitio web y redes sociales del establecimiento), sin exponer datos sensibles. "
@@ -92,6 +97,12 @@ public static class FichaImpresion
     /// </summary>
     private static IReadOnlyList<AutorizacionFicha> AutorizacionesDe(IReadOnlyDictionary<string, string> datos) =>
     [
+        new AutorizacionFicha
+        {
+            Titulo = "Autorización de paracetamol",
+            Texto = TextoParacetamol,
+            Respuesta = RespuestaSiNo(datos, "autorización de paracetamol (SI/NO)"),
+        },
         new AutorizacionFicha
         {
             Titulo = "Autorización de uso de imagen",
@@ -145,15 +156,21 @@ public static class FichaImpresion
     {
         var secciones = new List<SeccionFicha>();
 
+        // Apartados condicionales: si la respuesta es «No», el detalle no se
+        // imprime; si es «Sí», aparece. Lo no respondido tampoco aparece.
+        var sinRestriccionMadre = EsNo(datos, "restricción madre (SI/NO)");
+        var sinSituacionMedica = EsNo(datos, "situación médica (SI/NO)");
+        var pieNoParticipa = EsNo(datos, "PIE: participa (SI/NO/PENDIENTE)");
+
         foreach (var (titulo, claves) in Bloques)
         {
             var campos = claves
-                .Where(datos.ContainsKey)
+                .Where(clave => Visible(clave, datos, sinRestriccionMadre, sinSituacionMedica, pieNoParticipa))
                 .Select(clave => new CampoFicha
                 {
                     Etiqueta = Etiqueta(clave),
                     // Los RUN se imprimen con puntos, aunque la base los guarde sin ellos.
-                    Valor = ClavesRut.EsClave(clave) ? RutChileno.Formatear(datos[clave]) : datos[clave],
+                    Valor = ClavesRut.EsClave(clave) ? RutChileno.Formatear(datos[clave]) : datos[clave].Trim(),
                 })
                 .ToList();
 
@@ -177,6 +194,62 @@ public static class FichaImpresion
             Secciones = secciones,
             Autorizaciones = AutorizacionesDe(datos),
         };
+    }
+
+    /// <summary>
+    /// Decide si una clave del borrador se imprime: con respuesta «No» el
+    /// detalle no aparece; sin respuesta tampoco; «Ninguna» en alergias
+    /// equivale a sin respuesta.
+    /// </summary>
+    private static bool Visible(
+        string clave,
+        IReadOnlyDictionary<string, string> datos,
+        bool sinRestriccionMadre,
+        bool sinSituacionMedica,
+        bool pieNoParticipa)
+    {
+        var valor = datos.GetValueOrDefault(clave);
+
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return false;
+        }
+
+        if (clave == "alergias" && EsNegacion(valor))
+        {
+            return false;
+        }
+
+        if (sinRestriccionMadre && clave.StartsWith("restricción madre:", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (sinSituacionMedica && clave.StartsWith("situación médica 0", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (pieNoParticipa && (clave == "PIE: diagnosticado (SI/NO)" || clave == "PIE: apoyos o diagnóstico"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool EsNo(IReadOnlyDictionary<string, string> datos, string clave) =>
+        datos.GetValueOrDefault(clave)?.Trim().StartsWith('N') == true
+        || datos.GetValueOrDefault(clave)?.Trim().StartsWith('n') == true;
+
+    /// <summary>«Ninguna», «ninguno», «no», «sin alergias»: no hay nada que imprimir.</summary>
+    private static bool EsNegacion(string valor)
+    {
+        var limpio = valor.Trim().Trim('«', '»', '"', '.', ' ').ToLowerInvariant();
+
+        return limpio is "no" or "ninguna" or "ninguno"
+            || limpio.StartsWith("ningun", StringComparison.Ordinal)
+            || limpio.StartsWith("sin alerg", StringComparison.Ordinal);
     }
 
     /// <summary>«madre: cédula identidad» → «Cédula identidad».</summary>

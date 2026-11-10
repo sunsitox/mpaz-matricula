@@ -149,12 +149,8 @@ public static class ValidadorFicha
                         "Indique si el estudiante tiene alguna situación médica."));
                 }
 
-                if (string.IsNullOrWhiteSpace(form.Alergias))
-                {
-                    errores.Add(new ErrorValidacion(nameof(FichaForm.Alergias),
-                        "Indique las alergias o escriba «Ninguna»."));
-                }
-
+                // Las alergias son opcionales: si no hay, se deja en blanco y
+                // no aparecen en la ficha impresa.
                 if (string.IsNullOrWhiteSpace(form.Contacto_Sanitario_Nombre))
                 {
                     errores.Add(new ErrorValidacion(nameof(FichaForm.Contacto_Sanitario_Nombre),

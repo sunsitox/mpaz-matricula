@@ -230,6 +230,12 @@ public class FichaController : Controller
                 break;
 
             case 6:
+                // Los registros vaciados no deben conservar valores anteriores del borrador.
+                foreach (var clave in datos.Keys.Where(c => c.StartsWith("situación médica 0", StringComparison.Ordinal)).ToList())
+                {
+                    datos.Remove(clave);
+                }
+                datos["salud: registros revisados"] = "Si";
                 GuardarCampo(datos, "situación médica (SI/NO)", form.TieneSituacionMedica);
                 GuardarCampo(datos, "situación médica 01: identificación", form.Medica1_Identificacion);
                 GuardarCampo(datos, "situación médica 01: detalle", form.Medica1_Situacion);
@@ -240,6 +246,7 @@ public class FichaController : Controller
                 GuardarCampo(datos, "situación médica 03: identificación", form.Medica3_Identificacion);
                 GuardarCampo(datos, "situación médica 03: detalle", form.Medica3_Situacion);
                 GuardarCampo(datos, "situación médica 03: en tratamiento", form.Medica3_Tratamiento);
+                GuardarCampo(datos, "autorización de paracetamol (SI/NO)", form.AutorizaParacetamol);
                 GuardarCampo(datos, "alergias", form.Alergias);
                 GuardarCampo(datos, "contacto sanitario: nombre", form.Contacto_Sanitario_Nombre);
                 GuardarCampo(datos, "contacto sanitario: teléfono", form.Contacto_Sanitario_Telefono);
@@ -811,6 +818,7 @@ public class FichaController : Controller
 
         if (!User.HasClaim("permiso", "SALUD:LEER"))
         {
+            copia.Remove("autorización de paracetamol (SI/NO)");
             copia.Remove("situación médica (SI/NO)");
             copia.Remove("alergias");
             copia.Remove("contacto sanitario: nombre");
@@ -844,6 +852,7 @@ public class FichaController : Controller
 
         if (!User.HasClaim("permiso", "AUTORIZACIONES:LEER"))
         {
+            copia.Remove("autorización de paracetamol (SI/NO)");
             copia.Remove("autorización de uso de imagen (SI/NO)");
             copia.Remove("autorización de convivencia escolar (SI/NO)");
         }
@@ -935,7 +944,7 @@ public class FichaController : Controller
         },
         [6] = new[]
         {
-            nameof(FichaForm.TieneSituacionMedica),
+            nameof(FichaForm.TieneSituacionMedica), nameof(FichaForm.AutorizaParacetamol),
             nameof(FichaForm.Medica1_Identificacion), nameof(FichaForm.Medica1_Situacion), nameof(FichaForm.Medica1_Tratamiento),
             nameof(FichaForm.Medica2_Identificacion), nameof(FichaForm.Medica2_Situacion), nameof(FichaForm.Medica2_Tratamiento),
             nameof(FichaForm.Medica3_Identificacion), nameof(FichaForm.Medica3_Situacion), nameof(FichaForm.Medica3_Tratamiento),
@@ -1130,8 +1139,17 @@ public class FichaController : Controller
             return;
         }
 
+        var registrosMedicosCargados = datos.ContainsKey("salud: registros revisados")
+            || datos.Keys.Any(c => c.StartsWith("situación médica 0", StringComparison.Ordinal));
+
         foreach (var (clave, contenido) in RegistroFicha.DatosDesdeSnapshot(ficha.DatosSnapshot))
         {
+            if (registrosMedicosCargados
+                && clave.StartsWith("situación médica 0", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             if (!datos.ContainsKey(clave))
             {
                 datos[clave] = contenido;
@@ -1319,14 +1337,20 @@ public class FichaController : Controller
 
         var situaciones = await _db.SituacionesMedicas
             .AsNoTracking()
-            .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null)
+            .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null && s.Tipo != "ALERGIA")
             .OrderBy(s => s.Id)
             .Take(3)
             .ToListAsync();
 
+        // La lista se precarga una sola vez como bloque completo. Las filas de
+        // la base no tienen el número de casilla del formulario: al guardarlas
+        // cambian sus IDs y no se pueden mezclar por posición con el borrador.
+        var registrosMedicosCargados = datos.ContainsKey("salud: registros revisados")
+            || datos.Keys.Any(c => c.StartsWith("situación médica 0", StringComparison.Ordinal));
         var numeroSituacion = 1;
-        foreach (var situacion in situaciones)
+        foreach (var situacion in registrosMedicosCargados ? [] : situaciones)
         {
+
             var (identificacion, detalle) = SepararDescripcion(situacion.Descripcion);
             agregados += PonerSiFalta(datos, $"situación médica {numeroSituacion:00}: identificación", identificacion);
             agregados += PonerSiFalta(datos, $"situación médica {numeroSituacion:00}: detalle", detalle);
@@ -1504,6 +1528,7 @@ public class FichaController : Controller
         PieDiagnostico = datos.GetValueOrDefault("PIE: diagnosticado (SI/NO)"),
         PieApoyos = datos.GetValueOrDefault("PIE: apoyos o diagnóstico"),
 
+        AutorizaParacetamol = datos.GetValueOrDefault("autorización de paracetamol (SI/NO)"),
         AutorizaImagen = datos.GetValueOrDefault("autorización de uso de imagen (SI/NO)"),
         AutorizaConvivencia = datos.GetValueOrDefault("autorización de convivencia escolar (SI/NO)"),
 

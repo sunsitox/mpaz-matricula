@@ -276,6 +276,11 @@ textarea {
     visibility: hidden;
 }
 
+/* Bloques condicionales del wizard: ocultos solo cuando JS los apaga. */
+[data-ux-condicional][hidden] {
+    display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
