@@ -107,3 +107,35 @@ quedan disponibles con la misma numeración:
 ```bash
 /opt/mpaz-matriculas/releases/<release>/database/aplicar.sh mpaz_matricula ...
 ```
+
+## Neon (varios sistemas, auth central)
+
+Proyecto `mpaz-database`, rama principal. Una base por sistema más una base
+central de autenticación:
+
+| Base | Contenido | Cómo se creó |
+|---|---|---|
+| `mpaz_asistencia` | Tablas del sistema de asistencia (`public`) | Equipo de asistencia |
+| `mpaz_matricula` | Esquema `mpaz_matricula` sin Identity (31 tablas: 01+05+06) | `CREATE DATABASE` + pasos 01, 05, 06 |
+| `mpaz_auth` | Central de usuarios y sesiones: 7 tablas `AspNet*` + historial EF en esquema `mpaz_matricula` | `CREATE DATABASE` + `comun/pasos/02-identidad.sql` |
+
+Adaptaciones respecto al recorrido local (Neon no permite `CREATE ROLE` por
+SQL y el dueño `neondb_owner` ya tiene todos los derechos sobre sus bases):
+
+- Se omite `comun/pasos/00-rol-aplicacion.sql` (no hay rol `mpaz_app` en Neon).
+  En su lugar: `ALTER DATABASE <base> SET search_path = mpaz_matricula, public`.
+- Se omite `modulos/matricula/pasos/04-privilegios-aplicacion.sql` (otorga
+  sobre `mpaz_app`); sin ese rol no aplica.
+- Se omite `03-permisos-iniciales.sql` hasta que el colegio apruebe la matriz
+  (igual que en local).
+- `pg_trgm` ya viene instalada en Neon; el `CREATE EXTENSION` no hace nada.
+- El esquema dentro de `mpaz_auth` se llama `mpaz_matricula` a propósito: es el
+  nombre que el código (`MatriculaDbContext.Esquema`) espera, así cambiar la
+  conexión no exige cambiar código.
+
+Las aplicaciones se conectan con el rol `neondb_owner` usando dos cadenas:
+`Default` (su base) y `Auth` (`mpaz_auth`). Las claves van en user-secrets en
+desarrollo (`ConnectionStrings:Default`, `ConnectionStrings:Auth`) y en
+variables de entorno en el servidor; nunca en archivos versionados. Conectar
+el segundo `DbContext` a `mpaz_auth` y compartir las claves de DataProtection
+entre sistemas es el paso que falta para el login único.
