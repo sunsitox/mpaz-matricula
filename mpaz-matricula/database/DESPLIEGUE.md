@@ -115,7 +115,7 @@ central de autenticación:
 
 | Base | Contenido | Cómo se creó |
 |---|---|---|
-| `mpaz_asistencia` | Tablas del sistema de asistencia (`public`) | Equipo de asistencia |
+| `mpaz_asistencia` | Esquema `mpaz_asistencia`: 11 tablas + 9 enums + trigger `ck_alumno_en_curso` (movidos desde `public`) | Equipo de asistencia |
 | `mpaz_matricula` | Esquema `mpaz_matricula` sin Identity (31 tablas: 01+05+06) | `CREATE DATABASE` + pasos 01, 05, 06 |
 | `mpaz_auth` | Central de usuarios y sesiones: 7 tablas `AspNet*` + historial EF en esquema `mpaz_matricula` | `CREATE DATABASE` + `comun/pasos/02-identidad.sql` |
 
