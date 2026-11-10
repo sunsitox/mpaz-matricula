@@ -109,39 +109,37 @@ quedan disponibles con la misma numeración:
 /opt/mpaz-matriculas/releases/<release>/database/aplicar.sh mpaz_matricula ...
 ```
 
-## Neon (varios sistemas, auth central)
+## Neon (una base, un esquema por módulo)
 
-Proyecto `mpaz-database`, rama principal. Una base por sistema más una base
-central de autenticación:
+Proyecto `mpaz-database`, rama principal. Base única `mpaz`: cada módulo
+vive en su esquema y los JOIN entre módulos funcionan directo.
 
-| Base | Contenido | Cómo se creó |
+| Esquema (en `mpaz`) | Contenido | Cómo se creó |
 |---|---|---|
-| `mpaz_asistencia` | Esquema `mpaz_asistencia`: 11 tablas + 9 enums + trigger `ck_alumno_en_curso` (movidos desde `public`) | Equipo de asistencia |
-| `mpaz_matricula` | Esquema `mpaz_matricula` sin Identity (01, 05, 06, 07) + datos del desarrollo (889 filas, año 2027 activo) + 03 | Migración con triggers de usuario pausados, historial creado y 03 |
-| `mpaz_auth` | Central de usuarios y sesiones: 7 tablas `AspNet*` + historial EF en esquema `mpaz_matricula` | `CREATE DATABASE` + `comun/pasos/02-identidad.sql` |
+| `mpaz_matricula` | Dominio (01, 05, 06, 07) + Identity (7 tablas `AspNet*`, vía `comun/02`) + datos del desarrollo (889 filas, año 2027 activo) + 03 | `CREATE DATABASE mpaz` + pasos, migración con triggers de usuario pausados |
+| `mpaz_asistencia` | 11 tablas + 9 enums + `ck_alumno_en_curso`, vacío (sin datos que migrar) | Volcado de esquema desde la base `mpaz_asistencia`; guardado como `modulos/asistencia/pasos/10-ddl-asistencia.sql` |
 
 Adaptaciones respecto al recorrido local (Neon no permite `CREATE ROLE` por
 SQL y el dueño `neondb_owner` ya tiene todos los derechos sobre sus bases):
 
 - Se omite `comun/pasos/00-rol-aplicacion.sql` (no hay rol `mpaz_app` en Neon).
-  En su lugar: `ALTER DATABASE <base> SET search_path = mpaz_matricula, public`.
+  En su lugar: `ALTER DATABASE mpaz SET search_path = mpaz_matricula, public`.
 - Se omite `modulos/matricula/pasos/04-privilegios-aplicacion.sql` (otorga
   sobre `mpaz_app`); sin ese rol no aplica.
 - Se omite `03-permisos-iniciales.sql` hasta que el colegio apruebe la matriz
   (igual que en local).
-- `pg_trgm` ya viene instalada en Neon; el `CREATE EXTENSION` no hace nada.
-- El esquema dentro de `mpaz_auth` se llama `mpaz_matricula` a propósito: es el
-  nombre que el código (`MatriculaDbContext.Esquema`) espera, así cambiar la
-  conexión no exige cambiar código.
+- `pg_trgm` se instaló con `CREATE EXTENSION` explícito.
+- Las bases antiguas (`mpaz_matricula`, `mpaz_auth`, `mpaz_asistencia`) quedan
+  como respaldo hasta verificar el portal contra `mpaz`; después se pueden
+  eliminar desde el panel de Neon.
 
-Las aplicaciones se conectan con el rol `neondb_owner` usando dos cadenas:
-`Default` (su base) y `Auth` (`mpaz_auth`). Las claves van en user-secrets en
-desarrollo (`ConnectionStrings:Default`, `ConnectionStrings:Auth`) y en
-variables de entorno en el servidor; nunca en archivos versionados. Se aceptan
-en formato palabra-clave de Npgsql (`Host=...;Database=...`) o como URI tal
-como la entrega Neon (`postgresql://...`); `AddPersistencia` normaliza la URI
-sola, porque Npgsql no la entiende directo. El portal
-ya lee ambas: `CuentasDbContext` (derivado del mismo modelo) atiende Identity
-contra `mpaz_auth`, y sin cadena `Auth` todo convive en una sola conexión
-como antes. Compartir las claves de DataProtection entre sistemas es lo que
-falta para el login único (misma cookie válida en todos).
+Las aplicaciones se conectan con el rol `neondb_owner` con una sola cadena:
+`Default` (base `mpaz`); `Auth` apunta a la misma base y existe por si algún
+despliegue separa las cuentas. Las claves van en user-secrets en desarrollo
+(`ConnectionStrings:Default`, `ConnectionStrings:Auth`) y en variables de
+entorno en el servidor; nunca en archivos versionados. Se aceptan en formato
+palabra-clave de Npgsql (`Host=...;Database=...`) o como URI tal como la
+entrega Neon (`postgresql://...`); `AddPersistencia` normaliza la URI sola,
+porque Npgsql no la entiende directo. Compartir las claves de DataProtection
+entre sistemas es lo que falta para el login único (misma cookie válida en
+todos).

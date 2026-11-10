@@ -59,9 +59,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
 builder.Services.AddControllersWithViews(opciones =>
     opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
-// Base de datos: el dominio vive en el esquema dedicado "mpaz_matricula" y las
-// cuentas (Identity) pueden vivir en una base aparte —el auth central— que se
-// entrega en la cadena "Auth". Sin ella, todo convive en la misma conexión.
+// Base de datos: una sola base con un esquema por módulo. El dominio y las
+// cuentas (Identity) conviven en el esquema "mpaz_matricula"; la cadena
+// "Auth" existe por si algún despliegue separa las cuentas en otra base.
 // El proveedor de PostgreSQL y los DbContext se configuran en Infrastructure;
 // esta capa sólo entrega las cadenas.
 builder.Services.AddPersistencia(cadenaConexion, builder.Configuration.GetConnectionString("Auth"));

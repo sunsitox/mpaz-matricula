@@ -13,9 +13,10 @@ Cada módulo tiene su carpeta con la misma estructura:
 | Módulo | Estado |
 |---|---|
 | `matricula/` | Implementado (esquema `mpaz_matricula`). |
+| `asistencia/` | Semilla DDL (esquema `mpaz_asistencia`, paso 10): 11 tablas + 9 enums traídos de la base `mpaz_asistencia` de Neon. Sin datos de prueba aún. |
 | `_plantilla-modulo/` | Esqueleto para copiar. No es un módulo real. |
 
-Módulos futuros (asistencia, notas, apoyo, …) aún por definir con el equipo:
+Módulos futuros (notas, apoyo, …) aún por definir con el equipo:
 cuando se definan, copiar `_plantilla-modulo/` con el nombre del módulo y
 documentar aquí su esquema y su estado.
 

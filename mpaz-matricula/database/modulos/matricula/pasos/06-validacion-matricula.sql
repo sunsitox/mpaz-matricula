@@ -5,6 +5,10 @@
 -- trg_matricula_anual_auditoria. Aditivo e idempotente.
 -- =====================================================================
 
+-- Nombres sin calificar: se fija el search_path para no depender de la sesión
+-- (misma razón que el paso 07).
+SET search_path TO mpaz_matricula, public;
+
 ALTER TABLE matricula_anual
     ADD COLUMN IF NOT EXISTS validada_en TIMESTAMPTZ;
 
