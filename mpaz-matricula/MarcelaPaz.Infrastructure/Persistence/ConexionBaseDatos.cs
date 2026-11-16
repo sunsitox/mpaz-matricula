@@ -8,9 +8,10 @@ namespace MarcelaPaz.Infrastructure.Persistence;
 ///    host publicado con «-pooler»), y
 /// 2) la conexión directa a Neon (el mismo host sin «-pooler»), que se deriva
 ///    sola para no duplicar credenciales.
-/// La comprobación se hace una vez al arrancar: la primera respuesta buena se
-/// usa durante toda la ejecución. Si ninguna responde, el portal conserva la
-/// conexión configurada y muestra su aviso al consultar, como hasta ahora.
+/// La comprobación inicial se hace al arrancar. Después, el portal revalida el
+/// camino en caliente (ver ConexionViva) y cambia al otro lado sin reiniciar.
+/// Si ninguno responde al arrancar, el portal conserva la conexión configurada
+/// y muestra su aviso al consultar, como hasta ahora.
 /// </summary>
 public static class ConexionBaseDatos
 {
@@ -100,7 +101,7 @@ public static class ConexionBaseDatos
     /// Abre la base y ejecuta SELECT 1 con espera corta: sólo interesa saber si
     /// el camino responde ahora, no mantener la conexión abierta.
     /// </summary>
-    private static bool Probar(string cadena)
+    internal static bool Probar(string cadena)
     {
         try
         {

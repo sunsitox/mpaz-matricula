@@ -2,6 +2,7 @@ using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace MarcelaPaz.Infrastructure;
@@ -12,35 +13,61 @@ namespace MarcelaPaz.Infrastructure;
 /// </summary>
 public static class DependencyInjection
 {
-    /// <param name="cadena">Base del dominio (tablas institucionales).</param>
+    /// <param name="principal">Endpoint del servicio web (cadena configurada).</param>
+    /// <param name="directa">Conexión directa a Neon; si se omite, se deriva del principal.</param>
     /// <param name="cadenaCuentas">Base de las cuentas (Identity). Si se omite,
-    /// las cuentas viven junto al dominio con la misma conexión.</param>
+    /// las cuentas comparten el camino vivo junto al dominio.</param>
     public static IServiceCollection AddPersistencia(
-        this IServiceCollection servicios, string? cadena, string? cadenaCuentas = null)
+        this IServiceCollection servicios,
+        string? principal,
+        string? directa = null,
+        string? cadenaCuentas = null)
     {
-        if (string.IsNullOrWhiteSpace(cadena))
+        if (string.IsNullOrWhiteSpace(principal))
         {
             throw new InvalidOperationException(
                 "Configure ConnectionStrings:Default con la conexión a Neon; no hay una base local de respaldo.");
         }
 
-        var conexion = AjustarConexion(NormalizarConexion(cadena));
-        var conexionCuentas = AjustarConexion(NormalizarConexion(
-            string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas));
+        // La conexión vive en un único contenedor: la elección inicial por el
+        // servicio web y su revalidación en caliente (cambio automático al camino
+        // directo si el primero deja de responder) ocurren aquí, sin reiniciar.
+        servicios.AddSingleton<ConexionViva>(proveedor =>
+        {
+            var viva = new ConexionViva(
+                principal,
+                directa,
+                proveedor.GetRequiredService<ILogger<ConexionViva>>());
+            viva.IniciarRevision();
+            return viva;
+        });
+
+        string? conexionCuentas = string.IsNullOrWhiteSpace(cadenaCuentas)
+            ? null
+            : AjustarConexion(NormalizarConexion(cadenaCuentas));
 
         // Reintentos ante fallos transitorios: si el servidor cierra una conexión
         // ociosa o la red se corta, la consulta se repite en vez de terminar en
         // una página de error «posible fallo transitorio».
-        servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(
-            conexion, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+        // Cada contexto lee el camino vigente al crearse, así que el cambio en
+        // caliente surte efecto en el pedido siguiente.
+        void Registrar<TContext>(Func<IServiceProvider, string> cadena)
+            where TContext : DbContext
+        {
+            servicios.AddDbContext<TContext>((proveedor, opciones) => opciones.UseNpgsql(
+                cadena(proveedor),
+                npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+        }
 
-        servicios.AddDbContext<CuentasDbContext>(opciones => opciones.UseNpgsql(
-            conexionCuentas, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+        Func<IServiceProvider, string> caminoActual =
+            proveedor => proveedor.GetRequiredService<ConexionViva>().CadenaActual;
+
+        Registrar<MatriculaDbContext>(caminoActual);
+        Registrar<CuentasDbContext>(conexionCuentas is null ? caminoActual : _ => conexionCuentas);
 
         // Emisor SSO (prototipo del login único): comparte la conexión de las
         // cuentas para no crear una base aparte.
-        servicios.AddDbContext<SsoDbContext>(opciones => opciones.UseNpgsql(
-            conexionCuentas, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+        Registrar<SsoDbContext>(conexionCuentas is null ? caminoActual : _ => conexionCuentas);
 
         return servicios;
     }
@@ -90,7 +117,7 @@ public static class DependencyInjection
     /// sin esto, la primera consulta después de un rato podía fallar con
     /// «Se ha forzado la interrupción de una conexión existente».
     /// </summary>
-    private static string AjustarConexion(string conexion)
+    internal static string AjustarConexion(string conexion)
     {
         try
         {

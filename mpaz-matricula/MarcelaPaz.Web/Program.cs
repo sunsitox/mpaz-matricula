@@ -24,10 +24,9 @@ if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(cadenaCone
 }
 
 // Dos caminos a la misma base: primero el endpoint del servicio web y, si no
-// responde, la conexión directa a Neon. La elección se hace una vez al arrancar.
-var conexionElegida = ConexionBaseDatos.Elegir(
-    cadenaConexion,
-    builder.Configuration.GetConnectionString("Directa"));
+// responde, la conexión directa a Neon. La elección y la revalidación ocurren
+// en caliente (sin reiniciar), dentro de AddPersistencia.
+var cadenaDirecta = builder.Configuration.GetConnectionString("Directa");
 
 var directorioClaves = builder.Configuration["DataProtection:KeysPath"];
 if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(directorioClaves))
@@ -73,7 +72,7 @@ builder.Services.AddControllersWithViews(opciones =>
 // "Auth" existe por si algún despliegue separa las cuentas en otra base.
 // El proveedor de PostgreSQL y los DbContext se configuran en Infrastructure;
 // esta capa sólo entrega las cadenas.
-builder.Services.AddPersistencia(conexionElegida.Cadena, builder.Configuration.GetConnectionString("Auth"));
+builder.Services.AddPersistencia(cadenaConexion, cadenaDirecta, builder.Configuration.GetConnectionString("Auth"));
 
 // Emisor SSO (prototipo del login único): el portal emite credenciales
 // OpenID Connect para Asistencia, la web y Notas.
@@ -197,10 +196,11 @@ if (!builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 // Queda en el registro de arranque qué camino se está usando a la base.
-app.Logger.LogInformation("Base de datos: {Origen}.", conexionElegida.Origen);
-if (conexionElegida.Aviso is not null)
+var conexionViva = app.Services.GetRequiredService<ConexionViva>();
+app.Logger.LogInformation("Base de datos: {Origen}.", conexionViva.Origen);
+if (conexionViva.Aviso is not null)
 {
-    app.Logger.LogWarning("{Aviso}", conexionElegida.Aviso);
+    app.Logger.LogWarning("{Aviso}", conexionViva.Aviso);
 }
 
 // Al partir, cada funcionario activo de la base queda con su cuenta lista.
