@@ -272,6 +272,67 @@ public class FichaEtapa1Tests
     }
 
     [Fact]
+    public void Paso2_RestriccionDelPadre_SoloSeExigeConDatosDelPadre()
+    {
+        // Sin datos del padre no hay vínculo que restringir: la pregunta no aplica.
+        var sinPadre = ValidadorFicha.Validar(2, new FichaForm
+        {
+            Madre_Nombre_Apellido = "Ana",
+            Madre_Cedula_Identidad = "12.345.678-5",
+            Madre_Telefono = "+56912345678",
+            Restriccion_Madre = "No",
+        });
+
+        Assert.DoesNotContain(sinPadre, error => error.Campo == nameof(FichaForm.Restriccion_Padre));
+
+        var padreSinRespuesta = ValidadorFicha.Validar(2, new FichaForm
+        {
+            Madre_Nombre_Apellido = "Ana",
+            Madre_Cedula_Identidad = "12.345.678-5",
+            Madre_Telefono = "+56912345678",
+            Restriccion_Madre = "No",
+            Padre_Nombre_Apellido = "Luis",
+            Padre_Cedula_Identidad = "6.532.187-4",
+            Padre_Telefono = "+56922345678",
+        });
+
+        Assert.Contains(padreSinRespuesta, error => error.Campo == nameof(FichaForm.Restriccion_Padre));
+
+        var padreIncompleto = ValidadorFicha.Validar(2, new FichaForm
+        {
+            Madre_Nombre_Apellido = "Ana",
+            Madre_Cedula_Identidad = "12.345.678-5",
+            Madre_Telefono = "+56912345678",
+            Restriccion_Madre = "No",
+            Padre_Nombre_Apellido = "Luis",
+            Padre_Cedula_Identidad = "6.532.187-4",
+            Padre_Telefono = "+56922345678",
+            Restriccion_Padre = "Si",
+        });
+
+        Assert.Contains(padreIncompleto, error => error.Campo == nameof(FichaForm.Restriccion_Padre_Tipo));
+        Assert.Contains(padreIncompleto, error => error.Campo == nameof(FichaForm.Restriccion_Padre_Detalle));
+
+        var completa = ValidadorFicha.Validar(2, new FichaForm
+        {
+            Madre_Nombre_Apellido = "Ana",
+            Madre_Cedula_Identidad = "12.345.678-5",
+            Madre_Telefono = "+56912345678",
+            Restriccion_Madre = "No",
+            Padre_Nombre_Apellido = "Luis",
+            Padre_Cedula_Identidad = "6.532.187-4",
+            Padre_Telefono = "+56922345678",
+            Restriccion_Padre = "Si",
+            Restriccion_Padre_Tipo = "Judicial",
+            Restriccion_Padre_Detalle = "Orden de alejamiento vigente",
+        });
+
+        Assert.DoesNotContain(completa, error => error.Campo == nameof(FichaForm.Restriccion_Padre));
+        Assert.DoesNotContain(completa, error => error.Campo == nameof(FichaForm.Restriccion_Padre_Tipo));
+        Assert.DoesNotContain(completa, error => error.Campo == nameof(FichaForm.Restriccion_Padre_Detalle));
+    }
+
+    [Fact]
     public void Paso6_SituacionParcial_ExigeDetalleYTratamiento()
     {
         var errores = ValidadorFicha.Validar(6, new FichaForm

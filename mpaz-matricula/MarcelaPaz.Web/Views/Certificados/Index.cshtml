@@ -43,7 +43,7 @@
                             <td data-etiqueta="Año">@certificado.Anio</td>
                             <td data-etiqueta="Emitido">@certificado.EmitidoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                             <td data-etiqueta="Por">@(certificado.EmitidoPor ?? "—")</td>
-                            <td data-etiqueta="Estado">@(certificado.Anulado ? "Anulado" : "Vigente")</td>
+                            <td data-etiqueta="Estado">@(certificado.Anulado ? "Anulado" : certificado.Vencido ? "Vencido" : "Vigente")</td>
                         </tr>
                     }
                 </tbody>

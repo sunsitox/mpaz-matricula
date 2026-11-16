@@ -43,6 +43,28 @@ public static class ValidadorFicha
                     ExigirAdulto(errores, "del padre", form.Padre_Nombre_Apellido, form.Padre_Cedula_Identidad,
                         form.Padre_Telefono, nameof(FichaForm.Padre_Nombre_Apellido),
                         nameof(FichaForm.Padre_Cedula_Identidad), nameof(FichaForm.Padre_Telefono));
+
+                    // La restricción del padre sólo aplica cuando hay datos del
+                    // padre; sin vínculo no hay a quién restringir.
+                    if (string.IsNullOrWhiteSpace(form.Restriccion_Padre))
+                    {
+                        errores.Add(new ErrorValidacion(nameof(FichaForm.Restriccion_Padre),
+                            "Responda si existe alguna restricción que prohíba al padre vincularse."));
+                    }
+                    else if (EsSi(form.Restriccion_Padre))
+                    {
+                        if (string.IsNullOrWhiteSpace(form.Restriccion_Padre_Tipo))
+                        {
+                            errores.Add(new ErrorValidacion(nameof(FichaForm.Restriccion_Padre_Tipo),
+                                "Indique si la restricción del padre es judicial o familiar."));
+                        }
+
+                        if (string.IsNullOrWhiteSpace(form.Restriccion_Padre_Detalle))
+                        {
+                            errores.Add(new ErrorValidacion(nameof(FichaForm.Restriccion_Padre_Detalle),
+                                "Describa la restricción declarada para el padre."));
+                        }
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(form.Restriccion_Madre))

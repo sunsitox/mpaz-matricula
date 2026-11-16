@@ -35,4 +35,26 @@ public class FichaVersion
     public DateOnly? FechaFirma { get; set; }
 
     public int? FirmantePersonaId { get; set; }
+
+    // ── MAT-10 · Archivo físico y validación documental ──────────────────
+
+    /// <summary>Dónde queda el original en papel de esta ficha (caja, carpeta, archivo).</summary>
+    public string? UbicacionOriginalFisico { get; set; }
+
+    /// <summary>PENDIENTE, VALIDADA u OBSERVADA, según la revisión de Dirección.</summary>
+    public string EstadoValidacion { get; set; } = "PENDIENTE";
+
+    public int? ValidadoPor { get; set; }
+
+    public DateTimeOffset? ValidadoEn { get; set; }
+
+    /// <summary>Motivo de la observación cuando la validación no procede.</summary>
+    public string? ObservacionValidacion { get; set; }
+
+    /// <summary>Escaneo de la ficha firmada asociado a esta versión (MAT-09).</summary>
+    public int? EscaneoDocumentoId { get; set; }
+
+    public int? EscaneoSubidoPor { get; set; }
+
+    public DateTimeOffset? EscaneoSubidoEn { get; set; }
 }

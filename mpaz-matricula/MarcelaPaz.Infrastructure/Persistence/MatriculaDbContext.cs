@@ -35,7 +35,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
 
-    public DbSet<Rol> Roles => Set<Rol>();
+    // Oculta a propósito el Roles de Identity: el portal usa sus propios roles.
+    public new DbSet<Rol> Roles => Set<Rol>();
 
     public DbSet<FuncionarioRol> FuncionarioRoles => Set<FuncionarioRol>();
 
@@ -196,7 +197,14 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.CreadaPor).HasColumnName("creada_por");
             e.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
             e.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
-            e.Property(x => x.Version).HasColumnName("version").HasDefaultValue(1);
+            // Bloqueo optimista: el trigger de la base incrementa version en cada
+            // UPDATE. Si otro funcionario guardó antes, la sentencia no encuentra
+            // la fila y EF lanza DbUpdateConcurrencyException.
+            e.Property(x => x.Version)
+                .HasColumnName("version")
+                .HasDefaultValue(1)
+                .IsConcurrencyToken()
+                .ValueGeneratedOnAddOrUpdate();
             e.Property(x => x.ConfirmadaEn).HasColumnName("confirmada_en");
             e.Property(x => x.ConfirmadaPor).HasColumnName("confirmada_por");
             e.Property(x => x.Observaciones).HasColumnName("observaciones");
@@ -353,6 +361,15 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.PdfDocumentoId).HasColumnName("pdf_documento_id");
             e.Property(x => x.FechaFirma).HasColumnName("fecha_firma");
             e.Property(x => x.FirmantePersonaId).HasColumnName("firmante_persona_id");
+            // MAT-10: archivo físico y validación documental.
+            e.Property(x => x.UbicacionOriginalFisico).HasColumnName("ubicacion_original_fisico").HasMaxLength(200);
+            e.Property(x => x.EstadoValidacion).HasColumnName("estado_validacion").HasMaxLength(10).HasDefaultValue("PENDIENTE").IsRequired();
+            e.Property(x => x.ValidadoPor).HasColumnName("validado_por");
+            e.Property(x => x.ValidadoEn).HasColumnName("validado_en");
+            e.Property(x => x.ObservacionValidacion).HasColumnName("observacion_validacion");
+            e.Property(x => x.EscaneoDocumentoId).HasColumnName("escaneo_documento_id");
+            e.Property(x => x.EscaneoSubidoPor).HasColumnName("escaneo_subido_por");
+            e.Property(x => x.EscaneoSubidoEn).HasColumnName("escaneo_subido_en");
         });
 
         builder.Entity<Documento>(e =>

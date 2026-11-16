@@ -1,6 +1,7 @@
 @model MarcelaPaz.Web.Models.FichaForm
 @{
-    Layout = "_WizardLayout";
+    // Sin layout cuando el paso se pide como parcial (cambio sin recargar).
+    Layout = ViewData["Parcial"] is true ? null : "_WizardLayout";
     // La ficha se muestra a tamaño real: este paso ocupa más ancho que el resto.
     ViewData["AnchoAmplio"] = true;
     var datos = (Dictionary<string, string>)(ViewData["Borrador"] ?? new Dictionary<string, string>());
@@ -90,7 +91,9 @@
                     </div>
                     <iframe class="wizard__pdf-marco"
                             src="@Url.Action("Comprobante", "Ficha")"
-                            title="Vista previa de la ficha de matrícula"></iframe>
+                            title="Vista previa de la ficha de matrícula"
+                            loading="eager"
+                            onload="this.closest('.wizard__pdf')?.classList.add('wizard__pdf--lista');"></iframe>
                 </div>
             </aside>
         </div>

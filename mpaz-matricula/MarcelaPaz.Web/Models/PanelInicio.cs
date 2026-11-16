@@ -41,8 +41,6 @@ public class PanelInicio
 
     public List<CursoPanel> Cursos { get; set; } = new();
 
-    public List<AccesoPanel> Accesos { get; set; } = new();
-
     /// <summary>Porcentaje de expedientes cerrados sobre el total del año.</summary>
     public int Avance => TotalMatriculas == 0
         ? 0
@@ -66,6 +64,8 @@ public class PanelInicio
         public string Accion { get; set; } = string.Empty;
 
         public string? Area { get; set; }
+
+        public string? Recurso { get; set; }
 
         public string? Funcionario { get; set; }
     }

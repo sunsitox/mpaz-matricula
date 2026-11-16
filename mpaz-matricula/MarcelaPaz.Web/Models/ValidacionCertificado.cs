@@ -19,4 +19,14 @@ public sealed record ValidacionCertificado
     public int? Anio { get; init; }
 
     public DateTimeOffset? EmitidoEn { get; init; }
+
+    /// <summary>Fin de vigencia impreso en el papel: emisión + 30 días.</summary>
+    public DateTimeOffset? VigenteHasta { get; init; }
+
+    /// <summary>
+    /// El certificado existe y es auténtico, pero pasó su plazo de vigencia.
+    /// Se distingue de «no válido» para no confundir un documento vencido con
+    /// un folio mal escrito.
+    /// </summary>
+    public bool Vencido { get; init; }
 }

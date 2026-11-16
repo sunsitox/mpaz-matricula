@@ -3,33 +3,112 @@
    Reutiliza los tokens de site.css (--color-primary, --color-action, ...)
    ========================================================================== */
 
+.panel {
+    display: grid;
+    gap: 1.25rem;
+}
+
+/* El contenedor ya separa los bloques con gap: se anulan los márgenes sueltos. */
+.panel > * {
+    margin: 0;
+}
+
+.panel .admin__tarjeta + .admin__tarjeta {
+    margin-top: 0;
+}
+
+/* Las secciones del panel comparten el mismo encabezado con filete. */
+.panel h2.admin__titulo-seccion {
+    margin: 0 0 1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 1.15rem;
+}
+
+/* --------------------------------------------------------------------------
+   Cabecera: título a la izquierda, año y roles a la derecha
+   -------------------------------------------------------------------------- */
+
 .panel__encabezado {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1.25rem 1.5rem;
+}
+
+.panel__titulo .admin__ayuda {
+    max-width: 60ch;
+    margin-bottom: 0;
+}
+
+.panel__controles {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.55rem;
+}
+
+/* Selector de año escolar: una sola línea, no un campo de formulario ancho. */
+.panel__anio {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.panel__anio .acceso__etiqueta {
+    margin: 0;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.panel__anio .acceso__input {
+    width: 6.5rem;
+    height: 36px;
+    padding: 0 0.5rem;
+}
+
+.panel__anio .admin__boton {
+    height: 36px;
+    padding: 0 1rem;
+}
+
+.panel__roles {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
+    justify-content: flex-end;
+    gap: 0.3rem;
+}
+
+.panel__roles .admin__chip {
+    margin: 0;
 }
 
 .panel__meta {
-    margin: .5rem 0 0;
-    font-size: .78rem;
+    max-width: 46ch;
+    margin: 0;
     color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.45;
     text-align: right;
 }
+
+/* --------------------------------------------------------------------------
+   Indicadores
+   -------------------------------------------------------------------------- */
 
 .panel__kpis {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 1rem;
-    margin: 1rem 0;
 }
 
 .panel__kpi {
     display: flex;
     flex-direction: column;
-    gap: .15rem;
-    padding: 1rem 1.15rem;
+    gap: 0.2rem;
+    padding: 1.05rem 1.2rem;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 10px;
@@ -45,51 +124,60 @@
     box-shadow: inset 3px 0 0 var(--color-accent);
 }
 
-/* La fecha de acceso se mantiene en una línea; la tabla se desplaza si no cabe. */
-.panel__fecha {
-    white-space: nowrap;
-}
-
 .panel__etiqueta {
-    font-size: .75rem;
-    font-weight: 600;
-    letter-spacing: .05em;
-    text-transform: uppercase;
+    /* Dos líneas reservadas: los cuatro valores quedan a la misma altura aunque
+       un rótulo ocupe dos renglones. */
+    min-height: 2.2em;
     color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    text-transform: uppercase;
 }
 
 .panel__valor {
-    font-size: 2rem;
-    line-height: 1.1;
     color: var(--color-primary);
+    font-size: 2rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
 }
 
 .panel__detalle {
-    font-size: .8rem;
+    margin-top: auto;
     color: var(--color-text-secondary);
+    font-size: 0.8rem;
 }
+
+/* --------------------------------------------------------------------------
+   Columnas de contenido
+   -------------------------------------------------------------------------- */
 
 .panel__columnas {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     align-items: start;
+    gap: 1rem;
 }
 
-@media (max-width: 900px) {
-    .panel__columnas {
-        grid-template-columns: 1fr;
-    }
+/* --------------------------------------------------------------------------
+   Tabla de avance
+   -------------------------------------------------------------------------- */
 
-    .panel__meta {
-        text-align: left;
-    }
+.panel__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.panel__avance {
+    width: 42%;
 }
 
 .panel__celda-avance {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: 0.5rem;
+    min-width: 120px;
 }
 
 .panel__barra {
@@ -110,10 +198,20 @@
 
 .panel__pct {
     min-width: 2.6rem;
-    font-size: .78rem;
     color: var(--color-text-secondary);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
     text-align: right;
 }
+
+/* La fecha de acceso se mantiene en una línea; la tabla se desplaza si no cabe. */
+.panel__fecha {
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Lista de pendientes
+   -------------------------------------------------------------------------- */
 
 .panel__lista {
     margin: 0;
@@ -125,8 +223,8 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: .55rem 0;
-    font-size: .9rem;
+    padding: 0.55rem 0;
+    font-size: 0.9rem;
     border-bottom: 1px dashed var(--color-border);
 }
 
@@ -136,21 +234,62 @@
 
 .panel__lista strong {
     color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
 }
+
+/* --------------------------------------------------------------------------
+   Acciones del día a día, dentro de la cabecera
+   -------------------------------------------------------------------------- */
 
 .panel__acciones {
     display: flex;
     flex-wrap: wrap;
-    gap: .6rem;
-    margin-top: .75rem;
+    gap: 0.6rem;
+    margin-top: 1rem;
 }
 
-/* Selector de año escolar del panel */
-.panel__anio {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+.panel__acciones form {
+    display: block;
+    margin: 0;
+}
+
+/* Enlace discreto a la actividad del portal. */
+.panel__nota {
+    margin: 1rem 0 0;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 0.82rem;
+}
+
+/* --------------------------------------------------------------------------
+   Pantallas angostas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 980px) {
+    .panel__encabezado {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .panel__controles {
+        align-items: flex-start;
+    }
+
+    .panel__roles {
+        justify-content: flex-start;
+    }
+
+    .panel__meta {
+        text-align: left;
+    }
+}
+
+@media (max-width: 900px) {
+    .panel__columnas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .panel__avance {
+        width: auto;
+    }
 }

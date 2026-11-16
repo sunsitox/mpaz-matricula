@@ -141,7 +141,7 @@ CREATE TABLE comuna (
 
 CREATE TABLE curso (
     id     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre VARCHAR(20) NOT NULL UNIQUE,          -- ej. '1° A', 'Kinder B'
+    nombre VARCHAR(20) NOT NULL UNIQUE,          -- ej. 'PK A', '1° A', '8° B'
     activo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
@@ -836,7 +836,9 @@ BEGIN
     -- Auditoría de cambios (datos personales y sensibles: restringir lectura de
     -- historial_cambios al área AUDITORIA, porque guarda copias de estas filas)
     FOREACH t IN ARRAY ARRAY[
-        'estudiante', 'persona', 'estudiante_persona', 'restriccion_familiar',
+        -- funcionario: cambios de nombre, correo o estado de la cuenta también
+        -- se auditan (antes sólo quedaba registrado funcionario_rol).
+        'estudiante', 'persona', 'funcionario', 'estudiante_persona', 'restriccion_familiar',
         'contacto_emergencia', 'retiro_autorizado', 'matricula_anual',
         'documento', 'requisito_documental', 'ficha_version',
         'antecedente_salud', 'situacion_medica', 'antecedente_apoyo',

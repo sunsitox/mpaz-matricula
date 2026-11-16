@@ -52,6 +52,25 @@ public class HomeController : Controller
         }
     }
 
+    /// <summary>
+    /// Registro de actividad del portal en su propia página: el panel queda
+    /// para los indicadores y las acciones del día a día.
+    /// </summary>
+    public async Task<IActionResult> Actividad()
+    {
+        try
+        {
+            return View(new ActividadPanel { Accesos = await _panel.ActividadAsync(100) });
+        }
+        catch (Exception ex) when (ex is DbException or InvalidOperationException)
+        {
+            return View(new ActividadPanel
+            {
+                Error = "No se pudo leer el registro de actividad: revise la conexión con la base de datos.",
+            });
+        }
+    }
+
     [AllowAnonymous]
     public IActionResult Error() => View();
 }

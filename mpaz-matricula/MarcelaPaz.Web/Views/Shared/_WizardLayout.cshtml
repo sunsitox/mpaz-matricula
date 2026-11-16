@@ -86,18 +86,25 @@
             <p class="wizard__ayuda-pagina">Complete los ocho pasos; puede retomar la ficha más tarde.</p>
         </div>
 
-        <div class="wizard__tarjeta">
+        @* El paso se cambia aquí dentro con fetch: sólo esta tarjeta se
+           reemplaza, sin recargar el encabezado, el stepper ni el pie. *@
+        <div class="wizard__tarjeta" id="ficha-paso" data-paso="@pasoActual">
             @RenderBody()
         </div>
 
+        <p id="ficha-aviso" class="sr-only" role="status" aria-live="polite"></p>
+
         <div class="wizard__nota-guardado">
-            Al presionar «Guardar y continuar», lo escrito queda guardado en la ficha del estudiante.
-            <span class="wizard__nota-guardado-detalle">Puede retomarla después desde la ficha del alumno.</span>
+            Al presionar «Continuar», se conservan los datos para el siguiente paso.
+            <span class="wizard__nota-guardado-detalle">La ficha se guarda definitivamente al confirmar en el paso 8.</span>
         </div>
     </main>
 
     <partial name="_Notificacion" />
 
+    @* ficha.js va antes que ux.js: intercepta el envío del paso y evita que
+       ux.js tape la página con el velo de carga. *@
+    <script src="~/js/ficha.js" asp-append-version="true" defer></script>
     <script src="~/js/ux.js" asp-append-version="true" defer></script>
 </body>
 </html>

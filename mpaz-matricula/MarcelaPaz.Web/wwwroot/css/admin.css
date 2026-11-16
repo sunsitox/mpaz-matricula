@@ -12,55 +12,213 @@
     font-size: 0.85rem;
 }
 
+/* Cabecera institucional. El alto vive en --cab-alto para que el menú lateral,
+   que se pega debajo, siga el mismo valor cuando una variante la hace más alta. */
+html {
+    --cab-alto: 88px;
+}
+
 .admin__header {
-    display: flex;
+    /* Cabecera institucional dorada: única disposición del panel. */
+    --cab-fondo: #081A44;
+    --cab-texto: #F4EEDC;
+    --cab-tenue: rgba(244, 238, 220, 0.78);
+    --cab-linea: rgba(201, 162, 39, 0.45);
+    --cab-filete: #C9A227;
+    --cab-filete-ancho: 3px;
+    --cab-placa-fondo: #F4EEDC;
+    --cab-placa-radio: 6px;
+    --cab-placa-sombra: none;
+    --cab-avatar-fondo: transparent;
+    --cab-avatar-borde: #C9A227;
+    --cab-avatar-texto: #E7C766;
+    --cab-avatar-radio: 6px;
+    --cab-anio-fondo: transparent;
+    --cab-anio-texto: #E7C766;
+    --cab-salir-borde: #C9A227;
+    --cab-salir-fondo: transparent;
+    --cab-salir-texto: #E7C766;
+    --cab-salir-hover-fondo: #C9A227;
+    --cab-salir-hover-texto: #081A44;
+    --cab-titulo-familia: inherit;
+    --cab-titulo-transform: uppercase;
+    --cab-titulo-tracking: 0.1em;
+    --cab-titulo-size: 0.98rem;
+
+    /* Disposición: marca a la izquierda en dos líneas, año y sesión al borde
+       derecho. Las tres zonas son fijas; sólo se reacomodan al angostarse. */
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding: 1rem 2rem;
-    background: var(--color-primary);
-    color: #FFFFFF;
-    flex-wrap: wrap;
+    gap: 1rem;
+    height: var(--cab-alto);
+    padding: 0 1.5rem;
+    background: var(--cab-fondo);
+    /* El filete va como borde: ux.css fija su propia sombra al encabezado. */
+    border-bottom: var(--cab-filete-ancho) solid var(--cab-filete);
+    color: var(--cab-texto);
 }
 
 .admin__marca {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 0.8rem;
+    min-width: 0;
 }
 
+.admin__marca-texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Nombre del establecimiento bajo el título: parte de la disposición Escolar. */
+.admin__subtitulo {
+    display: block;
+    color: var(--cab-tenue);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* El escudo va sobre una placa blanca: así se lee sobre el azul. */
 .admin__marca .acceso__logo-img {
-    width: 40px;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 3px;
+    border-radius: var(--cab-placa-radio);
+    background: var(--cab-placa-fondo);
+    box-shadow: var(--cab-placa-sombra);
+    object-fit: contain;
 }
 
 .admin__titulo {
+    color: var(--cab-texto);
+    font-family: var(--cab-titulo-familia);
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: var(--cab-titulo-size);
+    letter-spacing: var(--cab-titulo-tracking);
+    text-transform: var(--cab-titulo-transform);
+    white-space: nowrap;
+}
+
+/* Filete que separa la marca de la sesión. */
+.admin__marca::after {
+    content: "";
+    width: 1px;
+    height: 26px;
+    margin-left: 0.9rem;
+    background: var(--cab-linea);
 }
 
 .admin__sesion {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-self: end;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.admin__persona {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+/* Iniciales del funcionario: ubica la sesión sin ocupar ancho. */
+.admin__avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--cab-avatar-borde);
+    border-radius: var(--cab-avatar-radio);
+    background: var(--cab-avatar-fondo);
+    color: var(--cab-avatar-texto);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
 }
 
 .admin__usuario {
-    color: var(--color-text-panel);
-    font-size: 0.9rem;
+    color: var(--cab-tenue);
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .admin__salir {
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background: transparent;
-    color: #FFFFFF;
-    border-radius: 6px;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-height: 34px;
+    padding: 0 0.95rem;
+    border: 1px solid var(--cab-salir-borde);
+    border-radius: 999px;
+    background: var(--cab-salir-fondo);
+    color: var(--cab-salir-texto);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
 }
 
-.admin__salir:hover {
-    background: rgba(255, 255, 255, 0.12);
+.admin__salir:hover,
+.admin__salir:focus-visible {
+    border-color: var(--cab-salir-hover-fondo);
+    background: var(--cab-salir-hover-fondo);
+    color: var(--cab-salir-hover-texto);
+}
+
+.admin__salir:focus-visible {
+    outline: 3px solid var(--cab-salir-borde);
+    outline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+    .admin__marca::after {
+        display: none;
+    }
+
+    .admin__usuario {
+        max-width: 16ch;
+    }
+}
+
+@media (max-width: 700px) {
+    .admin__header {
+        gap: 0.75rem;
+        padding: 0 1rem;
+    }
+
+    .admin__anio {
+        display: none;
+    }
+
+    .admin__usuario {
+        max-width: 12ch;
+    }
+
+    .admin__titulo {
+        font-size: 0.95rem;
+    }
+
+    .admin__marca .acceso__logo-img {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+@media (max-width: 520px) {
+    /* Queda el avatar con las iniciales; el nombre completo vive en el title. */
+    .admin__usuario {
+        display: none;
+    }
 }
 
 .admin__contenedor {
@@ -339,11 +497,14 @@
 .admin__anio {
     display: inline-flex;
     align-items: center;
-    padding: 0.3rem 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    color: #FFFFFF;
+    /* Escolar: sin píldora; el año se separa de la sesión con un filete. */
+    padding: 0.2rem 0 0.2rem 0.9rem;
+    border: 0;
+    border-left: 1px solid var(--cab-linea);
+    justify-self: end;
+    border-radius: 0;
+    background: var(--cab-anio-fondo);
+    color: var(--cab-anio-texto);
     font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
@@ -352,5 +513,5 @@
 
 a.admin__anio:hover,
 a.admin__anio:focus-visible {
-    background: rgba(255, 255, 255, 0.24);
+    filter: brightness(1.12);
 }

@@ -1,0 +1,14 @@
+{
+  "name": "mpaz-simulacion-visual",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulación visual de usuario del Portal de Matrícula MPAZ (Playwright, navegador visible).",
+  "type": "module",
+  "scripts": {
+    "simular": "node simulacion-secretaria.mjs",
+    "simular:headless": "node simulacion-secretaria.mjs --headless"
+  },
+  "dependencies": {
+    "playwright": "latest"
+  }
+}

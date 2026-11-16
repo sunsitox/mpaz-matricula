@@ -314,6 +314,65 @@
             La validación es el acto institucional de Dirección, distinto de confirmar. Solo sobre matrícula firmada o confirmada.
         </p>
     }
+    @* MAT-10: dónde queda el original en papel y si la documentación fue validada *@
+    @if (Model.PuedeVerDocumentos && !string.IsNullOrWhiteSpace(Model.FolioFicha))
+    {
+        <div class="expediente__validacion">
+            <h3 class="admin__subtitulo">Original en papel y validación documental</h3>
+            <p class="admin__ayuda">
+                Ficha <strong>@Model.FolioFicha</strong> · original en papel:
+                <strong>@(string.IsNullOrWhiteSpace(Model.UbicacionOriginalFisico) ? "sin ubicación registrada" : Model.UbicacionOriginalFisico)</strong>
+                · validación: <strong>@Model.EstadoValidacion</strong>
+                @if (Model.ValidacionDocumentalEn is DateTimeOffset validadaDocumental)
+                {
+                    <span>
+                        · @validadaDocumental.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                        @(Model.ValidacionDocumentalPor is string validadorDocumental ? $"({validadorDocumental})" : "")
+                    </span>
+                }
+            </p>
+            @if (!string.IsNullOrWhiteSpace(Model.ObservacionValidacion))
+            {
+                <p class="admin__ayuda">Observación: @Model.ObservacionValidacion</p>
+            }
+
+            @if (Model.PuedeValidarDocumentacion && Model.MatriculaId is int documentalId)
+            {
+                <form method="post" asp-action="ValidarDocumentacion" asp-route-id="@documentalId"
+                      data-ux-envio="Registrando la validación documental…">
+                    <div class="acceso__campo">
+                        <label class="acceso__etiqueta" for="ubicacion-original">Ubicación del original en papel</label>
+                        <input class="acceso__input" id="ubicacion-original" name="ubicacion" type="text"
+                               maxlength="200" value="@Model.UbicacionOriginalFisico"
+                               placeholder="Ej: caja 3, carpeta 2027, archivo de secretaría" />
+                    </div>
+                    <div class="acceso__campo">
+                        <label class="acceso__etiqueta" for="estado-validacion">Estado de la validación</label>
+                        <select class="acceso__input" id="estado-validacion" name="estado">
+                            <option value="PENDIENTE" selected="@(Model.EstadoValidacion == "PENDIENTE" ? "selected" : null)">Pendiente</option>
+                            <option value="VALIDADA" selected="@(Model.EstadoValidacion == "VALIDADA" ? "selected" : null)">Validada</option>
+                            <option value="OBSERVADA" selected="@(Model.EstadoValidacion == "OBSERVADA" ? "selected" : null)">Observada</option>
+                        </select>
+                    </div>
+                    <div class="acceso__campo">
+                        <label class="acceso__etiqueta" for="observacion-validacion">
+                            Observación (obligatoria si queda observada)
+                        </label>
+                        <textarea class="acceso__input" id="observacion-validacion" name="observacion"
+                                  rows="2" maxlength="500">@Model.ObservacionValidacion</textarea>
+                    </div>
+                    <button type="submit" class="admin__boton"
+                            data-ux-confirmar="¿Registrar este estado de validación documental? Queda con su nombre y la fecha.">
+                        Guardar validación documental
+                    </button>
+                    <p class="admin__ayuda">
+                        «Validada» exige la fecha de firma registrada y el escaneo de la ficha firmada.
+                    </p>
+                </form>
+            }
+        </div>
+    }
+
     @if (!Model.PuedeVerDocumentos)
     {
         <p class="admin__ayuda">Su rol no incluye la consulta de los documentos del expediente.</p>

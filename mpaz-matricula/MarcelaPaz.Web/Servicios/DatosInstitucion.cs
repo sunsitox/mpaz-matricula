@@ -29,10 +29,11 @@ public sealed class DatosInstitucion
     /// <summary>Nombre de quien firma. Vacío = firma el funcionario que emite.</summary>
     public string FirmanteNombre { get; set; } = string.Empty;
 
-    public string FirmanteCargo { get; set; } = "Dirección";
+    public string FirmanteCargo { get; set; } = "Directora";
 
     /// <summary>
-    /// Base pública de validación. Vacía = se arma con el dominio de la
+    /// Origen público del portal para el QR de verificación (por ejemplo
+    /// <c>https://portal.mpaz.cl</c>). Vacía = se usa el dominio de la
     /// petición que emite el documento.
     /// </summary>
     public string UrlValidacion { get; set; } = string.Empty;
@@ -54,6 +55,21 @@ public static class EmisionCertificado
 
     public const string PropositoGenerico = "Para los fines que estime conveniente.";
 
+    /// <summary>
+    /// Días de vigencia de un certificado desde su emisión. Pasado ese plazo la
+    /// validación pública lo declara vencido: el papel acredita la situación de
+    /// un año y el establecimiento no responde por él indefinidamente.
+    /// </summary>
+    public const int DiasVigencia = 30;
+
+    /// <summary>Momento en que el certificado deja de ser válido (emisión + 30 días).</summary>
+    public static DateTimeOffset VenceEn(DateTimeOffset emitidoEn) =>
+        emitidoEn.AddDays(DiasVigencia);
+
+    /// <summary>Vigente mientras no se cumpla el plazo: al día 30 ya está vencido.</summary>
+    public static bool EstaVigente(DateTimeOffset emitidoEn, DateTimeOffset ahora) =>
+        ahora < VenceEn(emitidoEn);
+
     public static string FormatoFolio(int anio, int id) => $"CAR-{anio}-{id:D6}";
 
     /// <summary>Código aleatorio de 12 caracteres en grupos de 4 (XXXX-XXXX-XXXX).</summary>
@@ -73,4 +89,11 @@ public static class EmisionCertificado
         var limpio = codigo.Replace("-", string.Empty).Trim().ToUpperInvariant();
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(limpio)));
     }
+
+    /// <summary>
+    /// Código sin guiones para la dirección corta del QR: mientras menos
+    /// caracteres, menos módulos y más fácil de leer el código impreso.
+    /// </summary>
+    public static string CodigoParaUrl(string codigo) =>
+        codigo.Replace("-", string.Empty).Trim().ToUpperInvariant();
 }

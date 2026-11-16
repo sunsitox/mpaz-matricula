@@ -33,15 +33,18 @@
                 Busque por nombre, RUN, IPE o IPA; filtre por año, curso, estado o pendientes y ordene por cualquier columna.
             </p>
         </div>
-        @if (Model.Anio > 0)
-        {
-            <span class="alumnos__insignia">Año escolar @Model.Anio</span>
-        }
-        <a class="admin__boton" asp-controller="Reportes" asp-action="Matriculas"
-           asp-route-anio="@(Model.Anio > 0 ? Model.Anio : (int?)null)" data-ux-cargando>Reportes</a>
+        <div class="alumnos__acciones-cabecera">
+            @if (Model.Anio > 0)
+            {
+                <span class="alumnos__insignia">Año escolar @Model.Anio</span>
+            }
+            <a class="admin__boton" asp-controller="Reportes" asp-action="Matriculas"
+               asp-route-anio="@(Model.Anio > 0 ? Model.Anio : (int?)null)" data-ux-cargando>Reportes</a>
+        </div>
     </div>
 
     <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
+        <div class="alumnos__filtros-campos">
         @if (Model.Anios.Count > 0)
         {
             <div class="acceso__campo">
@@ -83,13 +86,17 @@
             </select>
         </div>
 
-        <label class="alumnos__check">
-            <input type="checkbox" name="pendientes" value="true"
-                   checked="@(Model.SoloPendientes ? "checked" : null)" />
-            <span>Solo con pendientes</span>
-        </label>
+        </div>
 
-        <button type="submit" class="admin__boton admin__boton--primario alumnos__boton-buscar">Filtrar</button>
+        <div class="alumnos__filtros-pie">
+            <label class="alumnos__check">
+                <input type="checkbox" name="pendientes" value="true"
+                       checked="@(Model.SoloPendientes ? "checked" : null)" />
+                <span>Solo con pendientes</span>
+            </label>
+
+            <button type="submit" class="admin__boton admin__boton--primario alumnos__boton-buscar">Filtrar</button>
+        </div>
     </form>
 
     <p class="alumnos__filtros-ayuda">

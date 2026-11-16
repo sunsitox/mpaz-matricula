@@ -6,7 +6,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY MarcelaPaz.Domain/MarcelaPaz.Domain.csproj MarcelaPaz.Domain/
-COPY MarcelaPaz.Application/MarcelaPaz.Application.csproj MarcelaPaz.Application/
 COPY MarcelaPaz.Infrastructure/MarcelaPaz.Infrastructure.csproj MarcelaPaz.Infrastructure/
 COPY MarcelaPaz.Web/MarcelaPaz.Web.csproj MarcelaPaz.Web/
 RUN dotnet restore MarcelaPaz.Web/MarcelaPaz.Web.csproj

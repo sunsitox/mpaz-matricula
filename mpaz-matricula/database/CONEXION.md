@@ -2,7 +2,28 @@
 
 El portal usa PostgreSQL y EF Core (Npgsql). La cadena de conexión se entrega en
 `Program.cs` a `AddPersistencia(...)`, que vive en `MarcelaPaz.Infrastructure`:
-la capa Web no conoce el proveedor, sólo pasa la cadena.
+la capa Web no conoce el proveedor, sólo pasa la cadena. La base de trabajo es
+`mpaz` en Neon, también al ejecutar el portal en el equipo de desarrollo.
+
+## Dos caminos a la misma base
+
+El portal intenta conectarse en este orden:
+
+1. **Servicio web** — la cadena `ConnectionStrings:Default` tal como está
+   configurada (en Neon, el host publicado con `-pooler`).
+2. **Conexión directa a Neon** — el mismo host sin `-pooler`, que acepta las
+   mismas credenciales y se deriva solo de la anterior.
+
+La comprobación (`SELECT 1` con espera corta) ocurre una vez al arrancar y
+queda en el registro: `Base de datos: endpoint del servicio web.` o
+`Base de datos: conexión directa a Neon (el servicio web no respondió).` Si
+ninguno responde, se conserva la conexión configurada y el portal muestra su
+aviso al consultar.
+
+Para usar otra conexión directa (otro host, un rol distinto), definir
+`ConnectionStrings:Directa` en user-secrets o en el entorno; si se omite, se
+deriva quitando `-pooler` al host. El código vive en
+`MarcelaPaz.Infrastructure/Persistence/ConexionBaseDatos.cs`.
 
 ## Esquema dedicado
 
@@ -27,33 +48,44 @@ triggers y las vistas resuelvan los nombres sin calificar.
 
 | Entorno | Mecanismo | Archivo |
 |---|---|---|
-| Desarrollo local (Visual Studio, `dotnet run`) | `appsettings.Development.json` | `mpaz-matricula/MarcelaPaz.Web/appsettings.Development.json` |
+| Desarrollo (Visual Studio, `dotnet run`) | Neon en `appsettings.Development.json`, credenciales completas en user-secrets | `mpaz-matricula/MarcelaPaz.Web/appsettings.Development.json` |
 | Servidor | variable de entorno `ConnectionStrings__Default` | no hay archivo: la define el hosting |
-| Respaldo si no hay nada configurado | `CadenaPorDefecto` en `Infrastructure/DependencyInjection.cs` | `Database=mpaz`, `Username=mpaz_app` |
+| Sin conexión configurada | El arranque informa el error | No hay conexión local de respaldo |
 
 ASP.NET Core aplica esta precedencia (de menor a mayor):
 
 1. `appsettings.json`
 2. `appsettings.{Entorno}.json` — acá está la cadena de desarrollo
-3. Variables de entorno — acá debe ir la del servidor
-4. Argumentos de línea de comandos
+3. User-secrets (sólo en `Development`)
+4. Variables de entorno — acá debe ir la del servidor
+5. Argumentos de línea de comandos
 
 Por eso `appsettings.json` deja `ConnectionStrings:Default` vacío: es el valor
-base, y cualquier entorno lo sobrescribe. En desarrollo manda
-`appsettings.Development.json`; en el servidor (`Production`) manda la variable
-de entorno.
+base, y cualquier entorno lo sobrescribe. En desarrollo los user-secrets
+completan y sobrescriben la cadena del archivo; en el servidor (`Production`)
+manda la variable de entorno.
 
-## Desarrollo local
+## Desarrollo con Neon
 
 ```json
 "ConnectionStrings": {
-  "Default": "Host=localhost;Port=5432;Database=mpaz-matricula;Username=postgres;Password=...;Search Path=mpaz_matricula,public"
+  "Default": "Host=ep-lucky-wildflower-be8llkch-pooler.c-9.us-east-2.aws.neon.tech;Port=5432;Database=mpaz;Username=neondb_owner;Ssl Mode=require;Search Path=mpaz_matricula,public"
 }
 ```
 
 La contraseña no está versionada: vive en user-secrets (`dotnet user-secrets set "ConnectionStrings:Default"
 "<cadena>"`) y sobrescribe al archivo. Antes de publicar el repositorio,
 verificar que ningún archivo versionado traiga una clave real.
+
+`ConnectionStrings:Auth`, si está definido en user-secrets o en el entorno,
+debe apuntar a la misma base `mpaz` en Neon: lo usan Identity y OpenIddict.
+Si se omite, ambos utilizan `ConnectionStrings:Default`.
+
+El script `scripts/probar-sso.py` también usa Neon. Antes de ejecutarlo, definir
+`MPAZ_DB_CONEXION` con la URI PostgreSQL de esa misma base, además de las
+variables de prueba indicadas en el script. La consulta de comparación abre
+una conexión de sólo lectura. El portal puede seguir ejecutándose en localhost;
+eso no implica usar PostgreSQL local.
 
 ## Instalación nueva
 
@@ -107,7 +139,7 @@ pg_restore -d <base-destino> respaldo.dump
 1. Definir la variable de entorno antes de iniciar la aplicación:
 
    ```
-   ConnectionStrings__Default = Host=127.0.0.1;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=<clave>;SSL Mode=Disable;Search Path=mpaz_matricula,public
+   ConnectionStrings__Default = Host=<host-neon>;Port=5432;Database=mpaz;Username=<rol-aplicacion>;Password=<clave>;SSL Mode=Require;Search Path=mpaz_matricula,public
    ```
 
    El doble guion bajo `__` es la forma de escribir `ConnectionStrings:Default`

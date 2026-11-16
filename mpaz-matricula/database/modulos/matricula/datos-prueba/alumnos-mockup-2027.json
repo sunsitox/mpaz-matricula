@@ -209,8 +209,8 @@
       "comuna": "San Bernardo",
       "estadoMatricula": "activo",
       "pie": false,
-      "curso2026": { "nivel": "4º básico", "letra": "C", "anio": 2026 },
-      "curso2027": { "nivel": "5º básico", "letra": "C", "anio": 2027 },
+      "curso2026": { "nivel": "4º básico", "letra": "B", "anio": 2026 },
+      "curso2027": { "nivel": "5º básico", "letra": "B", "anio": 2027 },
       "madre": {
         "nombreApellido": "Verónica del Carmen Lagos Rivas",
         "run": "14.567.890-0",

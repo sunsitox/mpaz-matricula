@@ -29,7 +29,8 @@ public static class FichaImpresion
         ("Padre", new[]
         {
             "padre: nombre apellido", "padre: cédula identidad", "padre: teléfono",
-            "padre: escolaridad", "padre: domicilio", "padre: correo",
+            "padre: escolaridad", "padre: domicilio", "padre: correo", "restricción padre (SI/NO)",
+            "restricción padre: tipo", "restricción padre: detalle",
         }),
         ("Apoderado principal", new[]
         {
@@ -141,6 +142,8 @@ public static class FichaImpresion
         ["salida solo al finalizar jornada (SI/NO)"] = "Salida solo",
         ["restricción madre: tipo"] = "Restricción: tipo",
         ["restricción madre: detalle"] = "Restricción: detalle",
+        ["restricción padre: tipo"] = "Restricción: tipo",
+        ["restricción padre: detalle"] = "Restricción: detalle",
         ["alergias"] = "Alergias",
         ["contacto sanitario: nombre"] = "Contacto sanitario",
         ["contacto sanitario: teléfono"] = "Teléfono del contacto sanitario",
@@ -159,13 +162,14 @@ public static class FichaImpresion
         // Apartados condicionales: si la respuesta es «No», el detalle no se
         // imprime; si es «Sí», aparece. Lo no respondido tampoco aparece.
         var sinRestriccionMadre = EsNo(datos, "restricción madre (SI/NO)");
+        var sinRestriccionPadre = EsNo(datos, "restricción padre (SI/NO)");
         var sinSituacionMedica = EsNo(datos, "situación médica (SI/NO)");
         var pieNoParticipa = EsNo(datos, "PIE: participa (SI/NO/PENDIENTE)");
 
         foreach (var (titulo, claves) in Bloques)
         {
             var campos = claves
-                .Where(clave => Visible(clave, datos, sinRestriccionMadre, sinSituacionMedica, pieNoParticipa))
+                .Where(clave => Visible(clave, datos, sinRestriccionMadre, sinRestriccionPadre, sinSituacionMedica, pieNoParticipa))
                 .Select(clave => new CampoFicha
                 {
                     Etiqueta = Etiqueta(clave),
@@ -205,6 +209,7 @@ public static class FichaImpresion
         string clave,
         IReadOnlyDictionary<string, string> datos,
         bool sinRestriccionMadre,
+        bool sinRestriccionPadre,
         bool sinSituacionMedica,
         bool pieNoParticipa)
     {
@@ -221,6 +226,11 @@ public static class FichaImpresion
         }
 
         if (sinRestriccionMadre && clave.StartsWith("restricción madre:", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (sinRestriccionPadre && clave.StartsWith("restricción padre:", StringComparison.Ordinal))
         {
             return false;
         }

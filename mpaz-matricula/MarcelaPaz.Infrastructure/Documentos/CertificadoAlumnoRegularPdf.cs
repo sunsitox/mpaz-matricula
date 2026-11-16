@@ -5,10 +5,11 @@ using QuestPDF.Infrastructure;
 namespace MarcelaPaz.Infrastructure.Documentos;
 
 /// <summary>
-/// Certificado de alumno regular en hoja A4 completa: el contenido ocupa
-/// todo el alto disponible (un flexible intermedio empuja la firma hacia
-/// abajo y el pie de verificación va fijo al fondo), para que el papel se
-/// vea formal y sin vacíos.
+/// Certificado de alumno regular en una sola página A4. Lleva sólo lo que el
+/// documento necesita para ser válido: identificación del establecimiento
+/// (nombre, RBD, reconocimiento oficial y dirección), nombre y RUN del alumno,
+/// curso y año académico, folio, lugar y fecha, y la firma con su cargo. El
+/// QR al pie permite comprobar el papel sin agregar datos al texto.
 /// </summary>
 public sealed class CertificadoAlumnoRegularPdf : IDocument
 {
@@ -26,21 +27,7 @@ public sealed class CertificadoAlumnoRegularPdf : IDocument
 
     public byte[] Generar()
     {
-        return Document.Create(contenedor =>
-        {
-            contenedor.Page(pagina =>
-            {
-                pagina.Size(PageSizes.A4);
-                pagina.MarginLeft(56);
-                pagina.MarginRight(56);
-                pagina.MarginTop(44);
-                pagina.MarginBottom(36);
-                pagina.DefaultTextStyle(estilo => estilo.FontSize(12));
-
-                pagina.Content().Element(Cuerpo);
-                pagina.Footer().Element(Verificacion);
-            });
-        }).GeneratePdf();
+        return Document.Create(Compose).GeneratePdf();
     }
 
     public void Compose(IDocumentContainer contenedor)
@@ -50,12 +37,15 @@ public sealed class CertificadoAlumnoRegularPdf : IDocument
             pagina.Size(PageSizes.A4);
             pagina.MarginLeft(56);
             pagina.MarginRight(56);
-            pagina.MarginTop(44);
-            pagina.MarginBottom(36);
+            pagina.MarginTop(42);
+            pagina.MarginBottom(38);
             pagina.DefaultTextStyle(estilo => estilo.FontSize(12));
 
             pagina.Content().Element(Cuerpo);
-            pagina.Footer().Element(Verificacion);
+
+            // La firma cierra la hoja: el contenido superior fluye libre y el
+            // pie queda siempre abajo, con espacio para el timbre manual.
+            pagina.Footer().Element(Pie);
         });
     }
 
@@ -69,122 +59,120 @@ public sealed class CertificadoAlumnoRegularPdf : IDocument
 
             columna.Item().PaddingTop(8).Column(reglas =>
             {
-                reglas.Item().LineHorizontal(2.2f).LineColor(Azul);
+                reglas.Item().LineHorizontal(2.4f).LineColor(Azul);
                 reglas.Item().PaddingTop(2).LineHorizontal(0.7f).LineColor(GrisClaro);
             });
 
-            columna.Item().PaddingTop(10).AlignRight()
-                .Text($"Folio N° {_certificado.Folio}").FontSize(10).FontColor(Gris).Bold();
+            columna.Item().PaddingTop(16).AlignCenter()
+                .Text("CERTIFICADO DE ALUMNO REGULAR")
+                .FontSize(20).Bold().FontColor(Azul).LetterSpacing(0.1f);
 
             columna.Item().PaddingTop(6).AlignCenter()
-                .Text("CERTIFICADO DE ALUMNO REGULAR")
-                .FontSize(16.5f).Bold().FontColor(Azul).LetterSpacing(0.12f);
+                .Text($"Folio N° {_certificado.Folio}")
+                .FontSize(10.5f).FontColor(Gris).LetterSpacing(0.05f);
 
-            columna.Item().PaddingTop(14).Text(declaracion =>
+            columna.Item().PaddingTop(30).Text(declaracion =>
             {
-                declaracion.DefaultTextStyle(estilo => estilo.FontSize(12.5f).LineHeight(1.65f));
-                declaracion.Justify();
-                declaracion.Span("La Dirección de la ");
-                declaracion.Span(_certificado.Establecimiento).Bold();
-                declaracion.Span($", RBD N° {_certificado.Rbd}, dependiente del {_certificado.Sostenedor}, certifica que el(la) alumno(a) ");
+                declaracion.DefaultTextStyle(estilo => estilo.FontSize(12).LineHeight(1.6f));
+                declaracion.AlignLeft();
+                declaracion.Span("La Dirección del establecimiento certifica que ");
+
                 declaracion.Span(_certificado.AlumnoNombre.ToUpperInvariant()).Bold();
-                declaracion.Span($", RUN N° {_certificado.AlumnoRut}, nacido(a) el {_certificado.FechaNacimiento}, se encuentra matriculado(a) en {_certificado.Curso} de este establecimiento, correspondiente al año académico {_certificado.Anio}.");
+                declaracion.Span($", {_certificado.AlumnoDocumento}, ");
+
+                if (_certificado.MatriculaFutura)
+                {
+                    declaracion.Span("se encuentra matriculado(a) en este establecimiento para cursar ");
+                    declaracion.Span(_certificado.Curso).Bold();
+                    declaracion.Span($" durante el año académico {_certificado.Anio}.");
+                }
+                else
+                {
+                    declaracion.Span("es alumno(a) regular de este establecimiento y cursa ");
+                    declaracion.Span(_certificado.Curso).Bold();
+                    declaracion.Span($" durante el año académico {_certificado.Anio}.");
+                }
             });
 
-            columna.Item().PaddingTop(10).Text(_certificado.Proposito)
-                .FontSize(12.5f).LineHeight(1.65f).Justify();
+            columna.Item().PaddingTop(18)
+                .Text("Se extiende el presente certificado a solicitud del apoderado(a), para los fines que estime conveniente.")
+                .FontSize(12).LineHeight(1.6f).AlignLeft();
 
-            columna.Item().PaddingTop(10).Text(_certificado.LugarFecha)
-                .FontSize(12.5f);
+            columna.Item().PaddingTop(22)
+                .Text(_certificado.LugarFecha).FontSize(12).AlignLeft();
 
-            // Margen fijo calculado para que la firma caiga al último tercio
-            // y la hoja se vea completa (Extend empujaba la firma a otra página).
-            columna.Item().PaddingTop(100).Element(Firmas);
+            // El papel declara su propio plazo: quien lo recibe sabe hasta cuándo
+            // puede comprobarlo en el portal.
+            if (!string.IsNullOrWhiteSpace(_certificado.Vigencia))
+            {
+                columna.Item().PaddingTop(4)
+                    .Text(_certificado.Vigencia).FontSize(10).FontColor(Gris).AlignLeft();
+            }
         });
     }
 
+    /// <summary>
+    /// Membrete: identifica al establecimiento emisor con los datos que lo
+    /// hacen verificable (RBD y reconocimiento oficial).
+    /// </summary>
     private void Membrete(IContainer contenedor)
     {
-        contenedor.Column(columna =>
+        // Escudo arriba a la izquierda y los datos del establecimiento a su
+        // lado: deja la franja superior limpia y el ancho libre a la derecha.
+        contenedor.Row(fila =>
         {
             if (_certificado.Logo is { Length: > 0 })
             {
-                columna.Item().AlignCenter().Height(64).Image(_certificado.Logo, ImageScaling.FitHeight);
+                fila.ConstantItem(64).AlignMiddle().Height(54)
+                    .Image(_certificado.Logo).FitHeight();
             }
 
-            columna.Item().PaddingTop(4).AlignCenter()
-                .Text(_certificado.Sostenedor.ToUpperInvariant())
-                .FontSize(9).FontColor(Gris).LetterSpacing(0.15f);
+            fila.RelativeItem().AlignMiddle().Column(columna =>
+            {
+                columna.Item().Text(_certificado.Sostenedor.ToUpperInvariant())
+                    .FontSize(8.5f).FontColor(Gris).LetterSpacing(0.15f);
 
-            columna.Item().PaddingTop(2).AlignCenter()
-                .Text(_certificado.Establecimiento)
-                .FontSize(15).Bold();
+                columna.Item().PaddingTop(1).Text(_certificado.Establecimiento)
+                    .FontSize(15).Bold();
 
-            columna.Item().AlignCenter()
-                .Text(_certificado.Reconocimiento)
-                .FontSize(9).Italic().FontColor(Gris);
+                columna.Item().Text(_certificado.Reconocimiento)
+                    .FontSize(9).Italic().FontColor(Gris);
 
-            columna.Item().PaddingTop(2).AlignCenter()
-                .Text($"{_certificado.Direccion} · {_certificado.Contacto}")
-                .FontSize(9).FontColor(Gris);
+                columna.Item().PaddingTop(2)
+                    .Text($"{_certificado.Direccion} · RBD {_certificado.Rbd}")
+                    .FontSize(9).FontColor(Gris);
+            });
         });
     }
 
-    private void Firmas(IContainer contenedor)
+    private void Pie(IContainer contenedor)
     {
-        contenedor.Row(fila =>
+        contenedor.Column(pie =>
         {
-            fila.RelativeItem().Column(columna =>
-            {
-                columna.Item().PaddingTop(40).AlignCenter().Width(230).LineHorizontal(0.8f).LineColor(Gris);
-                columna.Item().AlignCenter()
-                    .Text(_certificado.FirmanteNombre).FontSize(12.5f).Bold();
-                columna.Item().AlignCenter()
-                    .Text($"{_certificado.FirmanteCargo} · {_certificado.Establecimiento}")
-                    .FontSize(10).FontColor(Gris);
-            });
+            pie.Item().PaddingTop(10).LineHorizontal(0.6f).LineColor(GrisClaro);
 
-            fila.ConstantItem(128).Column(columna =>
+            pie.Item().PaddingTop(14).Row(fila =>
             {
-                columna.Item().Height(104).Border(0.8f).BorderColor(GrisClaro)
-                    .AlignCenter().AlignMiddle()
-                    .Text("Timbre del establecimiento").FontSize(8).FontColor(Gris);
-            });
-        });
-    }
-
-    private void Verificacion(IContainer contenedor)
-    {
-        contenedor
-            .BorderTop(0.7f).BorderColor(GrisClaro)
-            .PaddingTop(8)
-            .Column(columna =>
-            {
-                columna.Item().Text("VERIFICACIÓN DE AUTENTICIDAD")
-                    .FontSize(8.5f).Bold().FontColor(Gris).LetterSpacing(1.2f);
-
-                columna.Item().PaddingTop(4).Row(fila =>
+                // La firma ocupa el bloque central de la hoja; el resto de la
+                // línea queda libre para el timbre manual.
+                fila.RelativeItem(3).Column(columna =>
                 {
-                    if (_certificado.Qr is { Length: > 0 })
-                    {
-                        fila.ConstantItem(72).Image(_certificado.Qr);
-                        fila.ConstantItem(10);
-                    }
+                    columna.Item().AlignCenter().Width(232).LineHorizontal(0.9f).LineColor(Gris);
+                    columna.Item().PaddingTop(5).AlignCenter()
+                        .Text(_certificado.FirmanteNombre).FontSize(12.5f).SemiBold();
+                    columna.Item().AlignCenter()
+                        .Text(_certificado.FirmanteCargo).FontSize(10.5f).FontColor(Gris);
+                });
 
-                    fila.RelativeItem().Column(datos =>
-                    {
-                        datos.Item().Text(texto =>
-                        {
-                            texto.Span("Folio: ").Bold();
-                            texto.Span(_certificado.Folio);
-                            texto.Span("   ·   Código: ").Bold();
-                            texto.Span(_certificado.Codigo);
-                        });
-                        datos.Item().Text($"Valide este documento en: {_certificado.UrlValidacion}");
-                        datos.Item().Text("La versión digital es válida con su folio y código; el papel además lleva timbre y firma.")
-                            .Italic().FontColor(Gris);
-                    });
+                fila.RelativeItem(1).Column(columna =>
+                {
+                    columna.Item().AlignCenter().Width(84).Height(84).Image(_certificado.Qr);
+                    columna.Item().PaddingTop(4).AlignCenter()
+                        .Text("Verifique este certificado").FontSize(8).FontColor(Gris);
+                    columna.Item().AlignCenter()
+                        .Text($"Cód. {_certificado.Codigo}").FontSize(8).SemiBold().FontColor(Gris);
                 });
             });
+        });
     }
 }

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
@@ -23,6 +22,12 @@ if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(cadenaCone
     throw new InvalidOperationException(
         "Producción requiere la variable ConnectionStrings__Default; no se usará una conexión implícita.");
 }
+
+// Dos caminos a la misma base: primero el endpoint del servicio web y, si no
+// responde, la conexión directa a Neon. La elección se hace una vez al arrancar.
+var conexionElegida = ConexionBaseDatos.Elegir(
+    cadenaConexion,
+    builder.Configuration.GetConnectionString("Directa"));
 
 var directorioClaves = builder.Configuration["DataProtection:KeysPath"];
 if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(directorioClaves))
@@ -68,7 +73,11 @@ builder.Services.AddControllersWithViews(opciones =>
 // "Auth" existe por si algún despliegue separa las cuentas en otra base.
 // El proveedor de PostgreSQL y los DbContext se configuran en Infrastructure;
 // esta capa sólo entrega las cadenas.
-builder.Services.AddPersistencia(cadenaConexion, builder.Configuration.GetConnectionString("Auth"));
+builder.Services.AddPersistencia(conexionElegida.Cadena, builder.Configuration.GetConnectionString("Auth"));
+
+// Emisor SSO (prototipo del login único): el portal emite credenciales
+// OpenID Connect para Asistencia, la web y Notas.
+builder.Services.AddEmisorSso(builder.Configuration, builder.Environment);
 
 // Documentos imprimibles (PDF) generados desde el formulario.
 builder.Services.AddDocumentos();
@@ -187,6 +196,13 @@ if (!builder.Environment.IsDevelopment())
 
 var app = builder.Build();
 
+// Queda en el registro de arranque qué camino se está usando a la base.
+app.Logger.LogInformation("Base de datos: {Origen}.", conexionElegida.Origen);
+if (conexionElegida.Aviso is not null)
+{
+    app.Logger.LogWarning("{Aviso}", conexionElegida.Aviso);
+}
+
 // Al partir, cada funcionario activo de la base queda con su cuenta lista.
 await using (var alcance = app.Services.CreateAsyncScope())
 {
@@ -205,7 +221,22 @@ await using (var alcance = app.Services.CreateAsyncScope())
         // Sin base de datos el portal igual abre el login y avisa en pantalla.
         app.Logger.LogError(ex, "No se pudieron preparar las cuentas de los funcionarios.");
     }
-}
+    }
+
+    // Emisor SSO (prototipo del login único): registra el cliente y los scopes
+    // de prueba. Sólo siembra en desarrollo; el registro real de clientes es
+    // tarea del despliegue.
+    await using (var alcanceSso = app.Services.CreateAsyncScope())
+    {
+        try
+        {
+            await EmisorSso.SembrarAsync(alcanceSso.ServiceProvider);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "No se pudo sembrar el emisor SSO de prueba.");
+        }
+    }
 
 app.UseForwardedHeaders();
 
@@ -274,5 +305,20 @@ app.Use(async (contexto, siguiente) =>
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Calentamiento en segundo plano de QuestPDF (precarga fuentes y SkiaSharp para evitar lag en primera vista previa)
+var generadorPdf = app.Services.GetService<MarcelaPaz.Infrastructure.Documentos.FichaMatriculaPdf>();
+_ = Task.Run(() =>
+{
+    try
+    {
+        var dummy = MarcelaPaz.Web.Models.FichaImpresion.DesdeBorrador(new Dictionary<string, string>(), 2027, DateTime.Now);
+        generadorPdf?.Generar(dummy);
+    }
+    catch
+    {
+        // Si falla en segundo plano no detiene la aplicación
+    }
+});
 
 app.Run();

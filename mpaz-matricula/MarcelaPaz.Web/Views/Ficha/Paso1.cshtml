@@ -1,6 +1,7 @@
 @model MarcelaPaz.Web.Models.FichaForm
 @{
-    Layout = "_WizardLayout";
+    // Sin layout cuando el paso se pide como parcial (cambio sin recargar).
+    Layout = ViewData["Parcial"] is true ? null : "_WizardLayout";
 }
 <h2 class="wizard__titulo-paso">Paso 1 · Datos del apoderado</h2>
 <p class="wizard__ayuda">
@@ -23,8 +24,8 @@
                     <label asp-for="Curso_Nivel" class="acceso__etiqueta">Curso *</label>
                     <select asp-for="Curso_Nivel" class="acceso__input">
                         <option value="">— Seleccione —</option>
-                        <option>NT1</option>
-                        <option>NT2</option>
+                        <option>Pre-kínder</option>
+                        <option>Kínder</option>
                         <option>1º básico</option>
                         <option>2º básico</option>
                         <option>3º básico</option>
@@ -42,8 +43,6 @@
                         <option value="">— Seleccione —</option>
                         <option>A</option>
                         <option>B</option>
-                        <option>C</option>
-                        <option>D</option>
                     </select>
                     <span asp-validation-for="Curso_Letra" class="acceso__error"></span>
                 </div>
@@ -127,6 +126,6 @@
     </details>
 
     <div class="wizard__botones">
-        <button type="submit" class="acceso__boton wizard__guardar">Guardar y continuar</button>
+        <button type="submit" class="acceso__boton wizard__guardar">Continuar</button>
     </div>
 </form>

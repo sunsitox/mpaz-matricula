@@ -10,8 +10,18 @@
 }
 
 .admin__menu {
+    /* El menú queda fijo bajo el encabezado mientras el contenido se desplaza y
+       ocupa todo el alto de la ventana, no sólo el de sus enlaces: la columna
+       blanca llega siempre hasta el borde inferior. */
+    position: sticky;
+    top: var(--cab-alto, 88px);
+    align-self: flex-start;
     flex: 0 0 220px;
     width: 220px;
+    height: calc(100vh - var(--cab-alto, 88px));
+    max-height: calc(100vh - var(--cab-alto, 88px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 1.5rem 0.75rem;
     background: var(--color-surface);
     border-right: 1px solid var(--color-border);
@@ -60,11 +70,17 @@
     }
 
     .admin__menu {
+        /* En pantallas angostas el menú es una fila horizontal: al desplazarse
+           la página no debe quedarse pegado ocupando alto. */
+        position: static;
         display: flex;
         flex: none;
         gap: 0.5rem;
         width: 100%;
+        height: auto;
+        max-height: none;
         overflow-x: auto;
+        overflow-y: hidden;
         padding: 0.75rem;
         border-right: 0;
         border-bottom: 1px solid var(--color-border);
@@ -88,7 +104,27 @@
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1rem 1.5rem;
+    padding-bottom: 1.15rem;
+    margin-bottom: 1.15rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.alumnos__encabezado h1 {
+    margin-bottom: 0.35rem;
+}
+
+.alumnos__encabezado .admin__ayuda {
+    max-width: 62ch;
+    margin-bottom: 0;
+}
+
+/* Año y acceso a reportes, juntos a la derecha del título. */
+.alumnos__acciones-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
 }
 
 .alumnos__insignia {
@@ -103,20 +139,49 @@
     font-weight: 600;
 }
 
+/* Dos líneas: los campos arriba y la acción abajo, siempre en el mismo orden.
+   En una sola línea el botón caía al costado y quedaba lejos de su formulario. */
 .alumnos__filtros {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.alumnos__filtros-campos {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: 0.75rem;
+    gap: 1rem;
+}
+
+/* Los campos no arrastran el margen del formulario de acceso. */
+.alumnos__filtros .acceso__campo {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.alumnos__filtros-campos > .acceso__campo:not(.alumnos__campo-texto) {
+    flex: 0 1 9.5rem;
+}
+
+.alumnos__filtros-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
 }
 
 .alumnos__check {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    min-height: 40px;
+    min-height: 44px;
     font-size: 0.88rem;
     color: var(--color-text);
+    white-space: nowrap;
 }
 
 .alumnos__check input {
@@ -126,6 +191,7 @@
 
 .alumnos__campo-texto {
     flex: 1 1 280px;
+    min-width: 0;
 }
 
 .alumnos__boton-buscar {
@@ -202,6 +268,35 @@
     background: #F8FAFD;
 }
 
+/* Filas de una lista: datos centrados en vertical y sin separador final. */
+.alumnos__tabla td {
+    vertical-align: middle;
+}
+
+.alumnos__tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.alumnos__tabla thead th.alumnos__col-accion {
+    text-align: right;
+}
+
+/* Reparto de columnas: el nombre ocupa el ancho que necesita para no partirse
+   en tres líneas y las cifras quedan compactas a la derecha. */
+.alumnos__tabla td {
+    font-size: 0.88rem;
+    padding-block: 0.6rem;
+}
+
+.alumnos__tabla th:nth-child(1) { width: 28%; }
+.alumnos__tabla th:nth-child(2) { width: 13%; }
+.alumnos__tabla th:nth-child(3) { width: 8%; }
+.alumnos__tabla th:nth-child(4) { width: 12%; }
+.alumnos__tabla th:nth-child(5) { width: 10%; }
+.alumnos__tabla th:nth-child(6) { width: 12%; }
+.alumnos__tabla th:nth-child(7) { width: 11%; }
+.alumnos__tabla th:nth-child(8) { width: 6%; }
+
 .alumnos__orden {
     display: inline-flex;
     align-items: center;
@@ -270,17 +365,26 @@
     color: var(--color-text-secondary);
 }
 
+/* Acción de la fila: píldora discreta, separada del texto de la tabla. */
 .alumnos__ver {
     display: inline-flex;
     align-items: center;
-    /* Enlace de acción de la tabla: 24 px de alto (WCAG 2.2 · 2.5.8). */
-    min-height: 24px;
-    padding-block: 0.15rem;
+    justify-content: center;
+    /* Objetivo táctil de al menos 24 px de alto (WCAG 2.2 · 2.5.8). */
+    min-height: 28px;
+    padding: 0 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
     color: var(--color-action);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
+}
+
+.alumnos__ver:hover {
+    border-color: var(--color-action);
+    background: var(--color-bg);
 }
 
 .alumnos__ver:hover {

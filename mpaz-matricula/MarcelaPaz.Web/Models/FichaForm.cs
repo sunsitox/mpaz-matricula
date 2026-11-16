@@ -17,6 +17,7 @@ public class FichaForm
     public string? Curso_Nivel { get; set; }
 
     [Required(ErrorMessage = "Seleccione la letra del curso.")]
+    [RegularExpression("^(A|B)$", ErrorMessage = "La letra del curso debe ser A o B: el colegio tiene dos cursos por nivel.")]
     public string? Curso_Letra { get; set; }
 
     [Required(ErrorMessage = "Falta el año escolar.")]
@@ -102,6 +103,17 @@ public class FichaForm
     /// <summary>Detalle de la restricción declarada.</summary>
     [StringLength(500, ErrorMessage = "El detalle no puede superar los 500 caracteres.")]
     public string? Restriccion_Madre_Detalle { get; set; }
+
+    // La misma pregunta para el padre: una orden también puede prohibirle
+    // vincularse con el o la estudiante. Sólo se pide cuando hay datos del padre.
+    public string? Restriccion_Padre { get; set; }
+
+    /// <summary>Tipo de restricción declarada para el padre: Judicial o Familiar.</summary>
+    public string? Restriccion_Padre_Tipo { get; set; }
+
+    /// <summary>Detalle de la restricción declarada para el padre.</summary>
+    [StringLength(500, ErrorMessage = "El detalle no puede superar los 500 caracteres.")]
+    public string? Restriccion_Padre_Detalle { get; set; }
 
     // Paso 3 · Apoderado principal y secundario
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]

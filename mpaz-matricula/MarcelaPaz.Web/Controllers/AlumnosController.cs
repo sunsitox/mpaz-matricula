@@ -269,6 +269,7 @@ public class AlumnosController : Controller
         var puedeDocumentos = Puede("DOCUMENTOS");
         var puedeSubirDocumentos = User.HasClaim("permiso", "DOCUMENTOS:CREAR");
         var puedeEditarAutorizaciones = User.HasClaim("permiso", "AUTORIZACIONES:EDITAR");
+        var puedeValidarDocumentacion = User.HasClaim("permiso", "DOCUMENTOS:VALIDAR");
         var puedeCrearMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
         var hoy = DateOnly.FromDateTime(DateTime.Today);
 
@@ -389,6 +390,13 @@ public class AlumnosController : Controller
         if (vigente?.ValidadaPor is int validadaPor)
         {
             idsResponsables.Add(validadaPor);
+        }
+
+        // MAT-10: quien validó la documentación de la ficha vigente también se
+        // muestra como responsable en la ficha del alumno.
+        if (ficha?.ValidadoPor is int validadorDocumental)
+        {
+            idsResponsables.Add(validadorDocumental);
         }
 
         if (ultimoCambio?.FuncionarioId is int responsableId)
@@ -618,6 +626,10 @@ public class AlumnosController : Controller
             PuedeRenovarAnio = puedeCrearMatricula && (vigente is null || vigente.Estado == "ANULADA"),
             PuedeVerDocumentos = puedeDocumentos,
             PuedeSubirDocumentos = puedeSubirDocumentos,
+            PuedeValidarDocumentacion = puedeValidarDocumentacion && ficha is not null,
+            UbicacionOriginalFisico = ficha?.UbicacionOriginalFisico,
+            EstadoValidacion = ficha?.EstadoValidacion ?? "PENDIENTE",
+            ObservacionValidacion = ficha?.ObservacionValidacion,
             FichaFirmadaDocumentoId = fichaFirmada?.Id,
             FichaFirmadaNombre = fichaFirmada?.NombreOriginal,
             FichaFirmadaSubidaEn = fichaFirmada?.SubidoEn,
@@ -685,6 +697,10 @@ public class AlumnosController : Controller
             perfil.ValidadaEn = vigente.ValidadaEn;
             perfil.ValidadaPor = vigente.ValidadaPor is int validador
                 ? nombresResponsables.GetValueOrDefault(validador)
+                : null;
+            perfil.ValidacionDocumentalEn = ficha?.ValidadoEn;
+            perfil.ValidacionDocumentalPor = ficha?.ValidadoPor is int validadorDocumento
+                ? nombresResponsables.GetValueOrDefault(validadorDocumento)
                 : null;
         }
 
@@ -824,6 +840,61 @@ public class AlumnosController : Controller
         if (error is null)
         {
             TempData["Notificacion"] = "Matrícula validada por Dirección.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+    }
+
+    /// <summary>
+    /// MAT-10: registra dónde queda el original en papel y el estado de la
+    /// validación documental de la ficha vigente. Exige DOCUMENTOS:VALIDAR, el
+    /// mismo permiso con que Dirección valida el área documental.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:VALIDAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ValidarDocumentacion(
+        int id, string? ubicacion, string? estado, string? observacion)
+    {
+        var matricula = await _db.Matriculas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (matricula is null)
+        {
+            return NotFound();
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para validar la documentación.";
+            return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+        }
+
+        string? error = null;
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+        {
+            error = await _registro.ValidarDocumentacionAsync(
+                id,
+                funcionarioId.Value,
+                ubicacion,
+                estado ?? "PENDIENTE",
+                observacion,
+                ct);
+        }, HttpContext.RequestAborted);
+
+        if (error is null)
+        {
+            TempData["Notificacion"] = "Validación documental registrada en la ficha.";
         }
         else
         {

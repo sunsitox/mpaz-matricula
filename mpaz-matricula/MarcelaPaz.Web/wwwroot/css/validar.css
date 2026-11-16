@@ -1,0 +1,338 @@
+/* ==========================================================================
+   Verificación pública de certificados (destino del código QR).
+   Estilo editorial: tipografía grande en serif, reglas finas, datos en una
+   fila y sin tarjetas. Paleta grafito con filete dorado; la cabecera usa el
+   azul institucional del portal.
+   ========================================================================== */
+
+body.validacion {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #FFFFFF;
+    color: #16181C;
+}
+
+/* --------------------------------------------------------------------------
+   Cabecera: escudo y nombre del establecimiento
+   -------------------------------------------------------------------------- */
+
+.validacion__marca {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 0;
+}
+
+.validacion__logo {
+    width: 38px;
+    height: auto;
+    flex: none;
+}
+
+.validacion__portal {
+    margin: 0;
+    color: #1A3D85;
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.validacion__colegio {
+    margin: 0.15rem 0 0;
+    color: var(--color-primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+/* --------------------------------------------------------------------------
+   Contenido
+   -------------------------------------------------------------------------- */
+
+.validacion__contenido {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2.4rem 1.5rem 2rem;
+}
+
+.validacion__sobre {
+    margin: 0;
+    color: #8A6D14;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.validacion__titulo {
+    margin: 0.4rem 0 0.55rem;
+    color: #16181C;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.7rem, 3.4vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.validacion__bajada {
+    max-width: 54ch;
+    margin: 0;
+    color: #5C6470;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   Resultado
+   -------------------------------------------------------------------------- */
+
+.resultado {
+    margin-top: 1.8rem;
+    padding: 1.3rem 0 1.2rem;
+    border-top: 3px solid #C9A227;
+    border-bottom: 1px solid #E2E5EA;
+}
+
+.resultado__estado {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.resultado__chip {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.resultado__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    background: #12603B;
+    color: #FFFFFF;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.resultado--invalido .resultado__icono {
+    background: var(--color-danger, #B23B3B);
+}
+
+.resultado__titulo {
+    margin: 0;
+    color: #0C4A2D;
+    font-size: 1.1rem;
+}
+
+.resultado--invalido .resultado__titulo {
+    color: var(--color-danger, #B23B3B);
+}
+
+.resultado__texto {
+    margin: 0;
+    color: #5C6470;
+    font-size: 0.85rem;
+}
+
+.resultado__datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem 2rem;
+    margin: 0;
+    padding: 1.1rem 0 0;
+}
+
+.resultado__dato {
+    display: block;
+    padding-left: 1.1rem;
+    border-left: 1px solid #E2E5EA;
+}
+
+.resultado__dato:first-child {
+    padding-left: 0;
+    border-left: 0;
+}
+
+.resultado__dato dt {
+    color: #5C6470;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.resultado__dato dd {
+    margin: 0.2rem 0 0;
+    color: #16181C;
+    font-size: 1.02rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+/* El dato largo (estudiante) cierra la fila; los cortos van juntos. */
+.resultado__dato--ancho {
+    order: 1;
+    flex: 1 0 100%;
+    padding-left: 0;
+    border-left: 0;
+}
+
+.validacion__otro {
+    margin: 1rem 0 0;
+    color: #5C6470;
+    font-size: 0.82rem;
+}
+
+.validacion__otro a {
+    color: #1A3D85;
+    font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Formulario
+   -------------------------------------------------------------------------- */
+
+.validacion__form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1.2rem;
+    align-items: end;
+    margin-top: 1.6rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #E2E5EA;
+}
+
+.validacion__campo {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.validacion__etiqueta {
+    margin-bottom: 0.25rem;
+    color: #5C6470;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.validacion__input {
+    width: 100%;
+    height: 34px;
+    padding: 0 0.2rem;
+    border: 0;
+    border-bottom: 1px solid #E2E5EA;
+    border-radius: 0;
+    background: transparent;
+    color: #16181C;
+    font-family: inherit;
+    font-size: 0.92rem;
+}
+
+.validacion__input:focus {
+    outline: none;
+    border-bottom-color: var(--color-primary);
+    box-shadow: 0 1px 0 var(--color-primary);
+}
+
+.validacion__boton {
+    height: 34px;
+    padding: 0 1.2rem;
+    border: 1px solid #C9A227;
+    border-radius: 0;
+    background: transparent;
+    color: #16181C;
+    font-family: inherit;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.validacion__boton:hover {
+    background: #C9A227;
+    color: #16181C;
+}
+
+.validacion__boton:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.validacion__pie {
+    width: 100%;
+}
+
+.validacion__pie p {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0.5rem 1.5rem 1rem;
+    color: #5C6470;
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Pantallas
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+    .validacion__marca {
+        padding: 1.1rem 1.1rem 0;
+    }
+
+    .validacion__contenido {
+        padding: 1.6rem 1.1rem 1.5rem;
+    }
+
+    .resultado__estado {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    .resultado__dato {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .validacion__form {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+}
+
+@media (max-height: 660px) {
+    .validacion__bajada,
+    .validacion__pie {
+        display: none;
+    }
+
+    .validacion__contenido {
+        padding-top: 1rem;
+    }
+}
+
+@media (forced-colors: active) {
+    .resultado,
+    .validacion__input,
+    .resultado__icono {
+        border: 1px solid CanvasText;
+    }
+}

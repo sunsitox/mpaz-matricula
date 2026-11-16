@@ -1,54 +1,177 @@
 @model MarcelaPaz.Web.Models.ValidacionCertificado
 @{
-    // Página pública sin menú del portal: la usa quien recibe el papel.
+    // Página pública sin sesión: la abre quien recibe el papel, casi siempre
+    // escaneando el QR desde el teléfono. Todo cabe en una pantalla.
     Layout = null;
     ViewData["Title"] = "Validar certificado de alumno regular";
+
+    var huboConsulta = !string.IsNullOrWhiteSpace(Context.Request.Query["codigo"]);
+    var emitido = Model.EmitidoEn is DateTimeOffset momento
+        ? momento.ToLocalTime().ToString("d 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-CL"))
+        : null;
+
+    var vence = Model.VigenteHasta is DateTimeOffset limite
+        ? limite.ToLocalTime().ToString("d 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-CL"))
+        : null;
 }
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <style>
-        body { font-family: system-ui, sans-serif; color: #1f2933; max-width: 36rem; margin: 3rem auto; padding: 0 1rem; }
-        .tarjeta { border: 1px solid #c9d1dc; border-radius: .5rem; padding: 1.5rem; }
-        .valido { color: #0a5c2f; font-weight: 700; }
-        .invalido { color: #8f1d1d; font-weight: 700; }
-        dl { display: grid; grid-template-columns: auto 1fr; gap: .25rem 1rem; }
-        dt { color: #52606d; } dd { margin: 0; }
-    </style>
+    <meta name="robots" content="noindex" />
+    <title>@ViewData["Title"] · Portal Marcela Paz</title>
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/validar.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/images/logo-mpaz-simplificado.ico" />
 </head>
-<body>
-    <h1>Validar certificado de alumno regular</h1>
-    <form method="get" class="tarjeta" style="margin-bottom: 1rem;">
-        <label>Folio<br /><input type="text" name="folio" value="@Model.Folio" required style="width: 100%;" /></label>
-        <br /><br />
-        <label>Código de verificación<br /><input type="text" name="codigo" required style="width: 100%;" /></label>
-        <br /><br />
-        <button type="submit">Validar</button>
-    </form>
-    <div class="tarjeta">
+<body class="validacion">
+
+    <header class="validacion__cabecera">
+        <div class="validacion__marca">
+            <img src="~/images/logo-mpaz.svg"
+                 alt="Logo Escuela Escritora Marcela Paz"
+                 class="validacion__logo"
+                 width="32" />
+            <div>
+                <p class="validacion__portal">Portal Marcela Paz</p>
+                <p class="validacion__colegio">Escuela Básica &laquo;Escritora Marcela Paz&raquo;</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="validacion__contenido">
+        <p class="validacion__sobre">Verificación pública de documentos</p>
+        <h1 class="validacion__titulo">Certificado de alumno regular</h1>
+        <p class="validacion__bajada">
+            Compruebe que un certificado impreso fue emitido por el establecimiento y sigue vigente.
+        </p>
+
         @if (Model.Valido)
         {
-            <p class="valido">Documento válido.</p>
-            <dl>
-                <dt>Folio</dt><dd>@Model.Folio</dd>
-                <dt>Establecimiento</dt><dd>@Model.Establecimiento</dd>
-                <dt>Alumno(a)</dt><dd>@Model.AlumnoNombre</dd>
-                <dt>Curso</dt><dd>@Model.Curso</dd>
-                <dt>Año académico</dt><dd>@Model.Anio</dd>
-                @if (Model.EmitidoEn is DateTimeOffset emitido)
-                {
-                    <dt>Emitido</dt><dd>@emitido.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
-                }
-            </dl>
+            <section class="resultado resultado--valido" aria-labelledby="estado-certificado">
+                <div class="resultado__estado">
+                    <div class="resultado__chip">
+                        <span class="resultado__icono" aria-hidden="true">&#10003;</span>
+                        <h2 class="resultado__titulo" id="estado-certificado">Documento válido</h2>
+                    </div>
+                    <p class="resultado__texto">Emitido por el establecimiento y vigente.</p>
+                </div>
+
+                <dl class="resultado__datos">
+                    <div class="resultado__dato">
+                        <dt>Folio</dt>
+                        <dd>@Model.Folio</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Año académico</dt>
+                        <dd>@Model.Anio</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Curso</dt>
+                        <dd>@Model.Curso</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Emitido</dt>
+                        <dd>@emitido</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Vigente hasta</dt>
+                        <dd>@vence</dd>
+                    </div>
+                    <div class="resultado__dato resultado__dato--ancho">
+                        <dt>Estudiante</dt>
+                        <dd>@Model.AlumnoNombre</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <p class="validacion__otro">
+                ¿Tiene otro certificado? <a asp-controller="Certificados" asp-action="Validar">Validar otro documento</a>
+            </p>
+        }
+        else if (Model.Vencido)
+        {
+            <section class="resultado resultado--invalido" aria-labelledby="estado-certificado" role="status">
+                <div class="resultado__estado">
+                    <div class="resultado__chip">
+                        <span class="resultado__icono" aria-hidden="true">!</span>
+                        <h2 class="resultado__titulo" id="estado-certificado">Documento vencido</h2>
+                    </div>
+                    <p class="resultado__texto">
+                        El certificado es auténtico, pero su vigencia terminó el @vence. Solicite uno nuevo al establecimiento.
+                    </p>
+                </div>
+
+                <dl class="resultado__datos">
+                    <div class="resultado__dato">
+                        <dt>Folio</dt>
+                        <dd>@Model.Folio</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Emitido</dt>
+                        <dd>@emitido</dd>
+                    </div>
+                    <div class="resultado__dato">
+                        <dt>Venció</dt>
+                        <dd>@vence</dd>
+                    </div>
+                </dl>
+            </section>
         }
         else
         {
-            <p class="invalido">Documento no válido.</p>
-            <p>El folio y el código no corresponden a un certificado vigente. Revise que estén bien escritos o pida un ejemplar nuevo en el establecimiento.</p>
+            @if (huboConsulta)
+            {
+                <section class="resultado resultado--invalido" aria-labelledby="estado-certificado" role="status">
+                    <div class="resultado__estado">
+                        <div class="resultado__chip">
+                            <span class="resultado__icono" aria-hidden="true">!</span>
+                            <h2 class="resultado__titulo" id="estado-certificado">Documento no válido</h2>
+                        </div>
+                        <p class="resultado__texto">
+                            El folio y el código no corresponden a un certificado vigente.
+                            Revise que estén bien escritos.
+                        </p>
+                    </div>
+                </section>
+            }
+
+            <form class="validacion__form" method="get" asp-controller="Certificados" asp-action="Validar">
+                <div class="validacion__campo">
+                    <label class="validacion__etiqueta" for="folio">Folio</label>
+                    <input class="validacion__input"
+                           id="folio"
+                           name="folio"
+                           type="text"
+                           value="@Model.Folio"
+                           placeholder="CAR-2027-000010"
+                           autocomplete="off"
+                           spellcheck="false"
+                           required />
+                </div>
+
+                <div class="validacion__campo">
+                    <label class="validacion__etiqueta" for="codigo">Código de verificación</label>
+                    <input class="validacion__input"
+                           id="codigo"
+                           name="codigo"
+                           type="text"
+                           placeholder="XXXX-XXXX-XXXX"
+                           autocomplete="off"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           required />
+                </div>
+
+                <button class="validacion__boton" type="submit">Validar</button>
+            </form>
         }
-    </div>
+    </main>
+
+    <footer class="validacion__pie">
+        <p>Servicio Local de Educación Pública Del Pino · La consulta sólo comprueba el documento.</p>
+    </footer>
+
 </body>
 </html>

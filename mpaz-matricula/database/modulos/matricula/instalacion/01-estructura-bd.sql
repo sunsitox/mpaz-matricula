@@ -92,7 +92,7 @@ CREATE TABLE comuna (
 
 CREATE TABLE curso (
     id     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre VARCHAR(20) NOT NULL UNIQUE,          -- ej. '1° A', 'Kinder B'
+    nombre VARCHAR(20) NOT NULL UNIQUE,          -- ej. 'PK A', '1° A', '8° B'
     activo BOOLEAN NOT NULL DEFAULT TRUE
 );
 

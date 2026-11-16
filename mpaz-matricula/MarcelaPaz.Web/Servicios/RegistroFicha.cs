@@ -25,6 +25,42 @@ public class RegistroFicha
     public RegistroFicha(MatriculaDbContext db) => _db = db;
 
     /// <summary>
+    /// Escribe todos los bloques de la ficha (pasos 1 a 7) en una sola pasada y transacción.
+    /// Se invoca al confirmar en el paso 8 para evitar llamadas remotas a la base en cada paso intermedio.
+    /// </summary>
+    public async Task<string?> AplicarTodoAsync(
+        IReadOnlyDictionary<string, string> datos,
+        int anio,
+        int? funcionarioId = null,
+        CancellationToken ct = default)
+    {
+        var avisos = new List<string>();
+
+        try
+        {
+            await Paso1Async(datos, anio, funcionarioId, avisos, ct);
+            await Paso2Async(datos, anio, avisos, ct);
+            await Paso3Async(datos, avisos, ct);
+            await Paso4Async(datos, avisos, ct);
+            await Paso5Async(datos, avisos, ct);
+            await Paso6Async(datos, avisos, ct);
+            await Paso7Async(datos, avisos, ct);
+
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return MensajeConflicto;
+        }
+        catch (DbUpdateException ex)
+        {
+            return $"No se pudo guardar en la base de datos: {ex.InnerException?.Message ?? ex.Message}";
+        }
+
+        return avisos.Count == 0 ? null : string.Join(" ", avisos);
+    }
+
+    /// <summary>
     /// Escribe el paso indicado. Devuelve un aviso para mostrar en pantalla, o
     /// <c>null</c> cuando todo se guardó sin observaciones.
     /// </summary>
@@ -65,6 +101,10 @@ public class RegistroFicha
             }
 
             await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return MensajeConflicto;
         }
         catch (DbUpdateException ex)
         {
@@ -196,40 +236,62 @@ public class RegistroFicha
             : await AsegurarRelacionAsync(estudiante.Id, madre, "MADRE", null, null, avisos, ct);
 
         var padre = await AsegurarPersonaAsync(datos, "padre", "el padre", avisos, ct);
-        if (padre is not null)
-        {
-            await AsegurarRelacionAsync(estudiante.Id, padre, "PADRE", null, null, avisos, ct);
-        }
+        var vinculoPadre = padre is null
+            ? null
+            : await AsegurarRelacionAsync(estudiante.Id, padre, "PADRE", null, null, avisos, ct);
 
-        if (vinculoMadre is null)
+        await AplicarRestriccionAsync(datos, vinculoMadre, "madre", anio, ct);
+        await AplicarRestriccionAsync(datos, vinculoPadre, "padre", anio, ct);
+    }
+
+    /// <summary>
+    /// Guarda la restricción declarada para un vínculo (madre o padre): abre una
+    /// fila en <c>restriccion_familiar</c> cuando la respuesta es Sí y cierra la
+    /// vigencia cuando es No. Sin vínculo o sin respuesta, no hace nada.
+    /// </summary>
+    private async Task AplicarRestriccionAsync(
+        IReadOnlyDictionary<string, string> datos,
+        EstudiantePersona? vinculo,
+        string prefijo,
+        int anio,
+        CancellationToken ct)
+    {
+        if (vinculo is null)
         {
             return;
         }
 
-        var restriccion = SiNo(Texto(datos, "restricción madre (SI/NO)"));
+        var respondido = SiNo(Texto(datos, $"restricción {prefijo} (SI/NO)"));
+
+        if (respondido is null)
+        {
+            return;
+        }
+
         var vigentes = await _db.RestriccionesFamiliares
-            .Where(r => r.EstudiantePersonaId == vinculoMadre.Id && r.VigenteHasta == null)
+            .Where(r => r.EstudiantePersonaId == vinculo.Id && r.VigenteHasta == null)
             .ToListAsync(ct);
 
-        if (restriccion == true && vigentes.Count == 0)
+        if (respondido == true && vigentes.Count == 0)
         {
             // El tipo y el detalle los declara el apoderado en el paso 2; si el
             // borrador es anterior a esos campos, se conserva el texto genérico.
-            var tipo = Texto(datos, "restricción madre: tipo");
-            var detalle = Texto(datos, "restricción madre: detalle");
+            var tipo = Texto(datos, $"restricción {prefijo}: tipo");
+            var detalle = Texto(datos, $"restricción {prefijo}: detalle");
+            var sujeto = prefijo == "madre" ? "la madre" : "el padre";
 
             _db.RestriccionesFamiliares.Add(new RestriccionFamiliar
             {
-                EstudiantePersona = vinculoMadre,
+                EstudiantePersona = vinculo,
                 Tipo = tipo is not null && tipo.StartsWith("J", StringComparison.OrdinalIgnoreCase)
                     ? "JUDICIAL"
                     : "FAMILIAR",
                 Descripcion = detalle
-                    ?? $"Restricción declarada en la ficha {anio}: la madre no puede vincularse con el o la estudiante.",
+                    ?? $"Restricción declarada en la ficha {anio}: {sujeto} no puede vincularse con el o la estudiante.",
                 VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
             });
         }
-        else if (restriccion == false)
+        else if (respondido == false)
         {
             foreach (var restriccionVigente in vigentes)
             {
@@ -237,10 +299,7 @@ public class RegistroFicha
             }
         }
 
-        if (restriccion is not null)
-        {
-            vinculoMadre.TieneRestriccion = restriccion;
-        }
+        vinculo.TieneRestriccion = respondido;
     }
 
     // ── Paso 3 · Apoderado principal y secundario ────────────────────────────
@@ -862,16 +921,40 @@ public class RegistroFicha
         return relacion;
     }
 
+    private static List<(int Id, string Nombre, string Normalizada)>? _comunasLista;
+    private static readonly SemaphoreSlim _comunasSemaforo = new(1, 1);
+
     private async Task<Comuna?> ComunaPorNombreAsync(string nombre, CancellationToken ct)
     {
         var buscada = SinTildes(nombre);
 
-        var comunas = await _db.Comunas.Select(c => new { c.Id, c.Nombre }).ToListAsync(ct);
+        if (_comunasLista is null)
+        {
+            await _comunasSemaforo.WaitAsync(ct);
+            try
+            {
+                if (_comunasLista is null)
+                {
+                    var items = await _db.Comunas
+                        .AsNoTracking()
+                        .Select(c => new { c.Id, c.Nombre })
+                        .ToListAsync(ct);
 
-        var encontrada = comunas.FirstOrDefault(c => SinTildes(c.Nombre) == buscada);
+                    _comunasLista = items.Select(c => (c.Id, c.Nombre, SinTildes(c.Nombre))).ToList();
+                }
+            }
+            finally
+            {
+                _comunasSemaforo.Release();
+            }
+        }
 
-        return encontrada is null ? null : await _db.Comunas.FirstOrDefaultAsync(c => c.Id == encontrada.Id, ct);
+        var encontrada = _comunasLista.FirstOrDefault(c => c.Normalizada == buscada);
+        return encontrada.Id == 0 ? null : new Comuna { Id = encontrada.Id, Nombre = encontrada.Nombre };
     }
+
+    private static List<Curso>? _cursosCache;
+    private static readonly SemaphoreSlim _cursosSemaforo = new(1, 1);
 
     private async Task<Curso?> CursoAsync(string? nivel, string? letra, CancellationToken ct)
     {
@@ -880,20 +963,36 @@ public class RegistroFicha
             return null;
         }
 
-        var grado = new string((nivel ?? string.Empty).Where(char.IsDigit).ToArray());
-        var cursos = await _db.Cursos.ToListAsync(ct);
+        // La clave del nivel sigue el nombre del curso en la base: «PK A»,
+        // «K A», «1° A» … «8° B». Sin clave no se puede elegir un curso.
+        var token = NivelesCurso.Token(nivel);
 
-        if (grado.Length == 0)
+        if (_cursosCache is null)
+        {
+            await _cursosSemaforo.WaitAsync(ct);
+            try
+            {
+                _cursosCache ??= await _db.Cursos.AsNoTracking().ToListAsync(ct);
+            }
+            finally
+            {
+                _cursosSemaforo.Release();
+            }
+        }
+
+        var cursos = _cursosCache;
+
+        if (token is null)
         {
             return letra is null
                 ? null
                 : cursos.FirstOrDefault(c => SinTildes(c.Nombre).EndsWith(SinTildes(letra), StringComparison.Ordinal));
         }
 
-        var objetivo = SinTildes($"{grado} {letra}");
+        var objetivo = SinTildes($"{token} {letra}");
 
         return cursos.FirstOrDefault(c => SinTildes(c.Nombre) == objetivo)
-            ?? cursos.FirstOrDefault(c => SinTildes(c.Nombre).StartsWith(SinTildes($"{grado} "), StringComparison.Ordinal));
+            ?? cursos.FirstOrDefault(c => SinTildes(c.Nombre).StartsWith(SinTildes($"{token} "), StringComparison.Ordinal));
     }
 
     // ── Cierre de la ficha (MAT-08) ──────────────────────────────────────────
@@ -1122,9 +1221,7 @@ public class RegistroFicha
         matricula.ConfirmadaPor = funcionarioId;
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _db.SaveChangesAsync(ct);
-
-        return null;
+        return await GuardarMatriculaAsync(ct);
     }
 
     /// <summary>
@@ -1166,9 +1263,7 @@ public class RegistroFicha
         matricula.Observaciones = motivo.Trim();
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _db.SaveChangesAsync(ct);
-
-        return null;
+        return await GuardarMatriculaAsync(ct);
     }
 
     /// <summary>
@@ -1198,6 +1293,112 @@ public class RegistroFicha
         matricula.ValidadaEn = DateTimeOffset.UtcNow;
         matricula.ValidadaPor = funcionarioId;
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
+
+        return await GuardarMatriculaAsync(ct);
+    }
+
+    /// <summary>
+    /// Guarda los cambios de la matrícula detectando ediciones simultáneas: la
+    /// base incrementa <c>version</c> en cada UPDATE y EF la usa como testigo de
+    /// concurrencia, así que una fila modificada por otro funcionario no se
+    /// sobrescribe en silencio.
+    /// </summary>
+    private async Task<string?> GuardarMatriculaAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+            return null;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return MensajeConflicto;
+        }
+    }
+
+    private const string MensajeConflicto =
+        "Otro funcionario guardó cambios en esta matrícula mientras trabajaba. "
+        + "Vuelva a abrir la ficha para ver la versión más reciente y repita la operación.";
+
+    /// <summary>
+    /// MAT-10: registra dónde está el original en papel y el estado de la
+    /// validación documental de la ficha vigente. La base sólo admite VALIDADA
+    /// cuando la ficha tiene firma y escaneo: si falta alguno se devuelve el
+    /// motivo en vez de intentar el guardado. Queda auditado por el trigger de
+    /// <c>ficha_version</c>.
+    /// </summary>
+    public async Task<string?> ValidarDocumentacionAsync(
+        int matriculaId,
+        int funcionarioId,
+        string? ubicacionOriginal,
+        string estado,
+        string? observacion,
+        CancellationToken ct = default)
+    {
+        var ficha = await _db.FichaVersiones.FirstOrDefaultAsync(
+            v => v.MatriculaId == matriculaId && v.Estado == "VIGENTE", ct);
+
+        if (ficha is null)
+        {
+            return "La matrícula no tiene una ficha vigente: genere la ficha antes de validar los documentos.";
+        }
+
+        var estadoNormalizado = (estado ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (estadoNormalizado is not ("PENDIENTE" or "VALIDADA" or "OBSERVADA"))
+        {
+            return "El estado de validación debe ser PENDIENTE, VALIDADA u OBSERVADA.";
+        }
+
+        if (estadoNormalizado == "OBSERVADA" && string.IsNullOrWhiteSpace(observacion))
+        {
+            return "Explique la observación que impide validar la documentación.";
+        }
+
+        if (estadoNormalizado == "VALIDADA")
+        {
+            if (ficha.FechaFirma is null)
+            {
+                return "No se puede validar: falta registrar la fecha de la firma de la ficha.";
+            }
+
+            var escaneo = await _db.Documentos
+                .AsNoTracking()
+                .Where(d => d.MatriculaId == matriculaId && d.Tipo == "FICHA_FIRMADA" && d.Activo)
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (escaneo is null)
+            {
+                return "No se puede validar: falta subir el escaneo de la ficha firmada.";
+            }
+
+            // El escaneo ya existe: se enlaza a la versión (la base exige ese
+            // vínculo para admitir VALIDADA) sin reescribir quién lo subió.
+            ficha.EscaneoDocumentoId = escaneo.Id;
+            ficha.ValidadoPor = funcionarioId;
+            ficha.ValidadoEn = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            ficha.ValidadoPor = null;
+            ficha.ValidadoEn = null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(ubicacionOriginal))
+        {
+            var ubicacion = ubicacionOriginal.Trim();
+
+            if (ubicacion.Length > 200)
+            {
+                return "La ubicación del original no puede superar los 200 caracteres.";
+            }
+
+            ficha.UbicacionOriginalFisico = ubicacion;
+        }
+
+        ficha.EstadoValidacion = estadoNormalizado;
+        ficha.ObservacionValidacion = string.IsNullOrWhiteSpace(observacion) ? null : observacion.Trim();
 
         await _db.SaveChangesAsync(ct);
 

@@ -498,3 +498,19 @@ select.acceso__input {
     font-weight: 600;
     white-space: nowrap;
 }
+
+/* Cambio de paso sin recargar (ficha.js): la tarjeta se atenúa mientras llega
+   el paso siguiente y recupera su tono al pintarse. */
+#ficha-paso {
+    transition: opacity 160ms ease;
+}
+
+.ficha__paso--cambiando {
+    opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #ficha-paso {
+        transition: none;
+    }
+}

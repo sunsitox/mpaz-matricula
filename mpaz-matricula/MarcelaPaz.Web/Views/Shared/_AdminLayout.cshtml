@@ -1,6 +1,17 @@
 @inject MarcelaPaz.Web.Servicios.AnioEscolar AniosEscolares
+@inject Microsoft.Extensions.Options.IOptions<MarcelaPaz.Web.Servicios.DatosInstitucion> Institucion
 @{
     var nombre = User.FindFirst("nombre_funcionario")?.Value ?? User.Identity?.Name ?? "sin sesión";
+
+    // Iniciales para la cabecera: dos palabras bastan (nombre y apellido).
+    var iniciales = string.Concat(
+        nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+              .Take(2)
+              .Select(palabra => char.ToUpperInvariant(palabra[0])));
+    if (iniciales.Length == 0)
+    {
+        iniciales = "MP";
+    }
 
     // El menú se dibuja sólo con lo que la sesión puede hacer: la bandera de
     // revisión no participa, para que la interfaz no anuncie permisos que el
@@ -16,16 +27,20 @@
     var anioActivo = await AniosEscolares.ActivoAsync();
 
     var controlador = ViewContext.RouteData.Values["controller"]?.ToString();
+    var accion = ViewContext.RouteData.Values["action"]?.ToString();
 
-    string Clase(string nombreControlador) =>
+    // Panel y Actividad comparten controlador: el enlace activo también mira la acción.
+    bool Es(string nombreControlador, string? nombreAccion) =>
         string.Equals(controlador, nombreControlador, StringComparison.OrdinalIgnoreCase)
+        && (nombreAccion is null || string.Equals(accion, nombreAccion, StringComparison.OrdinalIgnoreCase));
+
+    string Clase(string nombreControlador, string? nombreAccion = null) =>
+        Es(nombreControlador, nombreAccion)
             ? "admin__menu-enlace admin__menu-enlace--activo"
             : "admin__menu-enlace";
 
-    string? Actual(string nombreControlador) =>
-        string.Equals(controlador, nombreControlador, StringComparison.OrdinalIgnoreCase)
-            ? "page"
-            : null;
+    string? Actual(string nombreControlador, string? nombreAccion = null) =>
+        Es(nombreControlador, nombreAccion) ? "page" : null;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -53,24 +68,30 @@
                  alt="Logo Escuela Escritora Marcela Paz"
                  class="acceso__logo-img"
                  width="40" />
-            <div class="admin__titulo">Portal Marcela Paz</div>
+            <div class="admin__marca-texto">
+                <div class="admin__titulo">Portal Marcela Paz</div>
+                <span class="admin__subtitulo">@Institucion.Value.Establecimiento</span>
+            </div>
         </div>
 
-        <div class="admin__sesion">
-            @if (anioActivo is int anio)
+        @if (anioActivo is int anio)
+        {
+            @if (puedeConfigurarAnio)
             {
-                @if (puedeConfigurarAnio)
-                {
-                    <a class="admin__anio" asp-controller="Configuracion" asp-action="AnioEscolar"
-                       title="Cambiar el año escolar de matrícula">Año escolar @anio</a>
-                }
-                else
-                {
-                    <span class="admin__anio">Año escolar @anio</span>
-                }
+                <a class="admin__anio" asp-controller="Configuracion" asp-action="AnioEscolar"
+                   title="Cambiar el año escolar de matrícula">Año escolar @anio</a>
             }
+            else
+            {
+                <span class="admin__anio">Año escolar @anio</span>
+            }
+        }
 
-            <span class="admin__usuario">@nombre</span>
+        <div class="admin__sesion">
+            <span class="admin__persona" title="@nombre">
+                <span class="admin__avatar" aria-hidden="true">@iniciales</span>
+                <span class="admin__usuario">@nombre</span>
+            </span>
             <form asp-controller="Cuenta" asp-action="Salida" method="post">
                 <button type="submit" class="admin__salir">Cerrar sesión</button>
             </form>
@@ -81,7 +102,7 @@
         <nav class="admin__menu" aria-label="Secciones del portal">
             <p class="admin__menu-titulo">Menú</p>
 
-            <a class="@Clase("Home")" aria-current="@Actual("Home")"
+            <a class="@Clase("Home", "Index")" aria-current="@Actual("Home", "Index")"
                asp-controller="Home" asp-action="Index">Panel</a>
 
             @if (puedeMatricula)
@@ -97,6 +118,9 @@
                 <a class="@Clase("Certificados")" aria-current="@Actual("Certificados")"
                    asp-controller="Certificados" asp-action="Index">Certificados</a>
             }
+
+            <a class="@Clase("Home", "Actividad")" aria-current="@Actual("Home", "Actividad")"
+               asp-controller="Home" asp-action="Actividad">Actividad</a>
 
             @if (puedeFuncionarios)
             {

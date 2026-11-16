@@ -194,10 +194,9 @@ public class CertificadosController : Controller
 
         var hoy = DateOnly.FromDateTime(DateTime.Today);
         var baseValidacion = string.IsNullOrWhiteSpace(_institucion.UrlValidacion)
-            ? $"{Request.Scheme}://{Request.Host}/Certificados/Validar"
+            ? $"{Request.Scheme}://{Request.Host}"
             : _institucion.UrlValidacion.Trim().TrimEnd('/');
-        var urlValidacion =
-            $"{baseValidacion}?folio={Uri.EscapeDataString(emitido.Folio)}&codigo={Uri.EscapeDataString(codigo)}";
+        var urlValidacion = $"{baseValidacion}/c/{EmisionCertificado.CodigoParaUrl(codigo)}";
 
         var documento = new DocumentoCertificado
         {
@@ -206,16 +205,16 @@ public class CertificadosController : Controller
             Rbd = _institucion.Rbd,
             Reconocimiento = _institucion.LineaReconocimiento,
             Direccion = _institucion.Direccion,
-            Contacto = _institucion.Contacto,
             AlumnoNombre = estudiante.NombreCompleto,
-            AlumnoRut = string.Equals(estudiante.TipoIdentificador, "RUN", StringComparison.OrdinalIgnoreCase)
-                ? RutChileno.Formatear(estudiante.Identificador)
-                : estudiante.Identificador.ToUpperInvariant(),
-            FechaNacimiento = estudiante.FechaNacimiento.ToString("d 'de' MMMM 'de' yyyy", EspanolChile),
+            AlumnoDocumento = string.Equals(estudiante.TipoIdentificador, "RUN", StringComparison.OrdinalIgnoreCase)
+                ? $"RUN {RutChileno.Formatear(estudiante.Identificador)}"
+                : $"{estudiante.TipoIdentificador.Trim().ToUpperInvariant()} {estudiante.Identificador.Trim().ToUpperInvariant()}",
             Curso = matricula.Curso?.Nombre ?? "sin curso asignado",
             Anio = anioActivo.Value,
-            Proposito = propositoFinal,
+            MatriculaFutura = anioActivo.Value > hoy.Year,
             LugarFecha = $"{_institucion.LugarEmision}, {hoy.ToString("d 'de' MMMM 'de' yyyy", EspanolChile)}",
+            Vigencia = $"Válido por {EmisionCertificado.DiasVigencia} días, hasta el " +
+                $"{EmisionCertificado.VenceEn(emitido.EmitidoEn).ToLocalTime().ToString("d 'de' MMMM 'de' yyyy", EspanolChile)}.",
             FirmanteNombre = firmante,
             FirmanteCargo = _institucion.FirmanteCargo,
             Folio = emitido.Folio,
@@ -233,50 +232,96 @@ public class CertificadosController : Controller
     }
 
     /// <summary>
-    /// Validación pública: exige folio y código juntos; un documento anulado
-    /// o un código distinto responde inválido sin revelar datos del alumno.
+    /// Validación pública escribiendo folio y código, para quien recibe el
+    /// papel y no puede escanear el QR.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> Validar(string? folio, string? codigo)
     {
+        return View(await ResolverAsync(folio, codigo));
+    }
+
+    /// <summary>
+    /// Destino corto del QR impreso: <c>/c/CODIGO</c>. El código es aleatorio
+    /// y sólo se guarda su hash; un documento anulado responde inválido.
+    /// </summary>
+    [HttpGet("/c/{codigo}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Verificar(string codigo)
+    {
+        return View("Validar", await ResolverAsync(null, codigo));
+    }
+
+    /// <summary>
+    /// Busca el certificado por código (y folio, si se escribió) y devuelve lo
+    /// justo para confirmar el papel: nada del alumno si no calza.
+    /// </summary>
+    private async Task<ValidacionCertificado> ResolverAsync(string? folio, string? codigo)
+    {
         var modelo = new ValidacionCertificado { Folio = folio?.Trim() ?? string.Empty };
 
-        if (!string.IsNullOrWhiteSpace(folio) && !string.IsNullOrWhiteSpace(codigo))
+        if (string.IsNullOrWhiteSpace(codigo))
         {
-            var emitido = await _db.CertificadosEmitidos
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Folio == folio.Trim());
-
-            if (emitido is not null
-                && emitido.AnuladoEn is null
-                && emitido.CodigoHash == EmisionCertificado.HashCodigo(codigo))
-            {
-                var estudiante = await _db.Estudiantes
-                    .AsNoTracking()
-                    .Where(e => e.Id == emitido.EstudianteId)
-                    .Select(e => new { e.NombreCompleto })
-                    .FirstOrDefaultAsync();
-
-                var curso = await _db.Matriculas
-                    .AsNoTracking()
-                    .Where(m => m.Id == emitido.MatriculaId)
-                    .Select(m => m.Curso != null ? m.Curso.Nombre : null)
-                    .FirstOrDefaultAsync();
-
-                modelo = modelo with
-                {
-                    Valido = true,
-                    Establecimiento = _institucion.Establecimiento,
-                    AlumnoNombre = estudiante?.NombreCompleto,
-                    Curso = curso,
-                    Anio = emitido.Anio,
-                    EmitidoEn = emitido.EmitidoEn,
-                };
-            }
+            return modelo;
         }
 
-        return View(modelo);
+        var hash = EmisionCertificado.HashCodigo(codigo);
+        var consulta = _db.CertificadosEmitidos
+            .AsNoTracking()
+            .Where(c => c.CodigoHash == hash && c.AnuladoEn == null);
+
+        if (!string.IsNullOrWhiteSpace(folio))
+        {
+            consulta = consulta.Where(c => c.Folio == folio.Trim());
+        }
+
+        var emitido = await consulta.FirstOrDefaultAsync();
+
+        if (emitido is null)
+        {
+            return modelo;
+        }
+
+        var vence = EmisionCertificado.VenceEn(emitido.EmitidoEn);
+
+        // Vencido no es lo mismo que inexistente: el papel es auténtico y se
+        // dice hasta cuándo valió, sin exponer datos del alumno.
+        if (!EmisionCertificado.EstaVigente(emitido.EmitidoEn, DateTimeOffset.UtcNow))
+        {
+            return modelo with
+            {
+                Vencido = true,
+                Folio = emitido.Folio,
+                Anio = emitido.Anio,
+                EmitidoEn = emitido.EmitidoEn,
+                VigenteHasta = vence,
+            };
+        }
+
+        var estudiante = await _db.Estudiantes
+            .AsNoTracking()
+            .Where(e => e.Id == emitido.EstudianteId)
+            .Select(e => new { e.NombreCompleto })
+            .FirstOrDefaultAsync();
+
+        var curso = await _db.Matriculas
+            .AsNoTracking()
+            .Where(m => m.Id == emitido.MatriculaId)
+            .Select(m => m.Curso != null ? m.Curso.Nombre : null)
+            .FirstOrDefaultAsync();
+
+        return modelo with
+        {
+            Valido = true,
+            Folio = emitido.Folio,
+            Establecimiento = _institucion.Establecimiento,
+            AlumnoNombre = estudiante?.NombreCompleto,
+            Curso = curso,
+            Anio = emitido.Anio,
+            EmitidoEn = emitido.EmitidoEn,
+            VigenteHasta = vence,
+        };
     }
 
     /// <summary>

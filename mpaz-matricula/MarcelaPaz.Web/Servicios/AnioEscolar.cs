@@ -20,6 +20,8 @@ public sealed record AnioEscolarOpcion(int Anio, bool Activo, DateOnly? Apertura
 public sealed class AnioEscolar
 {
     private const string ClaveActivo = "anio-escolar:activo";
+    private const string ClaveApertura = "anio-escolar:apertura";
+    private const string ClaveLista = "anio-escolar:lista";
 
     private static readonly TimeSpan VigenciaCache = TimeSpan.FromMinutes(1);
 
@@ -44,7 +46,13 @@ public sealed class AnioEscolar
 
         try
         {
-            await AplicarAperturaPorFechaAsync();
+            // La apertura automática escribe en la base (un bloque DO). Se evalúa
+            // una vez por minuto y no en cada consulta del año.
+            if (!_cache.TryGetValue(ClaveApertura, out bool evaluada) || !evaluada)
+            {
+                await AplicarAperturaPorFechaAsync();
+                _cache.Set(ClaveApertura, true, VigenciaCache);
+            }
 
             // Año vigente: el marcado a mano o el más reciente cuya fecha de
             // apertura ya llegó. La automatización es sólo por apertura del
@@ -76,6 +84,11 @@ public sealed class AnioEscolar
     /// <summary>Años registrados, del más reciente al más antiguo.</summary>
     public async Task<IReadOnlyList<AnioEscolarOpcion>> ListarAsync()
     {
+        if (_cache.TryGetValue(ClaveLista, out List<AnioEscolarOpcion>? enMemoria) && enMemoria is not null)
+        {
+            return enMemoria;
+        }
+
         var anios = new List<AnioEscolarOpcion>();
 
         try
@@ -128,9 +141,13 @@ public sealed class AnioEscolar
             .DefaultIfEmpty(0)
             .Max();
 
-        return anios
+        var lista = anios
             .Select(opcion => opcion with { Activo = opcion.Anio == vigente })
             .ToList();
+
+        _cache.Set(ClaveLista, lista, VigenciaCache);
+
+        return lista;
     }
 
     /// <summary>
@@ -161,25 +178,39 @@ public sealed class AnioEscolar
     {
         try
         {
-            await using var transaccion = await _db.Database.BeginTransactionAsync();
+            // Con reintentos configurados en el contexto, una transacción manual
+            // debe ejecutarse dentro de la estrategia de ejecución.
+            var estrategia = _db.Database.CreateExecutionStrategy();
+            var activado = false;
 
-            await _db.Database.ExecuteSqlRawAsync(
-                "update anio_escolar set activo_matricula = false, actualizado_en = now() "
-                + "where activo_matricula and anio <> {0}",
-                anio);
-
-            var filas = await _db.Database.ExecuteSqlRawAsync(
-                "update anio_escolar set activo_matricula = true, actualizado_en = now() where anio = {0}",
-                anio);
-
-            if (filas == 0)
+            await estrategia.ExecuteAsync(async () =>
             {
-                await transaccion.RollbackAsync();
+                await using var transaccion = await _db.Database.BeginTransactionAsync();
 
+                await _db.Database.ExecuteSqlRawAsync(
+                    "update anio_escolar set activo_matricula = false, actualizado_en = now() "
+                    + "where activo_matricula and anio <> {0}",
+                    anio);
+
+                var filas = await _db.Database.ExecuteSqlRawAsync(
+                    "update anio_escolar set activo_matricula = true, actualizado_en = now() where anio = {0}",
+                    anio);
+
+                if (filas == 0)
+                {
+                    await transaccion.RollbackAsync();
+
+                    return;
+                }
+
+                await transaccion.CommitAsync();
+                activado = true;
+            });
+
+            if (!activado)
+            {
                 return false;
             }
-
-            await transaccion.CommitAsync();
         }
         catch (DbException ex)
         {
@@ -315,6 +346,11 @@ public sealed class AnioEscolar
         }
     }
 
-    /// <summary>Descarta el año activo en caché (tras activar uno nuevo).</summary>
-    public void Invalidar() => _cache.Remove(ClaveActivo);
+    /// <summary>Descarta el año activo, la lista y la evaluación de apertura.</summary>
+    public void Invalidar()
+    {
+        _cache.Remove(ClaveActivo);
+        _cache.Remove(ClaveApertura);
+        _cache.Remove(ClaveLista);
+    }
 }

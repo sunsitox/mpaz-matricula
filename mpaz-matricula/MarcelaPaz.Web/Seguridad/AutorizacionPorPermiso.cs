@@ -128,14 +128,19 @@ public sealed class PermisoAuthorizationHandler : AuthorizationHandler<PermisoRe
         }
 
         contexto.Succeed(requisito);
-    }
-
-    private async Task DenegarAsync(PermisoRequirement requisito, string esperado, string motivo)
+    }    private async Task DenegarAsync(PermisoRequirement requisito, string esperado, string motivo)
     {
         var http = _contexto.HttpContext;
-        var ruta = (http?.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText
-                   ?? http?.Request.Path.ToString()
-                   ?? "desconocido";
+
+        // Sin sesión no hay a quién atribuir el intento: registrarlo costaba una
+        // escritura en cada redirección al login y no aportaba trazabilidad.
+        if (http?.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var ruta = (http.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText
+                   ?? http.Request.Path.ToString();
 
         await _auditoria.RegistrarAsync(
             accion: "DENEGADO",

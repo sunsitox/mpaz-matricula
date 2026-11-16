@@ -82,6 +82,22 @@ public class PerfilAlumno
 
     public string? ValidadaPor { get; set; }
 
+    /// <summary>Hay ficha vigente y la sesión puede validar la documentación
+    /// (Dirección, área DOCUMENTOS · MAT-10).</summary>
+    public bool PuedeValidarDocumentacion { get; set; }
+
+    /// <summary>Dónde queda el original en papel de la ficha vigente (MAT-10).</summary>
+    public string? UbicacionOriginalFisico { get; set; }
+
+    /// <summary>PENDIENTE, VALIDADA u OBSERVADA (MAT-10).</summary>
+    public string EstadoValidacion { get; set; } = "PENDIENTE";
+
+    public string? ValidacionDocumentalPor { get; set; }
+
+    public DateTimeOffset? ValidacionDocumentalEn { get; set; }
+
+    public string? ObservacionValidacion { get; set; }
+
     /// <summary>Autorizaciones del apoderado con su estado e historial (MAT-04).</summary>
     public List<AutorizacionPerfil> Autorizaciones { get; set; } = new();
 

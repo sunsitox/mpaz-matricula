@@ -2,6 +2,7 @@ using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace MarcelaPaz.Infrastructure;
 
@@ -11,23 +12,35 @@ namespace MarcelaPaz.Infrastructure;
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Cadena usada cuando no hay configuración. Permite que la aplicación parta
-    /// y muestre el login; los accesos a datos fallarán hasta definir la conexión.
-    /// </summary>
-    public const string CadenaPorDefecto = "Host=localhost;Port=5432;Database=mpaz;Username=mpaz_app;Search Path=mpaz_matricula,public";
-
     /// <param name="cadena">Base del dominio (tablas institucionales).</param>
     /// <param name="cadenaCuentas">Base de las cuentas (Identity). Si se omite,
     /// las cuentas viven junto al dominio con la misma conexión.</param>
     public static IServiceCollection AddPersistencia(
         this IServiceCollection servicios, string? cadena, string? cadenaCuentas = null)
     {
-        var conexion = NormalizarConexion(string.IsNullOrWhiteSpace(cadena) ? CadenaPorDefecto : cadena);
-        var conexionCuentas = NormalizarConexion(string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas);
+        if (string.IsNullOrWhiteSpace(cadena))
+        {
+            throw new InvalidOperationException(
+                "Configure ConnectionStrings:Default con la conexión a Neon; no hay una base local de respaldo.");
+        }
 
-        servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(conexion));
-        servicios.AddDbContext<CuentasDbContext>(opciones => opciones.UseNpgsql(conexionCuentas));
+        var conexion = AjustarConexion(NormalizarConexion(cadena));
+        var conexionCuentas = AjustarConexion(NormalizarConexion(
+            string.IsNullOrWhiteSpace(cadenaCuentas) ? conexion : cadenaCuentas));
+
+        // Reintentos ante fallos transitorios: si el servidor cierra una conexión
+        // ociosa o la red se corta, la consulta se repite en vez de terminar en
+        // una página de error «posible fallo transitorio».
+        servicios.AddDbContext<MatriculaDbContext>(opciones => opciones.UseNpgsql(
+            conexion, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+
+        servicios.AddDbContext<CuentasDbContext>(opciones => opciones.UseNpgsql(
+            conexionCuentas, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
+
+        // Emisor SSO (prototipo del login único): comparte la conexión de las
+        // cuentas para no crear una base aparte.
+        servicios.AddDbContext<SsoDbContext>(opciones => opciones.UseNpgsql(
+            conexionCuentas, npgsql => npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null)));
 
         return servicios;
     }
@@ -38,7 +51,7 @@ public static class DependencyInjection
     /// La URI se convierte aquí, así pegar la cadena tal como la da Neon funciona.
     /// Las cadenas que ya vienen en formato palabra-clave pasan intactas.
     /// </summary>
-    private static string NormalizarConexion(string conexion)
+    internal static string NormalizarConexion(string conexion)
     {
         if (!Uri.TryCreate(conexion, UriKind.Absolute, out var uri)
             || (uri.Scheme != "postgresql" && uri.Scheme != "postgres"))
@@ -70,6 +83,32 @@ public static class DependencyInjection
             partes.Add($"Channel Binding={canal}");
 
         return string.Join(';', partes);
+    }
+
+    /// <summary>
+    /// Deja un latido en la conexión para que un socket ocioso no quede muerto:
+    /// sin esto, la primera consulta después de un rato podía fallar con
+    /// «Se ha forzado la interrupción de una conexión existente».
+    /// </summary>
+    private static string AjustarConexion(string conexion)
+    {
+        try
+        {
+            var constructor = new NpgsqlConnectionStringBuilder(conexion);
+
+            if (constructor.KeepAlive == 0)
+            {
+                constructor.KeepAlive = 30;
+            }
+
+            return constructor.ConnectionString;
+        }
+        catch (ArgumentException)
+        {
+            // Cadena con formato inesperado: se usa tal cual y el error aparece
+            // al conectar, con su mensaje original.
+            return conexion;
+        }
     }
 
     /// <summary>Generación de documentos imprimibles (PDF).</summary>

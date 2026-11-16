@@ -1,0 +1,60 @@
+@model MarcelaPaz.Web.Models.ActividadPanel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Actividad";
+}
+
+<div class="panel">
+
+    @if (Model.Error is not null)
+    {
+        <div class="acceso__alerta" role="alert">@Model.Error</div>
+    }
+
+    <div class="admin__tarjeta">
+        <div class="panel__encabezado">
+            <div class="panel__titulo">
+                <h1 class="admin__titulo-seccion">Actividad reciente</h1>
+                <p class="admin__ayuda">
+                    Consultas, descargas y accesos denegados que quedaron registrados en el portal.
+                    Se muestran los @Model.Limite movimientos más recientes.
+                </p>
+            </div>
+        </div>
+
+        @if (Model.Accesos.Count == 0)
+        {
+            <p class="admin__ayuda">Sin actividad registrada todavía.</p>
+        }
+        else
+        {
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Actividad registrada en el portal, de la más reciente a la más antigua.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Fecha</th>
+                            <th scope="col">Acción</th>
+                            <th scope="col">Área</th>
+                            <th scope="col">Recurso</th>
+                            <th scope="col">Funcionario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var acceso in Model.Accesos)
+                        {
+                            <tr>
+                                <td class="panel__fecha">@acceso.Cuando.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td>@acceso.Accion</td>
+                                <td>@(acceso.Area ?? "—")</td>
+                                <td>@(acceso.Recurso ?? "—")</td>
+                                <td>@(acceso.Funcionario ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>
