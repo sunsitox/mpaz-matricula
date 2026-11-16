@@ -338,6 +338,15 @@ public class AlumnosController : Controller
 
         var vigente = matriculas.FirstOrDefault(m => m.Anio == anioConsulta);
 
+        // Egresado de 8º básico: la última matrícula no anulada fue en el último
+        // nivel del colegio y no hay matrícula del año consultado (terminó y no
+        // renovó). Se deriva; no hay columna propia.
+        var ultimaNoAnulada = matriculas.FirstOrDefault(m => m.Estado != "ANULADA");
+
+        var esEgresado = ultimaNoAnulada is not null
+            && ultimaNoAnulada.Anio < anioConsulta.Value
+            && NivelesCurso.EsUltimo(NivelesCurso.DesdeNombre(ultimaNoAnulada.Curso?.Nombre));
+
         var ficha = vigente is null
             ? null
             : await _db.FichaVersiones
@@ -623,6 +632,7 @@ public class AlumnosController : Controller
                 && (vigente.Estado is "FIRMADA" or "CONFIRMADA" || vigente.ValidadaEn is not null),
             // Tras una anulación se permite iniciar una matrícula nueva: el
             // índice único de la base ignora las anuladas.
+            EsEgresado = esEgresado,
             PuedeRenovarAnio = puedeCrearMatricula && (vigente is null || vigente.Estado == "ANULADA"),
             PuedeVerDocumentos = puedeDocumentos,
             PuedeSubirDocumentos = puedeSubirDocumentos,

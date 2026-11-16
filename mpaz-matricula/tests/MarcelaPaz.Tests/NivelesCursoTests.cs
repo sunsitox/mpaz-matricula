@@ -74,6 +74,17 @@ public class NivelesCursoTests
         Assert.Equal(valido, !rechazada);
     }
 
+    [Theory]
+    [InlineData("8º básico", true)]
+    [InlineData("7º básico", false)]
+    [InlineData("1º básico", false)]
+    [InlineData("Pre-kínder", false)]
+    [InlineData(null, false)]
+    public void EsUltimo_SoloOctavoBasicoEgresa(string? nivel, bool esperado)
+    {
+        Assert.Equal(esperado, NivelesCurso.EsUltimo(nivel));
+    }
+
     [Fact]
     public void Orden_PoneParvulariaAntesDeBasica()
     {

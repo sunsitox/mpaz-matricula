@@ -93,6 +93,11 @@ public static class NivelesCurso
     /// antes que 1º básico y no por orden alfabético. Un curso desconocido queda
     /// al final en vez de intercalarse.
     /// </summary>
+    /// <summary>Último nivel del colegio: 8º básico. Quien lo termina egresa;
+    /// no existe un curso superior al que renovar.
+    /// </summary>
+    public static bool EsUltimo(string? nivel) => nivel == Todos[^1];
+
     public static int Orden(string? curso)
     {
         var nivel = DesdeNombre(curso);

@@ -26,6 +26,10 @@
             <div>
                 <span class="admin__chip">Año escolar @Model.Anio</span>
                 <span class="admin__chip">@(Model.EstadoActual ?? $"Sin matrícula {Model.Anio}")</span>
+                @if (Model.EsEgresado)
+                {
+                    <span class="admin__chip admin__chip--alerta">Egresado de 8º básico</span>
+                }
                 @if (Model.Restricciones.Count > 0)
                 {
                     <span class="admin__chip admin__chip--alerta">Restricción vigente</span>

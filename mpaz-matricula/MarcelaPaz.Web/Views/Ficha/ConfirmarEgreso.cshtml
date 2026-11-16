@@ -1,0 +1,46 @@
+@model MarcelaPaz.Web.Models.ConfirmarEgresoModelo
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Confirmar egreso";
+}
+
+<div class="admin__tarjeta">
+    <h1 class="admin__titulo-seccion">Egreso de 8º básico</h1>
+
+    <p class="admin__ayuda">
+        El estudiante <strong>@Model.Nombre</strong> terminó
+        <strong>@Model.CursoAnterior</strong> en el año @Model.AnioAnterior.
+    </p>
+    <p class="admin__ayuda">
+        El colegio llega hasta 8º básico: no existe un curso superior al que
+        renovar su matrícula para @Model.AnioNuevo.
+    </p>
+
+    <div class="admin__tarjeta--interna">
+        <p><strong>Dejar como egresado</strong></p>
+        <p class="admin__ayuda">
+            No se abre un expediente nuevo. El alumno queda marcado como
+            egresado en su ficha.
+        </p>
+        <form method="post" asp-action="Egresado" asp-route-id="@Model.EstudianteId">
+            <button type="submit" class="admin__boton admin__boton--primario">
+                Egresado, sin renovar
+            </button>
+        </form>
+    </div>
+
+    <div class="admin__tarjeta--interna">
+        <p><strong>Repite 8º básico</strong></p>
+        <p class="admin__ayuda">
+            Se abre la renovación igual que siempre, pero la ficha queda marcada
+            como repetición de 8º básico.
+        </p>
+        <form method="post" asp-action="Renovar">
+            <input type="hidden" name="id" value="@Model.EstudianteId" />
+            <input type="hidden" name="repite" value="true" />
+            <button type="submit" class="admin__boton">
+                Repite 8º básico
+            </button>
+        </form>
+    </div>
+</div>

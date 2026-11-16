@@ -688,7 +688,7 @@ public class FichaController : Controller
     [HttpPost]
     [Authorize(Policy = "Permiso:GENERAL:CREAR")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Renovar(int id)
+    public async Task<IActionResult> Renovar(int id, bool repite = false)
     {
         var anioActivo = await _anios.ActivoAsync();
 
@@ -715,6 +715,22 @@ public class FichaController : Controller
             .OrderByDescending(m => m.Anio)
             .FirstOrDefaultAsync();
 
+        // Egreso de 8º básico: el colegio no tiene curso superior, así que
+        // renovar a quien ya terminó el nivel debe confirmarse antes.
+        var (nivelAnteriorPrevio, _) = SepararCurso(anterior?.Curso?.Nombre);
+
+        if (NivelesCurso.EsUltimo(nivelAnteriorPrevio) && !repite)
+        {
+            return View("ConfirmarEgreso", new ConfirmarEgresoModelo
+            {
+                EstudianteId = id,
+                Nombre = estudiante.NombreCompleto,
+                AnioAnterior = anterior!.Anio,
+                CursoAnterior = anterior.Curso?.Nombre,
+                AnioNuevo = anio,
+            });
+        }
+
         var datos = new Dictionary<string, string>();
         GuardarCampo(datos, "tipo identificador", estudiante.TipoIdentificador);
         GuardarCampo(datos, "nombres", estudiante.Nombres);
@@ -736,10 +752,37 @@ public class FichaController : Controller
         datos["modo: detalle"] = anterior is null
             ? $"Expediente nuevo {anio}; el estudiante no tenía matrícula anterior."
             : $"Expediente nuevo {anio} a partir de la matrícula {anterior.Anio}"
-              + (string.IsNullOrWhiteSpace(anterior.Curso?.Nombre) ? "." : $" ({anterior.Curso!.Nombre}).");
+              + (string.IsNullOrWhiteSpace(anterior.Curso?.Nombre) ? "." : $" ({anterior.Curso!.Nombre}).")
+              + (repite ? " Repetición de 8º básico." : string.Empty);
 
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
         return RedirectToAction(nameof(Paso), new { id = 1 });
+    }
+
+    /// <summary>
+    /// Egreso de 8º básico: la renovación es solo una propuesta. Si el
+    /// estudiante ya terminó el último nivel del colegio, esta acción no
+    /// crea ningún expediente: queda derivado en su ficha (fin de su vida en
+    /// el portal) sin tocar la base.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = "Permiso:GENERAL:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Egresado(int id)
+    {
+        var estudiante = await _db.Estudiantes
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (estudiante is null)
+        {
+            TempData["Aviso"] = "No se encontró el estudiante seleccionado.";
+            return RedirectToAction(nameof(Buscar));
+        }
+
+        TempData["Aviso"] =
+            "El estudiante egresó de 8º básico: no se abrió un expediente nuevo.";
+
+        return RedirectToAction("Detalle", "Alumnos", new { id });
     }
 
     /// <summary>Matrícula nueva para un estudiante sin matrícula anterior.</summary>

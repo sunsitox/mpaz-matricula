@@ -77,6 +77,11 @@ public class PerfilAlumno
     /// matrícula está formalizada sin validar.</summary>
     public bool PuedeValidar { get; set; }
 
+    /// <summary>Terminó 8º básico (último nivel del colegio) en un año anterior
+    /// al consultado: egresado. Se deriva de la última matrícula no anulada,
+    /// sin columna propia.</summary>
+    public bool EsEgresado { get; set; }
+
     /// <summary>Fecha y responsable de la validación institucional (MAT-12).</summary>
     public DateTimeOffset? ValidadaEn { get; set; }
 
