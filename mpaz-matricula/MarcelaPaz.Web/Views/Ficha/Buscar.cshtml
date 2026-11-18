@@ -2,6 +2,7 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Matrícula";
+    var puedeCrear = User.HasClaim("permiso", "GENERAL:CREAR");
 }
 
 <div class="admin__tarjeta">
@@ -45,9 +46,16 @@
                 No hay un estudiante con el documento <strong>@Model.Rut</strong> en el registro único.
                 Corresponde una matrícula nueva.
             </p>
-            <form method="post" asp-controller="Ficha" asp-action="Nueva">
-                <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
-            </form>
+            @if (puedeCrear)
+            {
+                <form method="post" asp-controller="Ficha" asp-action="Nueva">
+                    <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
+                </form>
+            }
+            else
+            {
+                <p class="admin__ayuda">Su rol es de consulta o validación: la creación la realiza Secretaría.</p>
+            }
         }
         else if (Model.YaMatriculado)
         {
@@ -66,10 +74,17 @@
                 La renovación @Model.Anio abre un expediente nuevo con estos datos; la matrícula
                 anterior queda intacta.
             </p>
-            <form method="post" asp-controller="Ficha" asp-action="Renovar">
-                <input type="hidden" name="id" value="@Model.EstudianteId" />
-                <button type="submit" class="admin__boton admin__boton--primario">Renovar matrícula @Model.Anio</button>
-            </form>
+            @if (puedeCrear)
+            {
+                <form method="post" asp-controller="Ficha" asp-action="Renovar">
+                    <input type="hidden" name="id" value="@Model.EstudianteId" />
+                    <button type="submit" class="admin__boton admin__boton--primario">Renovar matrícula @Model.Anio</button>
+                </form>
+            }
+            else
+            {
+                <p class="admin__ayuda">Su rol es de consulta o validación: la renovación la realiza Secretaría.</p>
+            }
         }
         else
         {
@@ -78,9 +93,16 @@
                 Está en el registro de estudiantes, pero no tiene matrícula anterior.
                 Corresponde una matrícula nueva.
             </p>
-            <form method="post" asp-controller="Ficha" asp-action="Nueva">
-                <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
-            </form>
+            @if (puedeCrear)
+            {
+                <form method="post" asp-controller="Ficha" asp-action="Nueva">
+                    <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
+                </form>
+            }
+            else
+            {
+                <p class="admin__ayuda">Su rol es de consulta o validación: la creación la realiza Secretaría.</p>
+            }
         }
     </div>
 }

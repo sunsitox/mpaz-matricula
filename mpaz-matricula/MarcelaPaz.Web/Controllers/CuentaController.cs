@@ -6,6 +6,7 @@ using MarcelaPaz.Web.Seguridad;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarcelaPaz.Web.Controllers;
@@ -52,12 +53,22 @@ public class CuentaController : Controller
         }
 
         ViewData["ReturnUrl"] = returnUrl;
+
+        // El limitador de intentos redirige aquí cuando un mismo origen agota
+        // su ventana de intentos.
+        if (Request.Query.ContainsKey("limite"))
+        {
+            ModelState.AddModelError(string.Empty,
+                "Demasiados intentos de inicio de sesión desde este equipo. Espere unos minutos y vuelva a intentarlo.");
+        }
+
         return View(new LoginForm());
     }
 
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(LoginForm form, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
@@ -102,20 +113,16 @@ public class CuentaController : Controller
 
         var resultado = await _sesion.PasswordSignInAsync(usuario, form.Contrasena, false, lockoutOnFailure: true);
 
-        if (resultado.IsLockedOut)
-        {
-            await _auditoria.RegistrarAsync(
-                "DENEGADO", "GENERAL", "Cuenta/Login", funcionario.Id,
-                "{\"motivo\":\"bloqueo temporal por intentos fallidos\"}");
-            ModelState.AddModelError(string.Empty, "La cuenta quedó bloqueada por 15 minutos tras varios intentos fallidos.");
-            return View(form);
-        }
-
         if (!resultado.Succeeded)
         {
+            // Mismo mensaje para cuenta inexistente, clave incorrecta y cuenta
+            // bloqueada: distinguirlos permitía enumerar correos. El motivo
+            // real queda sólo en la auditoría.
             await _auditoria.RegistrarAsync(
                 "DENEGADO", "GENERAL", "Cuenta/Login", funcionario.Id,
-                "{\"motivo\":\"contraseña incorrecta\"}");
+                resultado.IsLockedOut
+                    ? "{\"motivo\":\"bloqueo temporal por intentos fallidos\"}"
+                    : "{\"motivo\":\"contraseña incorrecta\"}");
             ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
             return View(form);
         }

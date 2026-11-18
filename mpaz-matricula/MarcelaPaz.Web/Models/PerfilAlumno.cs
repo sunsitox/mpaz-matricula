@@ -146,6 +146,14 @@ public class PerfilAlumno
     /// <summary>El año consultado no tiene matrícula y la sesión puede crearla (MAT-01).</summary>
     public bool PuedeRenovarAnio { get; set; }
 
+    public bool PuedeVerMedicacion { get; set; }
+
+    public bool PuedeRegistrarDosis { get; set; }
+
+    public List<PrescripcionPerfil> Prescripciones { get; set; } = new();
+
+    public List<DosisPerfil> UltimasDosis { get; set; } = new();
+
     public bool PuedeVerDocumentos { get; set; }
 
     public bool PuedeSubirDocumentos { get; set; }
@@ -258,6 +266,32 @@ public class PerfilAlumno
         public string Descripcion { get; set; } = string.Empty;
 
         public bool? EnTratamiento { get; set; }
+    }
+
+    public class PrescripcionPerfil
+    {
+        public int Id { get; set; }
+
+        public string Medicamento { get; set; } = string.Empty;
+
+        public string Dosis { get; set; } = string.Empty;
+
+        public string Frecuencia { get; set; } = string.Empty;
+
+        public DateOnly VigenteHasta { get; set; }
+
+        public string Estado { get; set; } = string.Empty;
+    }
+
+    public class DosisPerfil
+    {
+        public string Medicamento { get; set; } = string.Empty;
+
+        public DateTimeOffset AdministradoEn { get; set; }
+
+        public string Dosis { get; set; } = string.Empty;
+
+        public string? Tens { get; set; }
     }
 
     public class DocumentoPerfil

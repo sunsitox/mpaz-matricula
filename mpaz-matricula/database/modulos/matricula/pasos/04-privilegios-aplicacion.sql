@@ -36,6 +36,22 @@ REVOKE UPDATE, DELETE ON TABLE
     mpaz_matricula.administracion_medicamento
 FROM mpaz_app;
 
+-- El GRANT general de arriba concede UPDATE sobre todo el esquema: esta
+-- comprobación impide que un GRANT posterior o un reordenamiento del script
+-- devuelva el permiso sin que nadie lo note.
+DO $$
+BEGIN
+    IF has_table_privilege('mpaz_app', 'mpaz_matricula.historial_cambios', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.registros_acceso', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.administracion_medicamento', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.historial_cambios', 'DELETE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.registros_acceso', 'DELETE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.administracion_medicamento', 'DELETE') THEN
+        RAISE EXCEPTION 'mpaz_app conserva UPDATE/DELETE sobre tablas de auditoría';
+    END IF;
+END
+$$;
+
 -- Identity necesita administrar sesiones, credenciales, bloqueos y tokens,
 -- pero sólo en sus propias tablas: el resto del esquema es SELECT/INSERT/UPDATE.
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE

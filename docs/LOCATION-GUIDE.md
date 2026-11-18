@@ -15,12 +15,11 @@ Esta guía explica qué va en cada carpeta del repo para mantener el proyecto or
 
 ## mpaz-matricula/
 
-**Propósito:** Contiene todo el sistema de MarcelaPaz.Matriculas (solución y 4 proyectos .NET).
+**Propósito:** Contiene todo el sistema de MarcelaPaz.Matriculas (solución y 3 proyectos .NET).
 
 **Qué ahí va:**
 - `MarcelaPaz.Matriculas.slnx` (o `.sln`) — archivo de solución de Visual Studio / .NET CLI
 - `MarcelaPaz.Domain/` — Capa de dominio (reglas de negocio, entidades, interfaces del dominio, value objects, excepciones del dominio)
-- `MarcelaPaz.Application/` — Capa de aplicación (casos de uso, comandos/queries, DTOs, validaciones, mappings, interfaces de servicios de aplicación)
 - `MarcelaPaz.Infrastructure/` — Capa de infraestructura (DbContext, repositorios, migrations, Identity, servicios externos, DI desde esta capa, configuración)
 - `MarcelaPaz.Web/` — Capa de presentación / API (controllers/endpoints, middleware, filters, hosting, configuración de entrada, DI final, wwwroot, properties/launchSettings)
 

@@ -41,7 +41,7 @@ JOIN (VALUES
     ('SECRETARIA', 'JUDICIAL',      'CREAR'),
     ('SECRETARIA', 'JUDICIAL',      'EDITAR'),
 
-    -- DIRECCION: consulta institucional y valida lo formalizado.
+    -- DIRECCION: ve todo + valida institucional, sin crear/editar (Johan 17-11-2026).
     ('DIRECCION', 'GENERAL',        'LEER'),
     ('DIRECCION', 'GENERAL',        'VALIDAR'),
     ('DIRECCION', 'FAMILIA',        'LEER'),
@@ -53,20 +53,28 @@ JOIN (VALUES
     ('DIRECCION', 'AUTORIZACIONES', 'VALIDAR'),
     ('DIRECCION', 'DOCUMENTOS',     'LEER'),
     ('DIRECCION', 'DOCUMENTOS',     'VALIDAR'),
+    ('DIRECCION', 'MEDICACION',     'LEER'),
     ('DIRECCION', 'GENERAL',        'EXPORTAR'),
     ('DIRECCION', 'DOCUMENTOS',     'EXPORTAR'),
 
-    -- INSPECTORIA: contacto y retiro, sin diagnósticos.
-    ('INSPECTORIA', 'GENERAL',      'LEER'),
-    ('INSPECTORIA', 'FAMILIA',      'LEER'),
-    ('INSPECTORIA', 'RETIRO',       'LEER'),
-    ('INSPECTORIA', 'RETIRO',       'EDITAR'),
+    -- INSPECTORIA: ve todo + edita datos del estudiante, sin crear ni validar (Johan 17-11-2026).
+    ('INSPECTORIA', 'GENERAL',        'LEER'),
+    ('INSPECTORIA', 'GENERAL',        'EDITAR'),
+    ('INSPECTORIA', 'FAMILIA',        'LEER'),
+    ('INSPECTORIA', 'FAMILIA',        'EDITAR'),
+    ('INSPECTORIA', 'RETIRO',         'LEER'),
+    ('INSPECTORIA', 'RETIRO',         'EDITAR'),
+    ('INSPECTORIA', 'SALUD',          'LEER'),
+    ('INSPECTORIA', 'PIE',            'LEER'),
+    ('INSPECTORIA', 'JUDICIAL',       'LEER'),
+    ('INSPECTORIA', 'AUTORIZACIONES', 'LEER'),
+    ('INSPECTORIA', 'DOCUMENTOS',     'LEER'),
+    ('INSPECTORIA', 'MEDICACION',     'LEER'),
 
-    -- EQUIPO_PIE: datos mínimos y apoyos.
+    -- EQUIPO_PIE: solo ver (Johan: no genera ni edita).
     ('EQUIPO_PIE', 'GENERAL',       'LEER'),
     ('EQUIPO_PIE', 'FAMILIA',       'LEER'),
     ('EQUIPO_PIE', 'PIE',           'LEER'),
-    ('EQUIPO_PIE', 'PIE',           'EDITAR'),
     ('EQUIPO_PIE', 'DOCUMENTOS',    'LEER'),
 
     -- TENS: contactos, salud pertinente y medicación.
@@ -83,6 +91,26 @@ JOIN (VALUES
     -- curso y estado; sin FAMILIA/SALUD/RETIRO/PIE el servidor no le entrega el
     -- resto del expediente (S-02).
     ('DOCENTE', 'GENERAL',          'LEER'),
+
+    -- UTP: ver todo, solo lectura + exportar (Johan 17-11-2026).
+    ('UTP', 'GENERAL',        'LEER'),
+    ('UTP', 'FAMILIA',        'LEER'),
+    ('UTP', 'RETIRO',         'LEER'),
+    ('UTP', 'SALUD',          'LEER'),
+    ('UTP', 'PIE',            'LEER'),
+    ('UTP', 'JUDICIAL',       'LEER'),
+    ('UTP', 'AUTORIZACIONES', 'LEER'),
+    ('UTP', 'DOCUMENTOS',     'LEER'),
+    ('UTP', 'MEDICACION',     'LEER'),
+    ('UTP', 'GENERAL',        'EXPORTAR'),
+    ('UTP', 'DOCUMENTOS',     'EXPORTAR'),
+
+    -- CONVIVENCIA: solo lo necesario (sin salud/PIE/judicial/medicación).
+    ('CONVIVENCIA', 'GENERAL',        'LEER'),
+    ('CONVIVENCIA', 'FAMILIA',        'LEER'),
+    ('CONVIVENCIA', 'RETIRO',         'LEER'),
+    ('CONVIVENCIA', 'AUTORIZACIONES', 'LEER'),
+    ('CONVIVENCIA', 'DOCUMENTOS',     'LEER'),
 
     -- ADMIN_TI: cuentas y auditoría, sin lectura clínica ni judicial.
     ('ADMIN_TI', 'ADMIN',           'ADMINISTRAR'),

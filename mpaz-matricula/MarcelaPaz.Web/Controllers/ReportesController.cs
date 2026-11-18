@@ -55,7 +55,9 @@ public class ReportesController : Controller
     private static FileContentResult Csv(string contenido, string nombre) =>
         new(CsvEncoding.GetBytes(contenido), "text/csv") { FileDownloadName = nombre };
 
+    // DOCENTE solo tiene LEER: ver el reporte exige EXPORTAR (SECRETARIA/DIRECCION/UTP).
     [HttpGet]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:EXPORTAR")]
     public async Task<IActionResult> Matriculas(int? anio)
     {
         var anioConsulta = await ResolverAnioAsync(anio);

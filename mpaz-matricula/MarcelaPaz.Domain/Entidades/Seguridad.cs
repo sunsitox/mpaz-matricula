@@ -23,7 +23,7 @@ public class Funcionario
     public ICollection<FuncionarioRol> Roles { get; set; } = new List<FuncionarioRol>();
 }
 
-/// <summary>Perfil institucional (SECRETARIA, DIRECCION, INSPECTORIA, EQUIPO_PIE, TENS, DOCENTE, ADMIN_TI).</summary>
+/// <summary>Perfil institucional (SECRETARIA, DIRECCION, INSPECTORIA, EQUIPO_PIE, TENS, DOCENTE, ADMIN_TI, UTP, CONVIVENCIA).</summary>
 public class Rol
 {
     public int Id { get; set; }

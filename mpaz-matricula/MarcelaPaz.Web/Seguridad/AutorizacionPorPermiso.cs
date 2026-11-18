@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace MarcelaPaz.Web.Seguridad;
@@ -49,22 +50,34 @@ public sealed class PermisoPolicyProvider : IAuthorizationPolicyProvider
 
     private readonly DefaultAuthorizationPolicyProvider _respaldo;
     private readonly ConfiguracionSeguridad _seguridad;
+    private readonly IHostEnvironment _entorno;
 
-    public PermisoPolicyProvider(IOptions<AuthorizationOptions> opciones, ConfiguracionSeguridad seguridad)
+    public PermisoPolicyProvider(
+        IOptions<AuthorizationOptions> opciones,
+        ConfiguracionSeguridad seguridad,
+        IHostEnvironment entorno)
     {
         _respaldo = new DefaultAuthorizationPolicyProvider(opciones);
         _seguridad = seguridad;
+        _entorno = entorno;
     }
 
+    /// <summary>
+    /// El modo revisión sólo existe en la máquina de desarrollo. Aunque alguien
+    /// arranque el portal en el servidor con <c>Seguridad__ExigirInicioSesion=false</c>,
+    /// fuera de Development las políticas siguen exigiendo sesión y permisos.
+    /// </summary>
+    private bool ModoRevision => !_seguridad.ExigirInicioSesion && _entorno.IsDevelopment();
+
     public Task<AuthorizationPolicy> GetDefaultPolicyAsync() =>
-        _seguridad.ExigirInicioSesion ? _respaldo.GetDefaultPolicyAsync() : Task.FromResult(Abierta);
+        ModoRevision ? Task.FromResult(Abierta) : _respaldo.GetDefaultPolicyAsync();
 
     public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() =>
-        _seguridad.ExigirInicioSesion ? _respaldo.GetFallbackPolicyAsync() : Task.FromResult<AuthorizationPolicy?>(Abierta);
+        ModoRevision ? Task.FromResult<AuthorizationPolicy?>(Abierta) : _respaldo.GetFallbackPolicyAsync();
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string nombre)
     {
-        if (!_seguridad.ExigirInicioSesion)
+        if (ModoRevision)
         {
             return Task.FromResult<AuthorizationPolicy?>(Abierta);
         }

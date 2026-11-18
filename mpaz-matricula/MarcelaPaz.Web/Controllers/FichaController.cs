@@ -239,10 +239,16 @@ public class FichaController : Controller
     /// tablas del DDL institucional, y avanza al paso siguiente.
     /// </summary>
     [HttpPost]
-    [Authorize(Policy = "Permiso:GENERAL:CREAR")]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Guardar(int? id, Models.FichaForm form)
     {
+        // SECRETARIA crea (CREAR) e INSPECTORIA edita (EDITAR); DIRECCION/PIE solo leen.
+        if (!User.HasClaim("permiso", "GENERAL:CREAR") && !User.HasClaim("permiso", "GENERAL:EDITAR"))
+        {
+            return Forbid();
+        }
+
         var paso = (id ?? 1) switch { < 1 => 1, > 8 => 8, var n => n };
 
         var datos = LeerBorrador();
@@ -498,10 +504,15 @@ public class FichaController : Controller
     /// versión nueva con motivo; la anterior queda como REEMPLAZADA y no se edita.
     /// </summary>
     [HttpPost]
-    [Authorize(Policy = "Permiso:GENERAL:CREAR")]
+    [Authorize(Policy = "Permiso:GENERAL:LEER")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Corregir(int matriculaId)
     {
+        if (!User.HasClaim("permiso", "GENERAL:CREAR") && !User.HasClaim("permiso", "GENERAL:EDITAR"))
+        {
+            return Forbid();
+        }
+
         var matricula = await _db.Matriculas
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == matriculaId);

@@ -271,6 +271,10 @@ public class AlumnosController : Controller
         var puedeEditarAutorizaciones = User.HasClaim("permiso", "AUTORIZACIONES:EDITAR");
         var puedeValidarDocumentacion = User.HasClaim("permiso", "DOCUMENTOS:VALIDAR");
         var puedeCrearMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
+        var puedeMedicacion = Puede("MEDICACION");
+        var puedeRegistrarDosis = User.HasClaim("permiso", "MEDICACION:CREAR");
+        // INSPECTORIA edita datos del estudiante sin generar matrículas (Johan 17-11-2026).
+        var puedeEditarMatricula = puedeCrearMatricula || User.HasClaim("permiso", "GENERAL:EDITAR");
         var hoy = DateOnly.FromDateTime(DateTime.Today);
 
         // MAT-03 / MAT-14: se leen también los vínculos cerrados, para mostrar los
@@ -492,6 +496,35 @@ public class AlumnosController : Controller
                 .FirstOrDefaultAsync()
             : null;
 
+        // MAT-05: prescripciones y últimas dosis. Solo con MEDICACION:LEER.
+        var prescripciones = puedeMedicacion
+            ? await _db.Prescripciones
+                .AsNoTracking()
+                .Where(p => p.EstudianteId == id)
+                .OrderBy(p => p.VigenteHasta)
+                .ToListAsync()
+            : new List<Prescripcion>();
+
+        var idsPrescripcion = prescripciones.Select(p => p.Id).ToList();
+        var nombresPrescripcion = prescripciones.ToDictionary(p => p.Id, p => p.Medicamento);
+
+        var ultimasDosis = idsPrescripcion.Count == 0
+            ? new List<AdministracionMedicamento>()
+            : await _db.AdministracionesMedicamento
+                .AsNoTracking()
+                .Where(d => idsPrescripcion.Contains(d.PrescripcionId))
+                .OrderByDescending(d => d.AdministradoEn)
+                .Take(10)
+                .ToListAsync();
+
+        var idsTens = ultimasDosis.Select(d => d.TensId).Distinct().ToList();
+        var nombresTens = idsTens.Count == 0
+            ? new Dictionary<int, string?>()
+            : await _db.Funcionarios
+                .AsNoTracking()
+                .Where(f => idsTens.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, f => (string?)f.Nombre);
+
         var perfil = new PerfilAlumno
         {
             Anio = anioConsulta.Value,
@@ -626,8 +659,32 @@ public class AlumnosController : Controller
             PuedeVerPie = puedePie,
             PuedeVerAutorizaciones = puedeAutorizaciones,
             PuedeEditarAutorizaciones = puedeEditarAutorizaciones,
-            PuedeCorregirFicha = puedeCrearMatricula && ficha is not null,
-            PuedeEmitirCertificado = vigente is not null
+            PuedeVerMedicacion = puedeMedicacion,
+            PuedeRegistrarDosis = puedeRegistrarDosis,
+            Prescripciones = prescripciones
+                .Select(p => new PerfilAlumno.PrescripcionPerfil
+                {
+                    Id = p.Id,
+                    Medicamento = p.Medicamento,
+                    Dosis = $"{p.DosisCantidad} {p.DosisUnidad}",
+                    Frecuencia = p.Frecuencia,
+                    VigenteHasta = p.VigenteHasta,
+                    Estado = p.Estado,
+                })
+                .ToList(),
+            UltimasDosis = ultimasDosis
+                .Select(d => new PerfilAlumno.DosisPerfil
+                {
+                    Medicamento = nombresPrescripcion.GetValueOrDefault(d.PrescripcionId, "—"),
+                    AdministradoEn = d.AdministradoEn,
+                    Dosis = $"{d.DosisCantidad} {d.DosisUnidad}",
+                    Tens = nombresTens.GetValueOrDefault(d.TensId),
+                })
+                .ToList(),
+            PuedeCorregirFicha = puedeEditarMatricula && ficha is not null,
+            // DOCENTE/PIE/TENS/UTP/CONVIVENCIA solo leen: emitir exige CREAR, EDITAR o VALIDAR.
+            PuedeEmitirCertificado = (puedeCrearMatricula || puedeEditarMatricula || User.HasClaim("permiso", "GENERAL:VALIDAR"))
+                && vigente is not null
                 && vigente.Estado != "ANULADA"
                 && (vigente.Estado is "FIRMADA" or "CONFIRMADA" || vigente.ValidadaEn is not null),
             // Tras una anulación se permite iniciar una matrícula nueva: el
@@ -1300,6 +1357,81 @@ public class AlumnosController : Controller
             recursoId: documentoId);
 
         TempData["Notificacion"] = "Escaneo de la ficha firmada adjuntado a la versión vigente.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>
+    /// MAT-05: registra una dosis administrada por un TENS. El trigger valida
+    /// rol TENS activo, orden VIGENTE validada y autorización otorgada vigente.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "MEDICACION:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegistrarDosis(int id, int prescripcionId, string? administradoEn, string? incidencias)
+    {
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario TENS para registrar la dosis.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        if (!DateTimeOffset.TryParse(administradoEn, out var cuando))
+        {
+            cuando = DateTimeOffset.Now;
+        }
+
+        try
+        {
+            string? error = null;
+            await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+            {
+                var prescripcion = await _db.Prescripciones
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == prescripcionId && p.EstudianteId == id, ct);
+
+                if (prescripcion is null)
+                {
+                    error = "La prescripción no corresponde al estudiante.";
+                    return;
+                }
+
+                _db.AdministracionesMedicamento.Add(new AdministracionMedicamento
+                {
+                    PrescripcionId = prescripcionId,
+                    AdministradoEn = cuando,
+                    DosisCantidad = prescripcion.DosisCantidad,
+                    DosisUnidad = prescripcion.DosisUnidad,
+                    TensId = funcionarioId.Value,
+                    Incidencias = string.IsNullOrWhiteSpace(incidencias) ? null : incidencias.Trim(),
+                });
+                await _db.SaveChangesAsync(ct);
+            }, HttpContext.RequestAborted);
+
+            if (error is not null)
+            {
+                TempData["Aviso"] = error;
+            }
+            else
+            {
+                await _auditoria.RegistrarAsync("CREAR", "MEDICACION", "administracion_medicamento",
+                    detalle: "{\"evento\":\"registrar_dosis\"}", estudianteId: id, recursoId: prescripcionId);
+                TempData["Notificacion"] = "Dosis registrada por TENS.";
+            }
+        }
+        catch (Exception ex) when (ex.InnerException?.Message.Contains("Solo un funcionario con rol TENS") == true
+            || ex.Message.Contains("Solo un funcionario con rol TENS"))
+        {
+            TempData["Aviso"] = "Solo un funcionario con rol TENS activo puede registrar dosis.";
+        }
+        catch (DbUpdateException)
+        {
+            TempData["Aviso"] = "No se pudo registrar: revise orden vigente, validada y autorización otorgada.";
+        }
+
         return RedirectToAction(nameof(Detalle), new { id });
     }
 

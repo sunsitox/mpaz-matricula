@@ -35,23 +35,37 @@ public class PanelIndicadores
         _cache = cache;
     }
 
-    public async Task<PanelInicio> CargarAsync(int anio, CancellationToken ct = default)
+    public async Task<PanelInicio> CargarAsync(
+        int anio,
+        bool puedeAutorizaciones = false,
+        bool puedeMedicacion = false,
+        CancellationToken ct = default)
     {
-        if (_cache.TryGetValue(ClavePanel + anio, out PanelInicio? enMemoria) && enMemoria is not null)
+        var clave = ClavePanel + anio + ":" + (puedeAutorizaciones ? 1 : 0) + (puedeMedicacion ? 1 : 0);
+
+        if (_cache.TryGetValue(clave, out PanelInicio? enMemoria) && enMemoria is not null)
         {
             return enMemoria;
         }
 
-        var panel = await CalcularAsync(anio, ct);
+        var panel = await CalcularAsync(anio, puedeAutorizaciones, puedeMedicacion, ct);
 
-        _cache.Set(ClavePanel + anio, panel, Vigencia);
+        _cache.Set(clave, panel, Vigencia);
 
         return panel;
     }
 
-    private async Task<PanelInicio> CalcularAsync(int anio, CancellationToken ct)
+    private async Task<PanelInicio> CalcularAsync(
+        int anio,
+        bool puedeAutorizaciones,
+        bool puedeMedicacion,
+        CancellationToken ct)
     {
-        var panel = new PanelInicio { Anio = anio };
+        var panel = new PanelInicio
+        {
+            Anio = anio,
+            PuedeVerAlertas = puedeAutorizaciones || puedeMedicacion,
+        };
 
         var matriculas = await _db.Matriculas
             .AsNoTracking()
@@ -83,7 +97,8 @@ public class PanelIndicadores
         panel.FuncionariosActivos = await _db.Funcionarios.CountAsync(f => f.Activo, ct);
 
         // Cuatro recuentos sobre vistas: una sola ida a la base.
-        var contadores = await ContarPanelAsync(anio, ct);
+        var contadores = await ContarPanelAsync(
+            anio, puedeAutorizaciones, puedeMedicacion, ct);
         panel.FichasConFolio = contadores.FichasConFolio;
         panel.PendientesDocumentales = contadores.PendientesDocumentales;
         panel.AutorizacionesVigentes = contadores.AutorizacionesVigentes;
@@ -182,7 +197,11 @@ public class PanelIndicadores
         public int AlertasVencimiento { get; set; }
     }
 
-    private async Task<ContadoresPanel> ContarPanelAsync(int anio, CancellationToken ct)
+    private async Task<ContadoresPanel> ContarPanelAsync(
+        int anio,
+        bool puedeAutorizaciones,
+        bool puedeMedicacion,
+        CancellationToken ct)
     {
         const string sql = """
             select
@@ -193,10 +212,17 @@ public class PanelIndicadores
                   where anio = {0}) as "PendientesDocumentales",
                 (select count(*)::int from v_autorizaciones_vigentes
                   where vigente_hasta is null or vigente_hasta >= current_date) as "AutorizacionesVigentes",
-                (select count(*)::int from v_alertas_vencimiento
-                  where vencida) as "AlertasVencimiento"
+                (select count(*)::int from v_alertas_vencimiento v
+                   join matricula_anual m
+                     on m.estudiante_id = v.estudiante_id
+                    and m.anio = {0}
+                    and m.estado <> 'ANULADA'
+                  where v.vencida
+                    and (({1} and v.origen = 'AUTORIZACION')
+                      or ({2} and v.origen = 'PRESCRIPCION'))) as "AlertasVencimiento"
             """;
 
-        return await _db.Database.SqlQueryRaw<ContadoresPanel>(sql, anio).SingleAsync(ct);
+        return await _db.Database.SqlQueryRaw<ContadoresPanel>(
+            sql, anio, puedeAutorizaciones, puedeMedicacion).SingleAsync(ct);
     }
 }

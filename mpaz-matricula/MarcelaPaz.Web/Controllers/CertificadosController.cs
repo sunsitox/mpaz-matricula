@@ -103,12 +103,22 @@ public class CertificadosController : Controller
     /// <summary>
     /// Emite el certificado del alumno para el año activo. Exige matrícula
     /// vigente apta: firmada, confirmada o validada por Dirección (nunca
-    /// borrador ni anulada).
+    /// borrador ni anulada). Es POST porque crea folio y registro: un GET
+    /// permitía emitir certificados con sólo navegar a la dirección.
     /// </summary>
-    [HttpGet]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
-    public async Task<IActionResult> Emitir(int id, string? proposito = null, bool descargar = false)
+    public async Task<IActionResult> Emitir(int id, string? proposito = null)
     {
+        // DOCENTE y solo-lectura no emiten: exige crear, editar o validar institucional.
+        if (!User.HasClaim("permiso", "GENERAL:CREAR")
+            && !User.HasClaim("permiso", "GENERAL:EDITAR")
+            && !User.HasClaim("permiso", "GENERAL:VALIDAR"))
+        {
+            return Forbid();
+        }
+
         var anioActivo = await _anios.ActivoAsync();
 
         if (anioActivo is null)
@@ -226,9 +236,7 @@ public class CertificadosController : Controller
 
         var archivo = _pdf.Generar(documento).Generar();
 
-        return descargar
-            ? File(archivo, "application/pdf", $"certificado-alumno-regular-{emitido.Folio}.pdf")
-            : File(archivo, "application/pdf");
+        return File(archivo, "application/pdf", $"certificado-alumno-regular-{emitido.Folio}.pdf");
     }
 
     /// <summary>

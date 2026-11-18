@@ -1,0 +1,151 @@
+% Manual de usuarios — Portal de Matrícula MPAZ 2027 (MAQUETA)
+% Solo estructura: los textos marcados TODO se completan después.
+% Compilar: pdflatex manual-usuarios.tex (2 pasadas para el índice).
+\documentclass[11pt,a4paper]{article}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+% Paleta institucional
+\definecolor{mpazAzul}{HTML}{0F2537}
+\definecolor{mpazDorado}{HTML}{D97706}
+\definecolor{mpazFondo}{HTML}{F8FAFC}
+\definecolor{mpazBorde}{HTML}{E2E0F0}
+\definecolor{mpazGris}{HTML}{64748B}
+
+\hypersetup{colorlinks=true,linkcolor=mpazAzul,urlcolor=mpazAzul,citecolor=mpazAzul,
+  pdftitle={Manual de Usuarios — Portal de Matrícula MPAZ 2027 (Maqueta)},
+  pdfauthor={Escuela Escritora Marcela Paz}}
+
+% Encabezado y pie
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{mpazGris}MPAZ 2027 · Manual de Usuarios}
+\fancyhead[R]{\small\color{mpazGris}Portal de Matrícula}
+\fancyfoot[C]{\small\color{mpazGris}\thepage}
+\renewcommand{\headrulewidth}{0.7pt}
+\renewcommand{\headrule}{{\color{mpazDorado}\hrule width\headwidth height\headrulewidth}}
+
+% Títulos
+\titleformat{\section}
+  {\Large\bfseries\color{mpazAzul}}{\thesection.}{0.6em}{}
+  [{\color{mpazDorado}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\large\bfseries\color{mpazAzul}}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.2}
+
+% Marcador de maqueta: reemplazar por el texto final.
+\newcommand{\todo}[1]{%
+  \par\noindent\fcolorbox{mpazBorde}{mpazFondo}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \small\textbf{\color{mpazDorado}TODO:}\ #1}}\par}
+
+\begin{document}
+\thispagestyle{empty}
+\begin{center}
+\vspace*{2cm}
+\IfFileExists{../mpaz-matricula/MarcelaPaz.Web/wwwroot/images/logo-mpaz-con-lema.png}{%
+  \includegraphics[width=0.18\textwidth]{../mpaz-matricula/MarcelaPaz.Web/wwwroot/images/logo-mpaz-con-lema.png}\par}{}
+\vspace{1em}
+{\Huge\bfseries\color{mpazAzul} Manual de Usuarios\par}
+\vspace{0.4em}
+{\large\color{mpazGris} Portal de Matrícula — Escuela Escritora Marcela Paz 2027\par}
+\vspace{0.6em}
+{\color{mpazDorado}\rule{0.3\textwidth}{1.2pt}}\par
+\vspace{0.8em}
+Escuela MPAZ\par
+2026\par
+\vspace{1.5em}
+\fcolorbox{mpazDorado}{mpazFondo}{%
+  \parbox{0.62\textwidth}{\centering\small\textbf{Documento en maqueta:} los textos marcados TODO se completan después.}}
+\end{center}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introducción}
+\todo{Para qué sirve este manual, a quién está dirigido y cómo está organizado.}
+
+\section{Acceso al portal}
+\subsection{Ingresar}
+\todo{Pasos para iniciar sesión con correo institucional y contraseña.}
+\subsection{Cerrar sesión}
+\todo{Pasos para cerrar sesión y qué hacer si olvidaste la contraseña.}
+
+\section{Panel principal}
+\todo{Qué muestra el panel (año escolar, indicadores) y dónde está Actividad.}
+
+\section{Secretaría}
+\subsection{Buscar un estudiante}
+\todo{Pasos y criterios de búsqueda.}
+\subsection{Crear o renovar una matrícula}
+\todo{Pasos 1--8 de la ficha, documentos, firma y confirmación.}
+\subsection{Corregir una ficha}
+\todo{Cuándo y cómo corregir, indicando el motivo.}
+
+\section{Dirección}
+\subsection{Validar matrículas y documentos}
+\todo{Pasos para validar una matrícula firmada o confirmada.}
+
+\section{Inspectoría}
+\subsection{Corregir datos del estudiante}
+\todo{Qué puede editar y cómo.}
+
+\section{PIE}
+\todo{Qué puede consultar en este portal.}
+
+\section{TENS}
+\subsection{Ver salud y medicación}
+\todo{Qué información se muestra en el expediente.}
+\subsection{Registrar una administración}
+\todo{Requisitos previos y pasos para registrar una dosis.}
+
+\section{UTP}
+\todo{Solo consulta: qué puede ver y exportar.}
+
+\section{Convivencia}
+\todo{Qué puede consultar.}
+
+\section{Docente}
+\todo{Qué puede consultar (datos mínimos).}
+
+\section{Admin TI}
+\subsection{Crear y gestionar cuentas}
+\todo{Crear, desactivar, cerrar rol, restablecer y desbloquear cuentas.}
+
+\section{Certificados}
+\todo{Cómo emitir y validar un certificado de alumno regular.}
+
+\section{Reportes}
+\todo{Qué reportes puede descargar cada rol.}
+
+\section{Alertas}
+\todo{Qué alertas existen y cómo revisarlas.}
+
+\section{Preguntas frecuentes}
+\todo{Listado de dudas frecuentes con respuesta breve.}
+
+\section{Glosario}
+\todo{Términos del portal (folio, prescripción, validación, etc.).}
+
+\section{Soporte}
+\todo{A quién contactar ante problemas y qué información enviar.}
+
+\end{document}

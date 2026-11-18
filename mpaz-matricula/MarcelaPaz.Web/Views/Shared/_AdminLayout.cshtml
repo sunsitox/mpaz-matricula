@@ -18,6 +18,9 @@
     // servidor no concede (S-01).
     var puedeAlumnos = User.HasClaim("permiso", "GENERAL:LEER");
     var puedeMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
+    // MAT-17: las alertas son por área; basta con una para ver esa parte.
+    var puedeAlertas = User.HasClaim("permiso", "AUTORIZACIONES:LEER")
+                       || User.HasClaim("permiso", "MEDICACION:LEER");
     var puedeFuncionarios = User.HasClaim("permiso", "ADMIN:ADMINISTRAR");
     var puedeConfigurarAnio = User.IsInRole("SECRETARIA") || User.IsInRole("DIRECCION");
 
@@ -117,6 +120,12 @@
                    asp-controller="Alumnos" asp-action="Index">Estudiantes</a>
                 <a class="@Clase("Certificados")" aria-current="@Actual("Certificados")"
                    asp-controller="Certificados" asp-action="Index">Certificados</a>
+            }
+
+            @if (puedeAlertas)
+            {
+                <a class="@Clase("Alertas")" aria-current="@Actual("Alertas")"
+                   asp-controller="Alertas" asp-action="Index">Alertas</a>
             }
 
             <a class="@Clase("Home", "Actividad")" aria-current="@Actual("Home", "Actividad")"

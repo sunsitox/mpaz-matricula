@@ -59,9 +59,10 @@
             }
             @if (Model.PuedeEmitirCertificado)
             {
-                <a class="admin__boton"
-                   asp-controller="Certificados" asp-action="Emitir" asp-route-id="@Model.Id"
-                   data-ux-cargando>Certificado alumno regular</a>
+                <form method="post" asp-controller="Certificados" asp-action="Emitir" asp-route-id="@Model.Id"
+                      target="_blank" data-ux-envio="Emitiendo el certificado…">
+                    <button type="submit" class="admin__boton">Certificado alumno regular</button>
+                </form>
             }
             @if (Model.PuedeRenovarAnio)
             {
@@ -790,6 +791,67 @@
                 }
             </ul>
         </div>
+    }
+</section>
+
+<section class="admin__tarjeta" data-ux-grupo="salud" role="tabpanel" id="panel-medicacion" aria-labelledby="pestana-salud" tabindex="0">
+    <h2 class="admin__titulo-seccion">Medicación (TENS)</h2>
+    @if (!Model.PuedeVerMedicacion)
+    {
+        <p class="admin__ayuda">Su rol no incluye la consulta de órdenes médicas ni dosis.</p>
+    }
+    else if (Model.Prescripciones.Count == 0)
+    {
+        <p class="admin__ayuda">Sin prescripciones registradas. Uso en producción exige protocolo TENS aprobado.</p>
+    }
+    else
+    {
+        <div class="tabla-envoltura" tabindex="0">
+            <table class="admin__tabla">
+                <caption class="sr-only">Prescripciones y últimas dosis del estudiante.</caption>
+                <thead><tr><th scope="col">Medicamento</th><th scope="col">Dosis</th><th scope="col">Frecuencia</th><th scope="col">Vigencia</th><th scope="col">Estado</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model.Prescripciones)
+                {
+                    <tr><td>@p.Medicamento</td><td>@p.Dosis</td><td>@p.Frecuencia</td><td>@p.VigenteHasta.ToString("dd-MM-yyyy")</td><td>@p.Estado</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.UltimasDosis.Count > 0)
+        {
+            <h3 class="admin__subtitulo">Últimas dosis</h3>
+            <ul class="perfil__restricciones">
+            @foreach (var d in Model.UltimasDosis)
+            {
+                <li>@d.AdministradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm") · @d.Medicamento · @d.Dosis @(string.IsNullOrWhiteSpace(d.Tens) ? "" : "· " + d.Tens)</li>
+            }
+            </ul>
+        }
+        @if (Model.PuedeRegistrarDosis && Model.Prescripciones.Count > 0)
+        {
+            <form method="post" asp-action="RegistrarDosis" asp-route-id="@Model.Id" data-ux-envio="Registrando dosis…">
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="prescripcionId">Prescripción vigente</label>
+                    <select class="acceso__input" id="prescripcionId" name="prescripcionId">
+                    @foreach (var p in Model.Prescripciones.Where(x => x.Estado == "VIGENTE"))
+                    {
+                        <option value="@p.Id">@p.Medicamento · @p.Dosis</option>
+                    }
+                    </select>
+                </div>
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="administradoEn">Fecha y hora</label>
+                    <input class="acceso__input" id="administradoEn" name="administradoEn" type="datetime-local" />
+                </div>
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="incidencias">Incidencias (opcional)</label>
+                    <input class="acceso__input" id="incidencias" name="incidencias" type="text" maxlength="500" />
+                </div>
+                <button type="submit" class="admin__boton admin__boton--primario">Registrar dosis</button>
+            </form>
+            <p class="admin__ayuda">Solo TENS activo. Exige orden vigente validada y autorización otorgada.</p>
+        }
     }
 </section>
 

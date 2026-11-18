@@ -19,27 +19,27 @@ html {
 }
 
 .admin__header {
-    /* Cabecera institucional dorada: única disposición del panel. */
-    --cab-fondo: #081A44;
-    --cab-texto: #F4EEDC;
-    --cab-tenue: rgba(244, 238, 220, 0.78);
-    --cab-linea: rgba(201, 162, 39, 0.45);
-    --cab-filete: #C9A227;
+    /* Cabecera institucional azul + filete ámbar. */
+    --cab-fondo: #0f2537;
+    --cab-texto: #ffffff;
+    --cab-tenue: rgba(248, 250, 252, 0.78);
+    --cab-linea: rgba(245, 158, 11, 0.45);
+    --cab-filete: #f59e0b;
     --cab-filete-ancho: 3px;
-    --cab-placa-fondo: #F4EEDC;
+    --cab-placa-fondo: #ffffff;
     --cab-placa-radio: 6px;
     --cab-placa-sombra: none;
     --cab-avatar-fondo: transparent;
-    --cab-avatar-borde: #C9A227;
-    --cab-avatar-texto: #E7C766;
+    --cab-avatar-borde: #f59e0b;
+    --cab-avatar-texto: #fbbf24;
     --cab-avatar-radio: 6px;
     --cab-anio-fondo: transparent;
-    --cab-anio-texto: #E7C766;
-    --cab-salir-borde: #C9A227;
+    --cab-anio-texto: #fbbf24;
+    --cab-salir-borde: #f59e0b;
     --cab-salir-fondo: transparent;
-    --cab-salir-texto: #E7C766;
-    --cab-salir-hover-fondo: #C9A227;
-    --cab-salir-hover-texto: #081A44;
+    --cab-salir-texto: #fbbf24;
+    --cab-salir-hover-fondo: #f59e0b;
+    --cab-salir-hover-texto: #0f2537;
     --cab-titulo-familia: inherit;
     --cab-titulo-transform: uppercase;
     --cab-titulo-tracking: 0.1em;
@@ -290,11 +290,13 @@ html {
     margin: 0 0.3rem 0.3rem 0;
 }
 
-.admin__chip form {
+.admin__chip form,
+.admin__desplegable-elemento form {
     margin: 0;
 }
 
-.admin__chip button {
+.admin__chip button,
+.admin__desplegable-elemento button {
     border: none;
     background: none;
     color: var(--color-danger);
@@ -302,6 +304,112 @@ html {
     font-size: 0.9rem;
     padding: 0;
     line-height: 1;
+}
+
+/* Desplegable de roles: una tarjeta integrada con el panel (mismo fondo,
+   borde y radio que el resto de la página). Se abre y lista los roles en
+   orden de agregación (fecha Desde). */
+.admin__desplegable {
+    display: inline-block;
+    max-width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(12, 37, 91, 0.06);
+    overflow: hidden;
+}
+
+.admin__desplegable-resumen {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--color-primary);
+    list-style: none;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+
+.admin__desplegable-resumen::-webkit-details-marker {
+    display: none;
+}
+
+.admin__desplegable-resumen:hover {
+    background: var(--color-bg);
+}
+
+.admin__desplegable-resumen:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Chevron a la derecha del resumen; rota al abrir. */
+.admin__desplegable-resumen::after {
+    content: "▸";
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--color-accent);
+    transition: transform 0.2s ease;
+}
+
+.admin__desplegable[open] .admin__desplegable-resumen {
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.admin__desplegable[open] .admin__desplegable-resumen::after {
+    transform: rotate(90deg);
+}
+
+.admin__desplegable-lista {
+    margin: 0;
+    padding: 0.25rem 0.85rem 0.5rem;
+    list-style: none;
+}
+
+.admin__desplegable-elemento {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 0;
+}
+
+.admin__desplegable-elemento + .admin__desplegable-elemento {
+    border-top: 1px solid var(--color-border);
+}
+
+.admin__desplegable-texto {
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.admin__desplegable-texto .admin__ayuda {
+    white-space: nowrap;
+}
+
+/* «Cerrar rol» como botón con borde, a juego con .admin__boton. */
+.admin__desplegable-elemento button.admin__chip-cerrar {
+    flex: none;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-danger);
+    border-radius: 8px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.admin__desplegable-elemento button.admin__chip-cerrar:hover {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #fff;
 }
 
 .admin__estado--activo {
@@ -440,7 +548,7 @@ html {
 .wizard__subtitulo {
   margin: 0 0 .35rem;
   font-size: 1.05rem;
-  color: #0C255B;
+  color: #0f2537;
 }
 
 .wizard__pdf-marco {

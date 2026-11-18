@@ -164,7 +164,10 @@
             <ul class="panel__lista">
                 <li><span>Fichas con folio emitidas</span><strong>@Model.FichasConFolio</strong></li>
                 <li><span>Autorizaciones vigentes</span><strong>@Model.AutorizacionesVigentes</strong></li>
-                <li><span>Documentos y autorizaciones vencidas</span><strong>@Model.AlertasVencimiento</strong></li>
+                @if (Model.PuedeVerAlertas)
+                {
+                    <li><a asp-controller="Alertas" asp-action="Index">Autorizaciones y órdenes médicas vencidas</a><strong>@Model.AlertasVencimiento</strong></li>
+                }
                 <li><span>Estudiantes en el registro único</span><strong>@Model.EstudiantesRegistrados</strong></li>
                 <li><span>Funcionarios activos</span><strong>@Model.FuncionariosActivos</strong></li>
             </ul>

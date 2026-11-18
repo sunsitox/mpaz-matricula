@@ -39,7 +39,10 @@ public class HomeController : Controller
 
         try
         {
-            return View(await _panel.CargarAsync(anioConsulta.Value));
+            return View(await _panel.CargarAsync(
+                anioConsulta.Value,
+                User.HasClaim("permiso", "AUTORIZACIONES:LEER"),
+                User.HasClaim("permiso", "MEDICACION:LEER")));
         }
         catch (Exception ex) when (ex is DbException or InvalidOperationException)
         {

@@ -82,6 +82,10 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<CertificadoEmitido> CertificadosEmitidos => Set<CertificadoEmitido>();
 
+    public DbSet<Prescripcion> Prescripciones => Set<Prescripcion>();
+
+    public DbSet<AdministracionMedicamento> AdministracionesMedicamento => Set<AdministracionMedicamento>();
+
     /// <summary>Auditoría de cambios (solo lectura: la escribe el trigger).</summary>
     public DbSet<HistorialCambio> HistorialCambios => Set<HistorialCambio>();
 
@@ -465,6 +469,40 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.AutorizacionId).HasColumnName("autorizacion_id");
             e.Property(x => x.Alcance).HasColumnName("alcance").HasMaxLength(60).IsRequired();
             e.Property(x => x.Otorgado).HasColumnName("otorgado");
+        });
+
+        // MAT-05: prescripción y administración por TENS (pasos/15).
+        // Solo lectura + inserción desde el portal; el trigger valida el ciclo.
+        builder.Entity<Prescripcion>(e =>
+        {
+            e.ToTable("prescripcion", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.AutorizacionId).HasColumnName("autorizacion_id");
+            e.Property(x => x.Medicamento).HasColumnName("medicamento").HasMaxLength(150).IsRequired();
+            e.Property(x => x.DosisCantidad).HasColumnName("dosis_cantidad");
+            e.Property(x => x.DosisUnidad).HasColumnName("dosis_unidad").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Via).HasColumnName("via").HasMaxLength(30).IsRequired();
+            e.Property(x => x.Frecuencia).HasColumnName("frecuencia").HasMaxLength(100).IsRequired();
+            e.Property(x => x.Horario).HasColumnName("horario").HasMaxLength(100);
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(20).IsRequired();
+        });
+
+        builder.Entity<AdministracionMedicamento>(e =>
+        {
+            e.ToTable("administracion_medicamento", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.PrescripcionId).HasColumnName("prescripcion_id");
+            e.Property(x => x.AdministradoEn).HasColumnName("administrado_en");
+            e.Property(x => x.DosisCantidad).HasColumnName("dosis_cantidad");
+            e.Property(x => x.DosisUnidad).HasColumnName("dosis_unidad").HasMaxLength(20).IsRequired();
+            e.Property(x => x.TensId).HasColumnName("tens_id");
+            e.Property(x => x.Incidencias).HasColumnName("incidencias");
+            e.Ignore(x => x.TensNombre);
         });
 
         // Certificados de alumno regular emitidos (pasos/08): los crea el

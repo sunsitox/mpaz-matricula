@@ -34,7 +34,7 @@ body.validacion {
 
 .validacion__portal {
     margin: 0;
-    color: #1A3D85;
+    color: #0f2537;
     font-size: 0.56rem;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -98,7 +98,7 @@ body.validacion {
 .resultado {
     margin-top: 1.8rem;
     padding: 1.3rem 0 1.2rem;
-    border-top: 3px solid #C9A227;
+    border-top: 3px solid #f59e0b;
     border-bottom: 1px solid #E2E5EA;
 }
 
@@ -197,7 +197,7 @@ body.validacion {
 }
 
 .validacion__otro a {
-    color: #1A3D85;
+    color: #0f2537;
     font-weight: 600;
 }
 
@@ -252,7 +252,7 @@ body.validacion {
 .validacion__boton {
     height: 34px;
     padding: 0 1.2rem;
-    border: 1px solid #C9A227;
+    border: 1px solid #f59e0b;
     border-radius: 0;
     background: transparent;
     color: #16181C;
@@ -266,8 +266,8 @@ body.validacion {
 }
 
 .validacion__boton:hover {
-    background: #C9A227;
-    color: #16181C;
+    background: #f59e0b;
+    color: #0f2537;
 }
 
 .validacion__boton:focus-visible {

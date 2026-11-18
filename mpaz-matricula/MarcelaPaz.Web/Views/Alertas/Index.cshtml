@@ -1,0 +1,124 @@
+@model MarcelaPaz.Web.Models.AlertasPagina
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Alertas";
+}
+
+<div class="panel">
+
+    @if (Model.Error is not null)
+    {
+        <div class="acceso__alerta" role="alert">@Model.Error</div>
+    }
+
+    <div class="admin__tarjeta">
+        <div class="panel__encabezado">
+            <div class="panel__titulo">
+                <h1 class="admin__titulo-seccion">Alertas de vencimiento</h1>
+                <p class="admin__ayuda">
+                    Autorizaciones y órdenes médicas vencidas o que vencen dentro de los próximos
+                    30 días. Primero aparece lo vencido y luego lo que vence antes.
+                </p>
+            </div>
+
+            @if (Model.Anios.Count > 0)
+            {
+                <form method="get" asp-controller="Alertas" asp-action="Index" class="panel__anio">
+                    <label class="acceso__etiqueta" for="anio-alertas">Año escolar</label>
+                    <select class="acceso__input" id="anio-alertas" name="anio">
+                        @foreach (var opcion in Model.Anios)
+                        {
+                            <option value="@opcion.Anio" selected="@(opcion.Anio == Model.Anio ? "selected" : null)">@opcion.Anio</option>
+                        }
+                    </select>
+                    <button type="submit" class="admin__boton">Ver</button>
+                </form>
+            }
+        </div>
+
+        <p class="admin__ayuda">
+            <span class="admin__chip admin__chip--alerta">@Model.Vencidas vencidas</span>
+            <span class="admin__chip">@Model.PorVencer por vencer</span>
+        </p>
+
+        @if (Model.UltimaRevision is { } revision)
+        {
+            <p class="admin__ayuda">
+                Última revisión automática: @revision.RevisadaEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                (cada 15 min) — @revision.Resumen
+            </p>
+        }
+
+        @if (Model.Alertas.Count == 0)
+        {
+            <p class="admin__ayuda">
+                No hay autorizaciones ni órdenes médicas vencidas o por vencer en los próximos 30 días@(Model.Anio is int anio ? $" del año {anio}" : "").
+            </p>
+        }
+        else
+        {
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">
+                        Alertas de vencimiento: alumno, curso, tipo, detalle, fecha de vencimiento y estado.
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Estudiante</th>
+                            <th scope="col">Curso</th>
+                            <th scope="col">Alerta</th>
+                            <th scope="col">Detalle</th>
+                            <th scope="col">Vence</th>
+                            <th scope="col">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var alerta in Model.Alertas)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-controller="Alumnos" asp-action="Detalle"
+                                       asp-route-id="@alerta.EstudianteId"
+                                       asp-route-anio="@alerta.Anio">@alerta.Estudiante</a>
+                                    <br />
+                                    <span class="panel__fecha">@alerta.Identificador</span>
+                                </td>
+                                <td>@alerta.Curso</td>
+                                <td>@alerta.Tipo</td>
+                                <td>@alerta.Detalle</td>
+                                <td class="panel__fecha">@alerta.VenceEl.ToString("dd-MM-yyyy")</td>
+                                <td>
+                                    @if (alerta.Vencida)
+                                    {
+                                        <span class="admin__chip admin__chip--alerta">Vencida</span>
+                                        <br />
+                                        <span class="admin__ayuda">@alerta.Plazo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin__chip">@alerta.Plazo</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (!Model.PuedeMedicacion)
+        {
+            <p class="admin__ayuda">
+                Sólo se muestran autorizaciones: las órdenes médicas requieren el área de medicación.
+            </p>
+        }
+
+        @if (!Model.PuedeAutorizaciones)
+        {
+            <p class="admin__ayuda">
+                Sólo se muestran órdenes médicas: las autorizaciones requieren el área de autorizaciones.
+            </p>
+        }
+    </div>
+
+</div>

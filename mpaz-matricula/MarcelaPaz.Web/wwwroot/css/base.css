@@ -8,24 +8,25 @@
    ========================================================================== */
 
 :root {
-    --color-primary: #0C255B;          /* azul marino institucional: panel de login */
-    --color-primary-strong: #081A44;   /* azul marino más oscuro: banda inferior del panel */
-    --color-action: #1A3D85;           /* azul marino intermedio: botones primarios */
-    --color-accent: #D7A62C;           /* dorado de marca: emblema */
-    --color-bg: #F6F8FB;               /* fondo general */
-    --color-surface: #FFFFFF;
-    --color-border: #E4EAF2;
-    --color-input-border: #C9D4E2;
-    --color-placeholder: #66788C;       /* ≥ 4,5:1 sobre blanco: WCAG 1.4.3 */
-    --color-warning-bg: #FDF3DC;       /* aviso de intentos */
-    --color-warning-text: #7A5610;
+    --color-primary: #0f2537;          /* azul institucional: header, títulos, botones */
+    --color-primary-strong: #0a1a27;   /* azul institucional más oscuro: banda inferior */
+    --color-action: #0f2537;           /* azul institucional: botones primarios */
+    --color-accent: #f59e0b;           /* ámbar institucional: destacados y filetes */
+    --color-accent-strong: #d97706;    /* ámbar oscuro: hover y énfasis */
+    --color-bg: #f8fafc;               /* fondo general slate suave */
+    --color-surface: #ffffff;          /* tarjetas y contenedores */
+    --color-border: #e2e8f0;           /* bordes sutiles */
+    --color-input-border: #cbd5e1;
+    --color-placeholder: #64748b;       /* ≥ 4,5:1 sobre blanco: WCAG 1.4.3 */
+    --color-warning-bg: #fef3c7;       /* aviso de intentos */
+    --color-warning-text: #92400e;
     --color-danger: #B23B3B;
     --color-danger-bg: #FBEAEA;
-    --color-text: #1C2B3A;
-    --color-text-secondary: #5A6B80;   /* 5,45:1 sobre blanco: WCAG 1.4.3 */
-    --color-text-panel: #C7D5E8;       /* texto secundario sobre azul */
-    --color-panel-soft: #9DB4D3;
-    --color-panel-muted: #7A93B5;
+    --color-text: #0f172a;              /* texto principal */
+    --color-text-secondary: #64748b;   /* 4,76:1 sobre blanco: WCAG 1.4.3 */
+    --color-text-panel: #e2e8f0;       /* texto secundario sobre azul */
+    --color-panel-soft: #94a3b8;
+    --color-panel-muted: #94a3b8;
 }
 
 /* Sólo para lectores de pantalla: mantiene el texto en el árbol de

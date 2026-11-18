@@ -1178,6 +1178,23 @@ public class RegistroFicha
             return "La matrícula no tiene una ficha vigente: genere la ficha antes de registrar la firma.";
         }
 
+        // La fecha de la firma llega del formulario: se acota en el servidor
+        // para que no se pueda fechar un documento antes de que existiera ni
+        // en el futuro.
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+
+        if (fechaFirma > hoy)
+        {
+            return "La fecha de la firma no puede ser posterior a hoy.";
+        }
+
+        var generadaEl = DateOnly.FromDateTime(ficha.GeneradaEn.LocalDateTime);
+
+        if (fechaFirma < generadaEl)
+        {
+            return $"La fecha de la firma no puede ser anterior a la generación de la ficha ({generadaEl:dd-MM-yyyy}).";
+        }
+
         // La ficha cerrada es inmutable (trigger del DDL): la fecha de la firma
         // queda en el evento de auditoría y el estado de la matrícula.
         matricula.Estado = "FIRMADA";

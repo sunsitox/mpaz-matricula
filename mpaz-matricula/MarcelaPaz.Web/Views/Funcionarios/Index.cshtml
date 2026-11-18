@@ -55,21 +55,33 @@
                             {
                                 <span class="admin__ayuda">Sin rol vigente</span>
                             }
-                            @foreach (var rol in funcionario.Roles)
+                            else
                             {
-                                <span class="admin__chip">
-                                    @rol.Codigo
-                                    <form asp-action="CerrarRol" method="post">
-                                        <input type="hidden" name="funcionarioId" value="@funcionario.Id" />
-                                        <input type="hidden" name="rolId" value="@rol.RolId" />
-                                        <button type="submit"
-                                                class="admin__chip-cerrar"
-                                                aria-label="Cerrar el rol @rol.Codigo de @funcionario.Nombre"
-                                                data-ux-confirmar="¿Cerrar el rol @rol.Codigo de @funcionario.Nombre? La fecha de cierre será hoy y no se puede deshacer desde esta pantalla.">
-                                            Cerrar rol
-                                        </button>
-                                    </form>
-                                </span>
+                                <details class="admin__desplegable">
+                                    <summary class="admin__desplegable-resumen">
+                                        @funcionario.Roles.Count rol@(funcionario.Roles.Count == 1 ? "" : "es") vigentes: @funcionario.Roles[0].Codigo@(funcionario.Roles.Count > 1 ? ", …" : "")
+                                    </summary>
+                                    <ol class="admin__desplegable-lista">
+                                        @foreach (var rol in funcionario.Roles)
+                                        {
+                                            <li class="admin__desplegable-elemento">
+                                                <span class="admin__desplegable-texto">
+                                                    @rol.Codigo · @rol.Nombre <span class="admin__ayuda">(@rol.Desde.ToString("dd-MM-yyyy"))</span>
+                                                </span>
+                                                <form asp-action="CerrarRol" method="post">
+                                                    <input type="hidden" name="funcionarioId" value="@funcionario.Id" />
+                                                    <input type="hidden" name="rolId" value="@rol.RolId" />
+                                                    <button type="submit"
+                                                            class="admin__chip-cerrar"
+                                                            aria-label="Cerrar el rol @rol.Codigo de @funcionario.Nombre"
+                                                            data-ux-confirmar="¿Cerrar el rol @rol.Codigo de @funcionario.Nombre? Dejará de estar vigente de inmediato y no se puede deshacer desde esta pantalla.">
+                                                        Cerrar rol
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ol>
+                                </details>
                             }
                         </td>
                         <td>
@@ -84,6 +96,7 @@
                         </td>
                         <td>
                             <div class="admin__acciones">
+                                <a class="admin__boton" asp-action="Editar" asp-route-id="@funcionario.Id">Editar</a>
                                 <form asp-action="CambiarEstado" method="post">
                                     <input type="hidden" name="id" value="@funcionario.Id" />
                                     <input type="hidden" name="activo" value="@(funcionario.Activo ? "false" : "true")" />
@@ -99,10 +112,13 @@
                                         Restablecer contraseña
                                     </button>
                                 </form>
-                                <form asp-action="Desbloquear" method="post">
-                                    <input type="hidden" name="id" value="@funcionario.Id" />
-                                    <button type="submit" class="admin__boton">Desbloquear</button>
-                                </form>
+                                @if (funcionario.Bloqueado)
+                                {
+                                    <form asp-action="Desbloquear" method="post">
+                                        <input type="hidden" name="id" value="@funcionario.Id" />
+                                        <button type="submit" class="admin__boton" title="Cuenta bloqueada por intentos fallidos">Desbloquear</button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>

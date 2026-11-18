@@ -1,8 +1,8 @@
 # Checklist — Portal de Matrícula MPAZ Web (Módulo 3)
 
 Escuela Escritora Marcela Paz · Basado en “Requerimientos Portal de Matrícula 2027” v1.0 (03-11-2026)  
-Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de verdad del esquema)  
-**Estado revisado:** 8 de noviembre de 2026
+Base de datos: `mpaz-matricula/database/modulos/matricula/pasos/01-ddl-institucional.sql` (fuente de verdad del esquema)  
+**Estado revisado:** 17 de noviembre de 2026
 
 ## Criterio de esta revisión
 
@@ -13,12 +13,24 @@ Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de ver
 
 ### Verificaciones ejecutadas
 
-- [x] La solución compila en `Release`: `dotnet build MarcelaPaz.Matriculas.slnx -c Release --no-restore` — 0 errores y 3 advertencias.
-- [x] Aplicación local accesible: `/`, `/Ficha/Buscar` y `/Cuenta/Login` respondieron HTTP 200 en `http://localhost:5195`.
+- [x] La solución compila en `Release`: `dotnet build MarcelaPaz.Matriculas.slnx -c Release --no-restore` — 0 errores y 0 advertencias (17-11-2026).
+- [x] Aplicación local accesible: `/`, `/Cuenta/Login`, `/Alertas` y `/?anio=2027` respondieron HTTP 200 en `http://localhost:5301` (17-11-2026); `/Alertas?anio=2026` también responde 200.
 - [x] Se inspeccionaron el DDL, entidades, contexto EF Core, controladores, vistas, seguridad, PDF y scripts de permisos.
-- [x] Existe un proyecto de pruebas automatizadas en `mpaz-matricula/tests` con 27 casos: RUN/IPE-IPA, validaciones del formulario, cierre de ficha, formatos y firma real de archivos del expediente.
+- [x] Existe un proyecto de pruebas automatizadas en `mpaz-matricula/tests` con 133 casos: RUN/IPE-IPA, validaciones del formulario, cierre de ficha, formatos, firma real de archivos del expediente y alertas MAT-17.
 - [x] PostgreSQL 16.15 instalado y probado en el servidor (`psql`, `pg_dump` disponibles) — 06-11-2026.
 - [x] Servidor auditado e intervenido en una ventana autorizada: runtime, release, base de datos y servicios temporales; ver secciones 8 y 11.
+
+### Correcciones de seguridad y datos cercanas (17-11-2026)
+
+- [x] Secreto SSO fuera de `appsettings.Development.json`; vive en user-secrets y `EmisorSso` actualiza el cliente en Desarrollo sin recrear la base.
+- [x] Fecha de firma acotada en el servidor: no puede ser posterior a hoy ni anterior a la generación de la ficha (`RegistroFicha.RegistrarFirmaAsync`).
+- [x] Emisión de certificados por POST con antiforgery token y descarga PDF; GET de emisión responde 405.
+- [x] Login con rate limiter por IP (20 intentos/5 min) que vuelve al formulario con aviso claro; mensaje único para cuenta, clave y bloqueo.
+- [x] Interruptor de autorización sólo en Development (`ModoRevision`): fuera de Development siempre exige sesión y permisos.
+- [x] `Cache-Control: no-store, no-cache, must-revalidate` en páginas autenticadas.
+- [x] Privilegios de auditoría: el script ya revocaba `UPDATE`/`DELETE` sobre `historial_cambios`, `registros_acceso` y `administracion_medicamento`; se agregó una guarda que aborta el script si el rol `mpaz_app` los conserva.
+
+Las correcciones anteriores están verificadas en compilación Release, rutas locales y auditoría de la base de desarrollo; no se aplicaron al servidor del colegio.
 
 ---
 
@@ -26,20 +38,29 @@ Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de ver
 
 - [ ] [Colegio] [BLOQUEADO] Textos de las autorizaciones de imagen y convivencia, aprobados por Dirección, Convivencia Escolar y el sostenedor (frase corta junto a cada checkbox)
 - [ ] [Colegio] [BLOQUEADO] Protocolo escrito de medicación por TENS: custodia de medicamentos y qué hacer si el TENS no está
-- [ ] [Colegio] [BLOQUEADO] Matriz final de permisos por rol (la sec. 10 es propuesta a validar)
+- [ ] [Colegio] [BLOQUEADO] Matriz final de permisos por rol (la sec. 10 es propuesta a validar) — **Confirmado por Johan 17-11-2026 (citado por José, sin aplicar todavía):** "UTP, INSPECTORIA y DIRECCIÓN son los que formalmente pueden ver todo"; "INSPECTORIA tiene la particularidad de poder editar datos del estudiante junto con el de admin"; "UTP, DIRECCIÓN, PIE Y CONVIVENCIA solo pueden ver, no editar nada, y no deberían tener acceso para generar o editar una matrícula". UTP y CONVIVENCIA no existen hoy como roles en `01-ddl-institucional.sql` ni en `03-permisos-iniciales.sql`. Comparación con lo cargado hoy en `03-permisos-iniciales.sql` (sin modificar):
+  - DIRECCIÓN hoy: `GENERAL/FAMILIA/RETIRO/SALUD/PIE/JUDICIAL/AUTORIZACIONES/DOCUMENTOS:LEER` + `GENERAL/AUTORIZACIONES/DOCUMENTOS:VALIDAR` + `EXPORTAR`. Casi coincide con "ver todo, sin generar/editar", salvo que le falta `MEDICACION:LEER` para el "todo" y hay que definir si `VALIDAR` se mantiene (¿validar es editar?).
+  - INSPECTORIA hoy: `GENERAL/FAMILIA/RETIRO:LEER` + `RETIRO:EDITAR`. Difiere: Johan pide ver todo y editar datos del estudiante; hoy no ve SALUD/PIE/JUDICIAL/AUTORIZACIONES/DOCUMENTOS/MEDICACION ni edita GENERAL/FAMILIA.
+  - EQUIPO_PIE hoy: `GENERAL/FAMILIA/PIE/DOCUMENTOS:LEER` + `PIE:EDITAR`. Difiere en edición: Johan pide solo lectura, sin generar ni editar matrícula.
+  - SECRETARIA hoy: `GENERAL/FAMILIA/RETIRO/AUTORIZACIONES/DOCUMENTOS/SALUD/JUDICIAL:LEER/CREAR/EDITAR` + `EXPORTAR`. Johan no la menciona: queda sin confirmar quién crea/mantiene.
+  - TENS/DOCENTE/ADMIN_TI: Johan no los menciona; se mantienen como están hasta la matriz final.
+  - "admin" que edita junto a INSPECTORIA está ambiguo: hoy `ADMIN_TI` solo tiene `ADMIN:ADMINISTRAR/LEER` + `AUDITORIA:LEER`, sin acceso al expediente. Falta definir si es ADMIN_TI o Secretaría/encargado de matrícula.
+  **Sin modificar `rol_permiso` ni crear roles UTP/CONVIVENCIA hasta la confirmación final.**
 - [ ] [Colegio] [BLOQUEADO] Plazos de conservación de originales y datos, y eliminación segura (con el sostenedor)
 - [ ] [Colegio] [BLOQUEADO] Documentos que el colegio pide hoy y cuáles son obligatorios por ley
 - [ ] [Colegio] [BLOQUEADO] Formato único de ficha para matrícula nueva y renovación, con anexos opcionales
-- [ ] [Colegio] [BLOQUEADO] Certificado de alumno regular: ¿se genera desde los datos confirmados? ¿quién lo emite? ¿qué debe llevar (firma, folio)?
-- [ ] [Colegio] [BLOQUEADO] Confirmar quién ingresa los datos de la matrícula (el documento dice: un funcionario)
+- [ ] [Colegio] [BLOQUEADO] Certificado de alumno regular: definir quién lo emite y qué debe llevar (firma, folio) — **Implementado en código:** `CertificadosController` lo emite desde los datos confirmados, conserva historial y expone validación pública por folio; falta la validación institucional del formato.
+- [x] [Colegio] Quién captura los datos — **Confirmado por Johan 17-11-2026:** formalmente alguien del colegio va preguntando al apoderado y registra; antes el apoderado lo escribía a mano. La captura formal no la hace el apoderado directamente en el portal. Queda pendiente separar esto de quién *formaliza* (crea/confirma la matrícula en el sistema) y del registro público propuesto (ver decisiones pendientes).
 - [ ] [Colegio] [BLOQUEADO] Si se actualiza un dato después de firmada la ficha: ¿se vuelve a firmar siempre o solo en cambios importantes?
-- [ ] [Colegio] [BLOQUEADO] Responsable por proceso y alcance de información visible por perfil
+- [ ] [Colegio] [BLOQUEADO] Responsable por proceso y alcance de información visible por perfil — **Pendiente de precisar (Johan 18-11-2026):** (1) si PIE y CONVIVENCIA ven todo el expediente o solo lo necesario para su función (salud/judicial incluidos o no); (2) si UTP/DIRECCIÓN/INSPECTORIA ven también antecedentes médicos y judiciales al "ver todo"; (3) quiénes crean y formalizan matrículas y qué significa "admin" (¿ADMIN_TI o Secretaría/encargado?).
+- [ ] [Colegio] [BLOQUEADO] Decisión: quién formaliza matrículas — **Pendiente y separada de la captura.** Johan confirmó quién captura (funcionario del colegio que entrevista al apoderado) y quiénes NO generan/editan (UTP, DIRECCIÓN, PIE, CONVIVENCIA), pero no dijo quién SÍ crea, edita y confirma la matrícula en el sistema (¿SECRETARIA? ¿INSPECTORIA? ¿"admin" = ADMIN_TI o encargado?). No se toca `rol_permiso` ni flujos de creación/confirmación hasta definirlo.
+- [ ] [Colegio] [BLOQUEADO] Decisión: alcance del registro público — **Pendiente y separado de la captura actual. Nuevo requisito de Johan 17-11-2026:** "debería haber una pestaña pública que sea activada o desactivada por el encargado TI para registrar a los alumnos". Sin definir: si es preinscripción del apoderado que luego un funcionario revisa y formaliza, o captura asistida; qué crea el envío (¿matrícula BORRADOR, solicitud pendiente, otro estado?); validaciones, anti-spam/abuso, auditoría y protección de datos; quién la revisa y con qué permisos. La sec. 12 mantiene "Acceso público o login de apoderados" fuera de alcance hasta aprobarlo. **No se habilita acceso público, no se cambia el login ni se toca `Program.cs`/autorización hasta aprobarlo.**
 - [ ] [Colegio] [BLOQUEADO] Confirmar si existe otra versión de la ficha con autorización de paracetamol (la ficha entregada no la trae)
 
 ## 1. Coordinación del equipo (reunión del martes)
 
 - [ ] [Equipo] [BLOQUEADO] ¿Qué archivo o formato pide el ministerio, y quién lo sube? (hoy el documento solo permite exportar reportes)
-- [ ] [Equipo] [BLOQUEADO] Definir quién construye el inicio de sesión único de funcionarios (sec. 4)
+- [x] [Equipo] Inicio de sesión único de funcionarios (sec. 4) — **Comprobado (16-11-2026):** emisor OpenIddict propio (`Seguridad/EmisorSso.cs`, `AutorizacionController`, `/connect/authorize` y `/connect/token`, scope `mpaz_api`), migración `AgregarSso` en el esquema `mpaz_auth`, módulo `database/modulos/auth` y prototipo de prueba `scripts/probar-sso.py`. Falta acordar con el equipo qué módulos lo consumirán.
 - [ ] [Equipo] [BLOQUEADO] Acordar con Samantha el identificador común del estudiante (RUN, o IPE/IPA)
 - [ ] [Equipo] [BLOQUEADO] Acordar qué datos mínimos recibe Asistencia (identificador, curso, condición de matrícula)
 - [ ] [Equipo] [BLOQUEADO] Acordar con Sebastián el enlace desde la página del colegio hacia el portal de matrícula
@@ -61,7 +82,7 @@ Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de ver
 - [x] [José] **MAT-12** Permisos leer / crear / editar / validar / administrar, por rol y por área de datos, aplicados en el servidor — **Comprobado:** `PermisoPolicyProvider` con claims desde `rol_permiso`; lectura, escritura y descarga del expediente exigen permiso por área, y la denegación a Docente se verificó en pantalla y por URL directa.
 - [x] [José] Denegar y registrar el intento cuando un rol no tiene permiso — **Comprobado:** `PermisoAuthorizationHandler` y `AuditoriaAcceso` registran `DENEGADO`; un Docente sin `DOCUMENTOS:LEER` no ve enlaces y la descarga directa responde con denegación.
 - [x] [José] **MAT-13** Ejecutar `SET LOCAL app.funcionario_id` en cada transacción que escriba — **Comprobado:** `EscrituraAuditada` envuelve administración de funcionarios, pasos del asistente, cierre de ficha, firma, confirmación y documentos; el historial registró al funcionario responsable en las pruebas.
-- [x] [José] **MAT-13** Registrar en `registros_acceso` lecturas, búsquedas, descargas, exportaciones y accesos denegados de datos sensibles — **Comprobado:** se registran `LEER` del expediente, `BUSCAR` (con hash del término), `DESCARGAR` y `DENEGADO`; falta la exportación, que aún no existe.
+- [x] [José] **MAT-13** Registrar en `registros_acceso` lecturas, búsquedas, descargas, exportaciones y accesos denegados de datos sensibles — **Comprobado:** se registran `LEER` del expediente, `BUSCAR` (con hash del término), `DESCARGAR` y `DENEGADO`; las exportaciones de reportes quedan como `DESCARGAR`/`REPORTE` en `ReportesController`.
 - [ ] [José] TLS en tránsito; archivos y respaldos protegidos; mínimos privilegios — configurado parcialmente para cookies/HSTS en producción, pero no desplegado ni comprobado.
 - [ ] [José] [BLOQUEADO] Cargar la matriz de permisos en `rol_permiso` cuando el colegio la apruebe — existe propuesta no aprobada en `database/03-permisos-iniciales.sql`.
 
@@ -78,7 +99,7 @@ Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de ver
 - [x] [José] Bloques F y G: autorizaciones de imagen (por canal) y de convivencia, como checkbox con su texto — **Comprobado:** se capturan en el paso 7, separadas de salud y PIE, y se guardan como autorizaciones del estudiante. Los textos legales definitivos siguen pendientes de Dirección.
 - [x] [José] **MAT-03** Registrar datos familiares, emergencia, retiro, salud y apoyos — **Comprobado:** el asistente persiste los cinco bloques y la ficha del alumno muestra familia, emergencia, retiro, salud, alergias, contacto sanitario y PIE/apoyos. Los apoyos exigen `PIE:LEER`, igual que el resto del área.
 - [x] [José] **MAT-04** Registrar el estado de cada autorización (otorgada, rechazada, revocada, vencida) — **Comprobado:** la ficha del alumno lista todas las autorizaciones con estado, firma, vigencia y alcances; la revocación exige motivo y registra funcionario y fecha, y las otorgadas cuyo plazo terminó pasan a `VENCIDA`. Revocación probada en ejecución con auditoría.
-- [ ] [José] Estados de la matrícula: BORRADOR → FICHA_GENERADA → FIRMADA → CONFIRMADA (o ANULADA) — **Parcial:** las cuatro primeras transiciones están implementadas y verificadas (cierre de ficha, registro de firma y confirmación con funcionario y fecha), y la base impide saltos; **falta ANULADA**, que solo existe en el DDL.
+- [x] [José] Estados de la matrícula: BORRADOR → FICHA_GENERADA → FIRMADA → CONFIRMADA (o ANULADA) — **Comprobado:** las cuatro transiciones están implementadas y verificadas (cierre de ficha, registro de firma, confirmación con funcionario y fecha y anulación con motivo), la anulación exige motivo y permite iniciar una matrícula nueva, y la base impide saltos. Cubierto por `AnulacionMatriculaTests`.
 - [x] [José] Vista previa de la ficha antes de cerrarla — el paso 8 muestra resumen ordenado (pasos 1-7) + PDF embebido + confirmación expresa; al guardar genera folio y congela la copia, y el comprobante posterior imprime desde el snapshot.
 - [x] [José] **MAT-08** Generar el PDF desde la copia congelada (`datos_snapshot`), con folio, año, versión, textos aceptados y bloques de firma — **Comprobado:** el cierre crea `ficha_version` con folio, versión y snapshot; el PDF usa la versión cerrada y el borrador se descarga como «Sin folio».
 - [x] [José] Botón para descargar e imprimir la ficha (registrar la descarga) — **Comprobado:** la descarga queda registrada como `DESCARGAR` en `registros_acceso`.
@@ -90,24 +111,34 @@ Base de datos: `mpaz-matricula/database/01-ddl-institucional.sql` (fuente de ver
 - [x] [José] **MAT-07** Marcar cada documento como recibido, no aplica o pendiente, sin bloquear la matrícula — **Comprobado:** estados editables desde la ficha; ninguno bloquea la matrícula.
 - [x] [José] Subir archivos PDF/JPG/PNG con límite de tamaño, guardados fuera de directorios públicos, con hash y análisis del archivo — **Comprobado:** validación de extensión, tamaño y firma real del archivo; hash SHA-256 y ruta relativa en `App_Data/documentos`. El análisis antivirus queda fuera de alcance.
 - [x] [José] **MAT-09** Subir el escaneo de la ficha firmada y asociarlo a la matrícula — **Comprobado:** el escaneo se guarda como documento `FICHA_FIRMADA`, reemplaza al anterior sin borrarlo y la ficha muestra el enlace de descarga.
-- [ ] [José] **MAT-10** Registrar la ubicación del original en papel y el estado de validación documental — definido en el DDL, no implementado en la aplicación.
+- [x] [José] **MAT-10** Registrar la ubicación del original en papel y el estado de validación documental — **Comprobado:** `AlumnosController.ValidarDocumentacion` (permiso `DOCUMENTOS:VALIDAR`) guarda `validado_por`, `validado_en`, la observación y la ubicación del original; `RegistroFicha.ValidarDocumentacionAsync` valida PENDIENTE/VALIDADA/OBSERVADA y exige firma y escaneo para VALIDADA; la ficha del alumno muestra ubicación, estado y observación.
 - [x] [José] Confirmar la matrícula según el procedimiento oficial (registrar quién y cuándo) — **Comprobado:** sólo desde ficha generada o firmada, con funcionario y fecha en la matrícula y en la auditoría.
 - [x] [José] **MAT-11** Consulta administrativa: búsqueda global y filtros por RUN/identificador, nombre, curso, año, estado y pendientes — **Comprobado:** el listado busca por nombre y por RUN, IPE o IPA, y agrega el filtro y la columna «Pendientes» (sin ficha vigente o con requisitos documentales pendientes) conservando año, curso, estado y orden.
 - [x] [José] Vista previa del PDF firmado; descarga solo si el rol lo permite — **Comprobado:** descarga del escaneo con `DOCUMENTOS:LEER` y denegación verificada para Docente.
 - [x] [José] Pestañas con acceso condicionado: salud, PIE, documentos judiciales — la ficha tiene pestañas General/Autorizaciones/Documentos/Salud/PIE; cada panel muestra solo lo del rol y explica la ausencia (S-02).
 - [x] [José] Mostrar última actualización y funcionario responsable — la ficha del alumno muestra fecha (trigger de auditoría, respaldo `updated_at`) y funcionario (historial, respaldo `creada_por`).
-- [ ] [José] Acceso de lectura concurrente; control de versión para evitar sobrescrituras al editar — el DDL tiene versionado/triggers en tablas vivas, pero la aplicación no maneja conflictos de concurrencia.
+- [x] [José] Acceso de lectura concurrente; control de versión para evitar sobrescrituras al editar — **Comprobado:** la columna `version` está mapeada como token de concurrencia en `MatriculaDbContext` (`IsConcurrencyToken`), de modo que EF lanza `DbUpdateConcurrencyException` si otro funcionario guardó primero, en vez de sobrescribir en silencio.
 - [ ] [José] [BLOQUEADO] Medicación por TENS: prescripción, autorización y registro de dosis (**MAT-05**) — el DDL contiene las tablas y restricciones, pero no debe conectarse hasta aprobar el protocolo.
 
 ## 6. Etapa III — Continuidad
 
 - [x] [José] **MAT-01** Renovación anual: precargar datos vigentes, exigir confirmación y generar la ficha del año nuevo — **Comprobado:** `Renovar` crea el expediente del año como `RENOVACION` y precarga estudiante, familia, apoderados, contactos, retiro, salud, PIE y autorizaciones; el paso 7 exige la confirmación y el cierre genera la ficha con folio. El flujo de cierre se probó sobre una matrícula de renovación.
+- [x] [José] Egreso de 8º básico: al renovar a quien terminó el último nivel del colegio se pide confirmar — **Comprobado:** `Renovar` abre una pantalla de confirmación con dos caminos: «Egresado, sin renovar» (no crea expediente) o «Repite 8º básico» (la ficha queda marcada como repetición). La ficha del alumno muestra la insignia «Egresado de 8º básico», derivada de la última matrícula no anulada, sin columna nueva. Cubierto por `NivelesCursoTests.EsUltimo`.
 - [x] [José] **MAT-14** Versiones históricas de la ficha, autorizaciones y cambios de apoderado — **Comprobado:** la ficha del alumno lista todas las versiones con folio, estado, fecha, responsable y motivo, y cada una se descarga desde su copia congelada; las autorizaciones conservan su historial y los vínculos familiares cerrados se muestran con su fecha de término.
 - [x] [José] **MAT-18** Corrección controlada: crear una versión nueva con motivo, sin tocar el documento firmado — **Comprobado:** «Corregir ficha» parte de la copia congelada, exige motivo en el paso 7 y genera la versión siguiente; la anterior queda `REEMPLAZADA`, la matrícula conserva su estado y la ficha original no se edita (trigger del DDL). Probado: versión 2 con motivo sobre una ficha vigente.
 - [x] [José] Revocación de autorizaciones (imagen, convivencia): conservar firma y fecha, bloquear el uso posterior — **Comprobado:** la acción de revocación conserva `fecha_firma` y firmante, guarda motivo, funcionario y fecha de revocación, y deja la autorización fuera de las vigentes.
 - [x] [José] **MAT-16** Exportar reportes autorizados: estado de matrículas y faltantes documentales — `ReportesController` con vista y CSV (descarga auditada, permiso EXPORTAR distinto de LEER).
-- [ ] [José] **MAT-17** Alertas de órdenes médicas y autorizaciones vencidas o por vencer — vistas de apoyo en el DDL, sin interfaz o proceso de alertas.
-- [ ] [José] Auditoría de cuentas: agregar `funcionario` a los triggers de auditoría — pendiente; el DDL revisado declara trigger específico para `funcionario_rol`, no para `funcionario`.
+- [x] [José] **MAT-17** Alertas de órdenes médicas y autorizaciones vencidas o por vencer — **Implementado el 16-11-2026.** Pantalla `/Alertas` con listado por alumno, curso, tipo, detalle, vencimiento y estado, enlace a la ficha y permiso por área; la vista incluye también las `VENCIDA` y las que vencen en 30 días. El requisito de origen sólo pide «emitir alertas por órdenes médicas o autorizaciones vencidas»; no fija canal ni antelación.
+    - **Existe:** la vista `v_alertas_vencimiento` del DDL (unión de `prescripcion` con estado `VIGENTE`/`PENDIENTE_VALIDACION` y de `autorizacion` `OTORGADA` o `VENCIDA` no revocada, con `vigente_hasta <= hoy + 30` y bandera `vencida`); el panel de inicio cuenta las vencidas en `PanelIndicadores.ContarPanelAsync` y las muestra como «Documentos y autorizaciones vencidas»; `Autorizaciones.EstadoEfectivo` y `RegistroFicha.MarcarVencidasAsync` pasan a `VENCIDA` las autorizaciones cuyo plazo terminó.
+    - **Listado — resuelto:** `AlertasController` y `/Alertas` muestran alumno, identificador, curso, tipo, detalle, vencimiento y estado, con enlace a la ficha; el bloque de autorizaciones exige `AUTORIZACIONES:LEER` y el de órdenes médicas `MEDICACION:LEER`, y la lectura queda en `registros_acceso` (MAT-13).
+    - **Aviso previo — resuelto en pantalla:** `/Alertas` muestra también las que vencen en los próximos 30 días, separadas como «por vencer». El contador del panel sigue mostrando sólo las vencidas.
+    - **Falta la rama de órdenes médicas:** no existe entidad `Prescripcion` en el código (0 referencias en C# o Razor); la tabla vive sólo en el DDL y depende de MAT-05, bloqueado por el protocolo de medicación. La rama `PRESCRIPCION` de la vista no puede generar filas desde el portal.
+    - **Falta proceso programado:** el panel se calcula al abrir la página (caché de 15 s). No hay tarea, timer de systemd ni correo o reporte periódico; `deploy/mpaz-matriculas.service` no programa nada.
+    - **Alcance por rol — resuelto (17-11-2026):** el panel sólo cuenta vencidas de las áreas que la sesión puede leer, por el año consultado; si no tiene ninguna de las dos áreas, no muestra el indicador. La pantalla de alertas ya filtraba por área y ahora también por año escolar.
+    - **Pruebas:** `AlertasPaginaTests` cubre `Vencidas`/`PorVencer` y el estado relativo de `Plazo`; no hay cobertura automatizada de las consultas SQL contra PostgreSQL.
+    - **Riesgo corregido y acotado (16-11-2026):** la vista acepta `estado IN ('OTORGADA', 'VENCIDA')`, excluye `revocada_en`, no lista una autorización reemplazada (comparación por fecha con respaldo en `id`, así una fila sin `vigente_desde` ni `fecha_firma` también se excluye) y deja de listar vencimientos de más de 90 días. La regla de reemplazo se limita a imagen y convivencia: la medicación admite una autorización por medicamento. Cambio en `pasos/01-ddl-institucional.sql`, `instalacion/01-estructura-bd.sql`, `docker/db-init/01-ddl-institucional.sql` y el paso incremental `pasos/12-alertas-vencimiento.sql`; **aplicado en la base de desarrollo el 16-11-2026, falta la base del servidor**.
+    - **Detalle menor corregido (17-11-2026):** la etiqueta del panel ahora dice «Autorizaciones y órdenes médicas vencidas», que es lo que cuenta la vista; los faltantes documentales son otro indicador.
+- [x] [José] Auditoría de cuentas: agregar `funcionario` a los triggers de auditoría — **Comprobado:** `pasos/09-auditar-funcionario.sql` agrega el trigger de auditoría a `funcionario` (nombre, correo y estado de la cuenta dejan rastro en `historial_cambios`); es aditivo e idempotente sobre una base instalada.
 
 ## 7. Pruebas de aceptación (sec. 13)
 
@@ -215,6 +246,8 @@ No son tareas: no se marcan ni se construyen.
 
 ## Resumen del estado actual
 
+> Este resumen corresponde al 06-11-2026. El estado vigente está en las secciones 11.1, 13 y 14.
+
 ### Completado y comprobado
 
 1. Rama de respaldo para el trabajo de acceso de apoderados y retiro de ese acceso desde `main`.
@@ -238,11 +271,11 @@ No son tareas: no se marcan ni se construyen.
 
 ### Bloqueos técnicos prioritarios
 
-1. Activar y probar la seguridad obligatoria antes de exponer cualquier ruta.
-2. Retirar `autoriza_paracetamol` del formulario/PDF y terminar la alineación con el DDL.
-3. Envolver todas las escrituras de matrícula con `app.funcionario_id`.
-4. Crear pruebas para RUN, duplicados, permisos, auditoría, transiciones y concurrencia.
-5. Implementar el cierre de ficha mediante `ficha_version.datos_snapshot`; el PDF actual es solo borrador.
+1. ~~Activar y probar la seguridad obligatoria~~ — cerrado: `ExigirInicioSesion`, cookie `Secure`, antiforgery global y cambio forzado de contraseña.
+2. Paracetamol: confirmar con Dirección si se mantiene la pregunta con indicación médica o se retira del formulario y del PDF.
+3. ~~Envolver todas las escrituras de matrícula con `app.funcionario_id`~~ — cerrado con `EscrituraAuditada`.
+4. ~~Crear pruebas para RUN, duplicados, permisos, auditoría, transiciones y concurrencia~~ — batería en `mpaz-matricula/tests` (no re-ejecutada en esta revisión).
+5. ~~Implementar el cierre de ficha mediante `ficha_version.datos_snapshot`~~ — cerrado: folio, versión congelada y PDF desde la copia.
 6. Probar respaldo y restauración reales, mover la base al disco de datos y programar copia externa.
 7. Retirar las credenciales visibles, rotarlas y publicar con dominio propio y Cloudflare Access.
 
@@ -268,10 +301,81 @@ No son tareas: no se marcan ni se construyen.
 
 ### Pendiente que sigue abierto
 
-- Retirar la autorización de paracetamol del formulario y del PDF cuando Dirección apruebe el procedimiento de medicación.
-- Anulación de matrícula: el estado `ANULADA` existe en el DDL, pero no hay acción en la aplicación.
-- Reportes y exportación (MAT-16), alertas de vencimientos (MAT-17) y control de concurrencia al editar.
+- Paracetamol: no se retiró; la ficha lo pregunta con el texto «únicamente con indicación médica y protocolo TENS aprobado» (`Paso6.cshtml`, `FichaImpresion`, `FichaEtapa1Tests`). Confirmar con Dirección si ésa es la decisión definitiva.
+- Anulación de matrícula — **cerrado:** `AlumnosController.Anular` y `RegistroFicha.AnularAsync` (exige motivo y permite iniciar una matrícula nueva), cubierto por `AnulacionMatriculaTests`.
+- Reportes y exportación (MAT-16) — **cerrado** (`ReportesController` y `ReportesCsvTests`); control de concurrencia al editar — **cerrado** (`version` como token de concurrencia en `MatriculaDbContext`). Sigue abierto MAT-17 (alertas), con el detalle de la sección 6.
 - Construir y probar la imagen Docker, probar respaldo/restauración y rotar las credenciales del servidor.
 - Publicar con dominio propio y Cloudflare Access.
 - Textos legales, matriz de permisos aprobada, retención de datos y revisión de la Ley 21.719 (bloqueados por el colegio).
 - Revisión visual en un equipo con Windows en alto contraste y a 200 % de zoom, más allá de la comprobación automatizada de desborde.
+
+---
+
+## 14. Avances del 09 al 16-11-2026
+
+### Cerrado y verificado en el repositorio
+
+| Cambio | Evidencia |
+| --- | --- |
+| Anulación de matrícula (antes sin acción) | `AlumnosController.Anular` y `RegistroFicha.AnularAsync`, con motivo obligatorio y `AnulacionMatriculaTests` |
+| MAT-16 reportes y exportación | `ReportesController` con vista y CSV de matrículas y faltantes, permisos `GENERAL:EXPORTAR` y `DOCUMENTOS:EXPORTAR`, descarga auditada; `ReportesCsvTests` |
+| Control de concurrencia al editar | columna `version` como token de concurrencia en `MatriculaDbContext` |
+| Inicio de sesión único de funcionarios | emisor OpenIddict (`Seguridad/EmisorSso.cs`, `AutorizacionController`), migración `AgregarSso` en `mpaz_auth`, módulo `database/modulos/auth` y `scripts/probar-sso.py` |
+| Certificado de alumno regular | `CertificadosController` con emisión, historial de emisiones y validación pública por folio; licencia QuestPDF configurada |
+| Egreso de 8º básico y niveles completos | confirmación egreso/repite en `Renovar`, insignia de egresado y cursos de pre-kínder a 8º básico con letras A/B |
+| Base por módulos en Neon | esquemas `mpaz_matricula`, `mpaz_auth` y `mpaz_asistencia`, conexión con respaldo y `database/CONEXION.md` |
+| Video demostrativo | `pruebas-visuales/evidencias/grabar-flujo/flujo-mpaz.webm` y 15 capturas con CSV de evidencia |
+
+### Pendiente que sigue abierto
+
+- MAT-17: aviso automático/proceso programado y pruebas contra la base real de la vista y el contador; el listado, el año escolar y las «por vencer» ya están en `/Alertas`, con el panel acotado por área y año.
+- Base de desarrollo: migración `AgregarSso` de OpenIddict aplicada el 16-11-2026; el emisor arranca sin error y `/connect/authorize` responde. La base del servidor sigue sin esas tablas.
+- MAT-15: integración con Asistencia; el esquema `mpaz_asistencia` existe, sin flujo de datos.
+- Matriz de permisos aprobada, protocolo de medicación, textos legales y Ley 21.719 (vigente desde el 01-12-2026): bloqueados por el colegio.
+- Respaldo y restauración probados, rotación de credenciales, dominio propio con Cloudflare Access e imagen Docker sin construir.
+
+## 15. Avances del 17-11-2026
+
+### Cerrado y verificado en el repositorio
+
+| Cambio | Evidencia |
+| --- | --- |
+| MAT-17: filtro y alcance por año escolar | `AlertasController` resuelve el año activo o seleccionado y filtra la matrícula de ese año; `PanelIndicadores` agrupa el conteo por año y área. |
+| MAT-17: panel por permisos | `HomeController` pasa `AUTORIZACIONES:LEER` y `MEDICACION:LEER`; el contador queda en 0 y oculto sin alguna de las áreas. |
+| MAT-17: etiqueta del panel corregida | «Autorizaciones y órdenes médicas vencidas», con enlace a `/Alertas`. |
+| Pruebas MAT-17 | `AlertasPaginaTests`: conteos de vencidas/por vencer y texto relativo de `Plazo`. |
+| Compilación Release y pruebas | 0 errores y 0 advertencias; 133 pruebas superadas, 0 fallos. |
+
+### Pendiente que sigue abierto
+
+- MAT-17: proceso programado/aviso automático, pruebas contra la base real de la vista y el contador, y aplicación en la base del servidor.
+- Respaldo y restauración probados, rotación de credenciales, dominio propio con Cloudflare Access e imagen Docker sin construir.
+
+## 16. Revisión actualizada y lista vigente (17-11-2026)
+
+### Estado real hoy
+
+El portal local compila en Release sin errores ni advertencias y las 137 pruebas pasan. `/Alertas` filtra por año (activo o seleccionado) y por área (autorizaciones/medicación); el panel de inicio sólo cuenta alertas de las áreas permitidas, por año, y oculta el indicador si no tiene ninguna. Quedan cerrados los cinco hallazgos de auditoría y los dos mínimos de datos, más la guarda de privilegios de auditoría.
+
+> **Superadmin solo en prueba (17-11-2026):** rol `SUPERADMIN` (66 permisos: todas las áreas × todas las acciones) y funcionario `superadmin.test@mpaz.cl` existen **únicamente en la base local de prueba** (`mpaz_restore_local`), nunca en Neon ni en producción. No están en los pasos del DDL: es siembra puntual de desarrollo. Si la base de prueba se re-restaura desde Neon, el superadmin desaparece y hay que volver a sembrarlos con el procedimiento de esta revisión.
+
+### Lo que falta y puede hacerse sin autorización externa
+
+- [x] MAT-17: aviso automático/proceso programado y pruebas reales (17-11-2026). Canal in-app en `/Alertas`; frecuencia cada 15 min + primera revisión al arrancar; responsable: proceso programado, sin funcionario asignado. Vista y contador probados contra la base real de desarrollo: años 2026 (9 matrículas) y 2027 (27); prueba positiva con una autorización temporal vencida (vista = 1, contador del panel 2027 = 1, revisión programada con “1 autorizaciones”, `/Alertas` en HTTP con el resumen), datos de prueba limpiados y contador de vuelta a 0. Permisos: `mpaz_app` recibe solo `SELECT, INSERT` sobre `alerta_revision` en `pasos/13` e `instalacion/02`, verificado con rol simulado (lee e inserta, no actualiza ni borra).
+- [x] Aceptación funcional parcial (17-11-2026): PDF desde `datos_snapshot` descargado por HTTP (`/Ficha/Version/43` y `/44`, 200 `application/pdf`, `%PDF`); concurrencia con bloqueo optimista verificada en base real (guardado con versión actual sí, con versión antigua 0 filas); renovación al año siguiente probada por HTTP con 2028 activado temporalmente (`POST /Ficha/Renovar` → paso 1 con año 2028). Falta: validación final del formulario y pruebas de los pasos 2-5 (bloques B y C).
+- [ ] Construir y probar la imagen Docker y el arranque completo en una máquina local/API. No se hizo: Docker no está instalado en este equipo; el paquete Docker sigue revisado pero sin construir.
+- [x] Prueba de respaldo y restauración en una copia local (17-11-2026). Respaldo `artifacts/respaldo/mpaz-20261117T023610Z.dump` (354 KB, 629 objetos, incluye `alerta_revision`). Restauración completa en PostgreSQL 18 local (`mpaz_restore_local`): 41 tablas en `mpaz_matricula`, 4 en `mpaz_auth`, 36 matrículas, 44 fichas y 1 revisión; para llegar, `pg_restore` directo no bastó por sentencias `pg_attver` que el PostgreSQL local no reconoce, y se restauró vía SQL plano sin esas líneas.
+- [x] Paquete de despliegue limpio (17-11-2026): `scripts/publicar-paquete.sh` pública en Release y genera `artifacts/deploy/mpaz-matriculas-20261117T025827Z-linux-x64.tar.gz` (46 MB) con SHA-256; verificado sin `appsettings.Development.json`, sin PDB y sin `App_Data`.
+
+### Lo que falta y sí requiere autorización o decisión externa
+
+- [ ] Aplicar en el servidor: `12-alertas-vencimiento.sql`, `13-alertas-revision.sql`, migración `AgregarSso`, guarda de `04-privilegios-aplicacion.sql`, fuentes PDF (`fontconfig`/`fonts-dejavu-core`) y el release actual.
+- [ ] Respaldos programados y copia externa; rotación de credenciales visibles; dominio propio con Cloudflare Access.
+- [ ] Decisiones del colegio: textos legales de autorizaciones, matriz de permisos por rol, protocolo de medicación TENS (MAT-05), paracetamol, certificado de alumno regular, conservación de datos y Ley 21.719.
+- [ ] Coordinación del equipo: formato ministerial y quién lo sube, identificador común con Asistencia/Notas/Apoyo (MAT-15), enlace desde la página del colegio y consumo del SSO por otros módulos.
+
+### Orden sugerido
+
+1. Instalación de Docker para construir y probar la imagen.
+2. Aceptación funcional final: pasos 2-5 del wizard (bloques B y C) y validación final del formulario.
+3. Con autorización: despliegue al servidor, credenciales y Cloudflare Access.

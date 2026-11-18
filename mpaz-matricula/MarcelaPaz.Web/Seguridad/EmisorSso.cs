@@ -100,26 +100,37 @@ public static class EmisorSso
 
         var aplicaciones = proveedor.GetRequiredService<IOpenIddictApplicationManager>();
 
-        if (await aplicaciones.FindByClientIdAsync(id) is null)
+        // El descriptor se reescribe en cada arranque de desarrollo: así una
+        // rotación del secreto en user-secrets queda aplicada sin recrear la base.
+        var existente = await aplicaciones.FindByClientIdAsync(id);
+
+        var descriptor = new OpenIddictApplicationDescriptor
         {
-            await aplicaciones.CreateAsync(new OpenIddictApplicationDescriptor
+            ClientId = id,
+            ClientType = ClientTypes.Confidential,
+            ClientSecret = secreto,
+            RedirectUris = { new Uri(retorno) },
+            Permissions =
             {
-                ClientId = id,
-                ClientSecret = secreto,
-                RedirectUris = { new Uri(retorno) },
-                Permissions =
-                {
-                    Permissions.Endpoints.Authorization,
-                    Permissions.Endpoints.Token,
-                    Permissions.GrantTypes.AuthorizationCode,
-                    Permissions.GrantTypes.RefreshToken,
-                    Permissions.ResponseTypes.Code,
-                    Permissions.Prefixes.Scope + "openid",
-                    Permissions.Prefixes.Scope + "profile",
-                    Permissions.Prefixes.Scope + "email",
-                    Permissions.Prefixes.Scope + AlcanceApi,
-                },
-            });
+                Permissions.Endpoints.Authorization,
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.AuthorizationCode,
+                Permissions.GrantTypes.RefreshToken,
+                Permissions.ResponseTypes.Code,
+                Permissions.Prefixes.Scope + "openid",
+                Permissions.Prefixes.Scope + "profile",
+                Permissions.Prefixes.Scope + "email",
+                Permissions.Prefixes.Scope + AlcanceApi,
+            },
+        };
+
+        if (existente is null)
+        {
+            await aplicaciones.CreateAsync(descriptor);
+        }
+        else
+        {
+            await aplicaciones.UpdateAsync(existente, descriptor);
         }
     }
 }

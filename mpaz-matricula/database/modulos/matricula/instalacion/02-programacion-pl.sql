@@ -279,6 +279,22 @@ REVOKE UPDATE, DELETE ON TABLE
     mpaz_matricula.administracion_medicamento
 FROM mpaz_app;
 
+-- El GRANT general de arriba concede UPDATE sobre todo el esquema: esta
+-- comprobación impide que un GRANT posterior o un reordenamiento del script
+-- devuelva el permiso sin que nadie lo note.
+DO $$
+BEGIN
+    IF has_table_privilege('mpaz_app', 'mpaz_matricula.historial_cambios', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.registros_acceso', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.administracion_medicamento', 'UPDATE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.historial_cambios', 'DELETE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.registros_acceso', 'DELETE')
+       OR has_table_privilege('mpaz_app', 'mpaz_matricula.administracion_medicamento', 'DELETE') THEN
+        RAISE EXCEPTION 'mpaz_app conserva UPDATE/DELETE sobre tablas de auditoría';
+    END IF;
+END
+$$;
+
 -- Identity necesita administrar sesiones, credenciales, bloqueos y tokens,
 -- pero sólo en sus propias tablas: el resto del esquema es SELECT/INSERT/UPDATE.
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
@@ -323,3 +339,29 @@ ALTER FUNCTION mpaz_matricula.fn_auditar_funcionario_rol()
 
 
 COMMIT;
+
+-- =====================================================================
+-- 13. MAT-17 · Revisión automática de alertas de vencimiento.
+-- Canal in-app (/Alertas), cada 15 minutos, responsable: proceso programado.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS mpaz_matricula.alerta_revision (
+    id                              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    revisada_en                     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    anio                            SMALLINT NOT NULL CHECK (anio BETWEEN 2000 AND 2100),
+    vencidas_autorizaciones         INTEGER NOT NULL DEFAULT 0 CHECK (vencidas_autorizaciones >= 0),
+    vencidas_prescripciones         INTEGER NOT NULL DEFAULT 0 CHECK (vencidas_prescripciones >= 0),
+    por_vencer_autorizaciones       INTEGER NOT NULL DEFAULT 0 CHECK (por_vencer_autorizaciones >= 0),
+    por_vencer_prescripciones       INTEGER NOT NULL DEFAULT 0 CHECK (por_vencer_prescripciones >= 0),
+    resumen                         TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerta_revision_en
+    ON mpaz_matricula.alerta_revision (revisada_en DESC);
+
+-- La revisión la escribe el proceso programado con el rol de la aplicación:
+-- solo lectura e inserción, nunca UPDATE/DELETE.
+GRANT SELECT, INSERT ON TABLE mpaz_matricula.alerta_revision TO mpaz_app;
+
+
+COMMENT ON TABLE mpaz_matricula.alerta_revision IS
+    'Resumen periódico de v_alertas_vencimiento escrito por el proceso programado MAT-17.';

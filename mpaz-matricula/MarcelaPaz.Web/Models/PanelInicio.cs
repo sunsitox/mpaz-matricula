@@ -26,6 +26,9 @@ public class PanelInicio
 
     public int AutorizacionesVigentes { get; set; }
 
+    /// <summary>La sesión tiene al menos una de las áreas de alertas (MAT-17).</summary>
+    public bool PuedeVerAlertas { get; set; }
+
     public int AlertasVencimiento { get; set; }
 
     public int EstudiantesRegistrados { get; set; }

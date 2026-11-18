@@ -11,6 +11,8 @@ public class FuncionarioListado
 
     public bool Activo { get; set; }
 
+    public bool Bloqueado { get; set; }
+
     public List<RolAsignado> Roles { get; set; } = new();
 
     public class RolAsignado
@@ -20,5 +22,7 @@ public class FuncionarioListado
         public string Codigo { get; set; } = string.Empty;
 
         public string Nombre { get; set; } = string.Empty;
+
+        public DateOnly Desde { get; set; }
     }
 }

@@ -195,7 +195,7 @@ CREATE TABLE rol_permiso (
     PRIMARY KEY (rol_id, area, accion)
 );
 
--- Perfiles de la sección 10 (propuesta a validar con Dirección).
+-- Perfiles sección 10 + UTP/CONVIVENCIA (Johan 17-11-2026).
 INSERT INTO rol (codigo, nombre) VALUES
     ('SECRETARIA',  'Secretaría / matrícula'),
     ('DIRECCION',   'Dirección'),
@@ -203,7 +203,10 @@ INSERT INTO rol (codigo, nombre) VALUES
     ('EQUIPO_PIE',  'Equipo PIE'),
     ('TENS',        'TENS'),
     ('DOCENTE',     'Docentes'),
-    ('ADMIN_TI',    'Administración TI');
+    ('ADMIN_TI',    'Administración TI'),
+    ('UTP',         'UTP'),
+    ('CONVIVENCIA', 'Convivencia Escolar')
+ON CONFLICT (codigo) DO NOTHING;
 
 -- Ejemplo de cómo cargar la matriz (NO activado; falta validación institucional):
 -- INSERT INTO rol_permiso (rol_id, area, accion)
@@ -885,18 +888,46 @@ WHERE a.estado = 'OTORGADA'
   AND (a.vigente_hasta IS NULL OR a.vigente_hasta >= CURRENT_DATE);
 
 -- Órdenes médicas y autorizaciones vencidas o por vencer en 30 días (MAT-17).
+--
+-- Reglas de acotamiento, para que las alertas no se acumulen para siempre:
+--   1. Incluye las autorizaciones ya marcadas VENCIDA: al consultar al alumno,
+--      la aplicación cambia OTORGADA → VENCIDA y, sin este filtro, la alerta
+--      desaparecería del contador justo cuando alguien la revisa.
+--   2. No lista una autorización que ya fue reemplazada: si existe otra
+--      OTORGADA vigente del mismo tipo y estudiante registrada después, la fila
+--      anterior es historia y se consulta en la ficha, no como alerta. La
+--      comparación usa la fecha y, si falta, el id de la fila, de modo que una
+--      autorización sin vigente_desde ni fecha_firma también queda excluida.
+--      Sólo aplica a imagen y convivencia: la medicación admite una
+--      autorización por medicamento y sus filas no se reemplazan entre sí.
+--   3. Pasados 90 días desde el vencimiento la alerta deja de listarse; el
+--      registro sigue en la ficha y en el historial.
 CREATE VIEW v_alertas_vencimiento AS
 SELECT 'PRESCRIPCION'::TEXT AS origen, p.id AS registro_id, p.estudiante_id,
        p.vigente_hasta AS vence_el, (p.vigente_hasta < CURRENT_DATE) AS vencida
 FROM prescripcion p
 WHERE p.estado IN ('VIGENTE', 'PENDIENTE_VALIDACION')
-  AND p.vigente_hasta <= CURRENT_DATE + 30
+  AND p.vigente_hasta BETWEEN CURRENT_DATE - 90 AND CURRENT_DATE + 30
 UNION ALL
 SELECT 'AUTORIZACION', a.id, a.estudiante_id,
        a.vigente_hasta, (a.vigente_hasta < CURRENT_DATE)
 FROM autorizacion a
-WHERE a.estado = 'OTORGADA' AND a.vigente_hasta IS NOT NULL
-  AND a.vigente_hasta <= CURRENT_DATE + 30;
+WHERE a.estado IN ('OTORGADA', 'VENCIDA') AND a.revocada_en IS NULL
+  AND a.vigente_hasta BETWEEN CURRENT_DATE - 90 AND CURRENT_DATE + 30
+  AND (
+      a.tipo = 'MEDICACION'
+      OR NOT EXISTS (
+          SELECT 1
+          FROM autorizacion n
+          WHERE n.estudiante_id = a.estudiante_id
+            AND n.tipo = a.tipo
+            AND n.id <> a.id
+            AND n.estado = 'OTORGADA'
+            AND n.revocada_en IS NULL
+            AND (coalesce(n.vigente_desde, n.fecha_firma, DATE '0001-01-01'), n.id)
+              > (coalesce(a.vigente_desde, a.fecha_firma, DATE '0001-01-01'), a.id)
+      )
+  );
 
 -- Pendientes documentales por matrícula (MAT-16).
 CREATE VIEW v_pendientes_documentales AS

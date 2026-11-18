@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,31 @@ builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
 builder.Services.AddControllersWithViews(opciones =>
     opciones.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
+// Freno por origen a los intentos de inicio de sesión. El bloqueo de Identity
+// es por cuenta; este límite evita además la prueba masiva de contraseñas desde
+// una misma dirección (una red escolar completa cuenta como un origen).
+builder.Services.AddRateLimiter(opciones =>
+{
+    opciones.AddPolicy("login", contexto =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            contexto.Connection.RemoteIpAddress?.ToString() ?? "sin-origen",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(5),
+                QueueLimit = 0,
+            }));
+
+    // Al agotarse el límite se vuelve al formulario con un aviso, en vez de
+    // dejar al usuario en una página 429 vacía. La petición rechazada no
+    // reinicia la ventana: el límite se mantiene igual.
+    opciones.OnRejected = (contexto, _) =>
+    {
+        contexto.HttpContext.Response.Redirect("/Cuenta/Login?limite=1");
+        return ValueTask.CompletedTask;
+    };
+});
+
 // Base de datos: una sola base con un esquema por módulo. El dominio y las
 // cuentas (Identity) conviven en el esquema "mpaz_matricula"; la cadena
 // "Auth" existe por si algún despliegue separa las cuentas en otra base.
@@ -85,11 +111,20 @@ builder.Services.Configure<DatosInstitucion>(builder.Configuration.GetSection("I
 // Guardado del asistente en las tablas del DDL institucional.
 builder.Services.AddScoped<RegistroFicha>();
 
+// Sincronización de funcionarios con el web service externo; la base Neon
+// es el respaldo si el web service está caído. Timeout corto para no
+// retener la creación del funcionario.
+builder.Services.AddHttpClient<RegistroWebService>(cliente =>
+    cliente.Timeout = TimeSpan.FromSeconds(8));
+
 // Indicadores de la portada (panel administrativo).
 builder.Services.AddScoped<PanelIndicadores>();
 
 // Año escolar con matrícula activa: configuración, nunca año calendario.
 builder.Services.AddScoped<AnioEscolar>();
+
+// MAT-17: revisión automática de alertas en segundo plano (cada 15 min).
+builder.Services.AddHostedService<AlertasProgramadas>();
 
 // Expediente documental: archivos fuera de wwwroot, con hash y validación real.
 builder.Services.AddScoped<ExpedienteDocumentos>();
@@ -242,6 +277,9 @@ app.UseForwardedHeaders();
 
 // Cabeceras de seguridad en todas las respuestas (S-05). La CSP no permite
 // scripts externos ni inline: la interfaz sólo carga /js/ux.js del propio sitio.
+// En Desarrollo se amplía sólo para BrowserLink/Browser Refresh (puertos
+// locales y su fragmento inline); producción queda estricta.
+var esDesarrollo = app.Environment.IsDevelopment();
 app.Use(async (contexto, siguiente) =>
 {
     var cabeceras = contexto.Response.Headers;
@@ -249,9 +287,13 @@ app.Use(async (contexto, siguiente) =>
     cabeceras["X-Frame-Options"] = "DENY";
     cabeceras["Referrer-Policy"] = "no-referrer";
     cabeceras["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
-    cabeceras["Content-Security-Policy"] =
-        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-        + "script-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';";
+    cabeceras["Content-Security-Policy"] = esDesarrollo
+        ? "default-src 'self'; connect-src 'self' http://localhost:* https://localhost:* "
+          + "ws://localhost:* wss://localhost:*; img-src 'self' data:; "
+          + "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+          + "frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+        : "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+          + "script-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';";
 
     // El PDF del paso 8 debe poder incrustarse en el propio portal. Se aplica
     // al emitir la respuesta para comprobar la acción resuelta y el tipo real:
@@ -282,7 +324,23 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
+
+// Datos de menores: ninguna página autenticada queda en la caché del navegador.
+// Los archivos estáticos no pasan por aquí (UseStaticFiles ya respondió) y el
+// login, sin sesión, sigue cacheándose.
+app.Use(async (contexto, siguiente) =>
+{
+    if (contexto.User.Identity?.IsAuthenticated == true)
+    {
+        contexto.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+        contexto.Response.Headers.Pragma = "no-cache";
+    }
+
+    await siguiente();
+});
+
 app.UseAuthorization();
 
 // S-09: mientras la cuenta siga usando la contraseña inicial compartida, no se

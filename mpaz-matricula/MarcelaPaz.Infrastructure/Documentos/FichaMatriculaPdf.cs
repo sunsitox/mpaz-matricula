@@ -14,13 +14,13 @@ namespace MarcelaPaz.Infrastructure.Documentos;
 /// </summary>
 public sealed class FichaMatriculaPdf
 {
-    private const string Azul = "#0C255B";
-    private const string Dorado = "#D7A62C";
-    private const string Gris = "#52606D";
-    private const string GrisClaro = "#7B8794";
-    private const string Borde = "#C9D1DC";
-    private const string FondoSeccion = "#EEF1F7";
-    private const string Texto = "#1F2933";
+    private const string Azul = "#0f2537";
+    private const string Dorado = "#f59e0b";
+    private const string Gris = "#64748b";
+    private const string GrisClaro = "#64748b";
+    private const string Borde = "#e2e8f0";
+    private const string FondoSeccion = "#f8fafc";
+    private const string Texto = "#0f172a";
 
     static FichaMatriculaPdf()
     {
