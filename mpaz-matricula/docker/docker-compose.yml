@@ -11,6 +11,9 @@ services:
       POSTGRES_USER: postgres
       # Sin valor por defecto: el compose se detiene si falta .env.
       POSTGRES_PASSWORD: ${CLAVE_POSTGRES:?Defina CLAVE_POSTGRES en .env}
+      # El rol de la aplicación lo crea db-init/00-rol-app.sh con esta clave, para
+      # que no quede escrita en un .sql del repositorio.
+      CLAVE_APP: ${CLAVE_APP:?Defina CLAVE_APP en .env}
       TZ: America/Santiago
     volumes:
       - datos-db:/var/lib/postgresql/data
@@ -44,8 +47,13 @@ services:
       # temporal; se retira después del primer arranque.
       Seguridad__ContrasenaInicial: ${CLAVE_INICIAL:-}
       ConnectionStrings__Default: "Host=db;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=${CLAVE_APP:?Defina CLAVE_APP en .env};SSL Mode=Disable;Search Path=mpaz_matricula,public"
+      # Expediente documental en un volumen propio: sobrevive a los rebuild.
+      Documentos__RutaBase: /datos/documentos
+      # MAT-05 sigue bloqueado hasta aprobar el protocolo TENS.
+      Medicacion__Habilitada: "false"
     volumes:
       - claves:/keys
+      - documentos:/datos/documentos
     ports:
       - "127.0.0.1:${PUERTO_APP:-5101}:8080"
     healthcheck:
@@ -59,6 +67,7 @@ services:
 volumes:
   datos-db:
   claves:
+  documentos:
 
 networks:
   mpaz:

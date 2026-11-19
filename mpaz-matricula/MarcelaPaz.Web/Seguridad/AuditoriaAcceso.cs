@@ -22,13 +22,16 @@ public interface IAuditoriaAcceso
 
 public class AuditoriaAcceso : IAuditoriaAcceso
 {
-    private readonly MatriculaDbContext _db;
+    private readonly IServiceScopeFactory _alcances;
     private readonly IHttpContextAccessor _contexto;
     private readonly ILogger<AuditoriaAcceso> _log;
 
-    public AuditoriaAcceso(MatriculaDbContext db, IHttpContextAccessor contexto, ILogger<AuditoriaAcceso> log)
+    public AuditoriaAcceso(
+        IServiceScopeFactory alcances,
+        IHttpContextAccessor contexto,
+        ILogger<AuditoriaAcceso> log)
     {
-        _db = db;
+        _alcances = alcances;
         _contexto = contexto;
         _log = log;
     }
@@ -61,8 +64,14 @@ public class AuditoriaAcceso : IAuditoriaAcceso
 
         try
         {
-            _db.RegistrosAcceso.Add(registro);
-            await _db.SaveChangesAsync();
+            // Contexto propio en su propia conexión: antes se reutilizaba el de
+            // la operación y este SaveChanges confirmaba, de paso, los cambios
+            // pendientes del guardado en curso (fuera de su transacción).
+            using var alcance = _alcances.CreateScope();
+            var db = alcance.ServiceProvider.GetRequiredService<MatriculaDbContext>();
+
+            db.RegistrosAcceso.Add(registro);
+            await db.SaveChangesAsync();
         }
         catch (Exception ex)
         {

@@ -56,6 +56,14 @@ public class CertificadosController : Controller
     [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
     public async Task<IActionResult> Index()
     {
+        // El historial muestra folio, alumno, curso y propósito de cada
+        // certificado: se reserva a quien puede emitirlos, no a cualquier
+        // sesión de sólo lectura.
+        if (!PuedeEmitir())
+        {
+            return Forbid();
+        }
+
         var emitidos = await _db.CertificadosEmitidos
             .AsNoTracking()
             .OrderByDescending(c => c.Id)
@@ -112,9 +120,7 @@ public class CertificadosController : Controller
     public async Task<IActionResult> Emitir(int id, string? proposito = null)
     {
         // DOCENTE y solo-lectura no emiten: exige crear, editar o validar institucional.
-        if (!User.HasClaim("permiso", "GENERAL:CREAR")
-            && !User.HasClaim("permiso", "GENERAL:EDITAR")
-            && !User.HasClaim("permiso", "GENERAL:VALIDAR"))
+        if (!PuedeEmitir())
         {
             return Forbid();
         }
@@ -331,6 +337,15 @@ public class CertificadosController : Controller
             VigenteHasta = vence,
         };
     }
+
+    /// <summary>
+    /// DOCENTE y otros roles de sólo lectura no emiten ni consultan el historial:
+    /// hace falta crear, editar o validar institucionalmente.
+    /// </summary>
+    private bool PuedeEmitir() =>
+        User.HasClaim("permiso", "GENERAL:CREAR")
+        || User.HasClaim("permiso", "GENERAL:EDITAR")
+        || User.HasClaim("permiso", "GENERAL:VALIDAR");
 
     /// <summary>
     /// Lee el escudo desde wwwroot (el mismo PNG con lema de la ficha);

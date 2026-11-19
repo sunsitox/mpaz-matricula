@@ -33,6 +33,9 @@ public class PerfilAlumno
 
     public string? NecesidadesAtencion { get; set; }
 
+    /// <summary>Salida al baño durante la jornada (campo propio, MAT-05).</summary>
+    public bool? SaleAlBano { get; set; }
+
     public List<MatriculaPerfil> Matriculas { get; set; } = new();
 
     public List<ApoderadoPerfil> Apoderados { get; set; } = new();

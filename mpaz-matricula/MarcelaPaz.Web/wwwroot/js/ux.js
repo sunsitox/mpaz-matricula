@@ -6,6 +6,22 @@
 
     document.documentElement.classList.add('ux-js');
 
+    // Envío automático al cambiar un filtro. Antes iba en un atributo inline
+    // (onchange), que la CSP de producción bloquea por no permitir inline.
+    document.querySelectorAll('[data-ux-enviar-al-cambiar]').forEach(campo => {
+        campo.addEventListener('change', () => {
+            if (!campo.form) {
+                return;
+            }
+
+            if (typeof campo.form.requestSubmit === 'function') {
+                campo.form.requestSubmit();
+            } else {
+                campo.form.submit();
+            }
+        });
+    });
+
     // Grupos opcionales: repetir clic o Espacio quita la respuesta marcada.
     document.querySelectorAll('[data-ux-radio-desmarcable]').forEach(grupo => {
         const radios = Array.from(grupo.querySelectorAll('input[type="radio"]'));

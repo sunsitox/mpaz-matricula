@@ -28,6 +28,7 @@ public class AlumnosController : Controller
     private readonly AnioEscolar _anios;
     private readonly EscrituraAuditada _escritura;
     private readonly ExpedienteDocumentos _documentos;
+    private readonly IConfiguration _configuracion;
 
     public AlumnosController(
         MatriculaDbContext db,
@@ -35,7 +36,8 @@ public class AlumnosController : Controller
         IAuditoriaAcceso auditoria,
         AnioEscolar anios,
         EscrituraAuditada escritura,
-        ExpedienteDocumentos documentos)
+        ExpedienteDocumentos documentos,
+        IConfiguration configuracion)
     {
         _db = db;
         _registro = registro;
@@ -43,6 +45,7 @@ public class AlumnosController : Controller
         _anios = anios;
         _escritura = escritura;
         _documentos = documentos;
+        _configuracion = configuracion;
     }
 
     /// <summary>¿La sesión tiene el permiso de área indicado?</summary>
@@ -271,8 +274,11 @@ public class AlumnosController : Controller
         var puedeEditarAutorizaciones = User.HasClaim("permiso", "AUTORIZACIONES:EDITAR");
         var puedeValidarDocumentacion = User.HasClaim("permiso", "DOCUMENTOS:VALIDAR");
         var puedeCrearMatricula = User.HasClaim("permiso", "GENERAL:CREAR");
-        var puedeMedicacion = Puede("MEDICACION");
-        var puedeRegistrarDosis = User.HasClaim("permiso", "MEDICACION:CREAR");
+        // MAT-05 depende del protocolo TENS: aunque la matriz conceda el
+        // permiso, la medicación queda apagada hasta que el colegio lo apruebe.
+        var medicacionHabilitada = _configuracion.GetValue("Medicacion:Habilitada", false);
+        var puedeMedicacion = medicacionHabilitada && Puede("MEDICACION");
+        var puedeRegistrarDosis = medicacionHabilitada && User.HasClaim("permiso", "MEDICACION:CREAR");
         // INSPECTORIA edita datos del estudiante sin generar matrículas (Johan 17-11-2026).
         var puedeEditarMatricula = puedeCrearMatricula || User.HasClaim("permiso", "GENERAL:EDITAR");
         var hoy = DateOnly.FromDateTime(DateTime.Today);
@@ -424,26 +430,9 @@ public class AlumnosController : Controller
                 .Where(f => idsResponsables.Contains(f.Id))
                 .ToDictionaryAsync(f => f.Id, f => f.Nombre);
 
-        // MAT-04: antes de listar, las autorizaciones otorgadas cuyo plazo ya
-        // terminó pasan a VENCIDA en la base (sólo cuando hay alguna).
-        if (puedeAutorizaciones
-            && int.TryParse(User.FindFirstValue("funcionario_id"), out var funcionarioLectura))
-        {
-            var hayVencidas = await _db.Autorizaciones
-                .AsNoTracking()
-                .AnyAsync(a => a.EstudianteId == id
-                               && a.Estado == "OTORGADA"
-                               && a.VigenteHasta != null
-                               && a.VigenteHasta < hoy);
-
-            if (hayVencidas)
-            {
-                await _escritura.EjecutarAsync(
-                    funcionarioLectura,
-                    ct => _registro.MarcarVencidasAsync(id, hoy, ct),
-                    HttpContext.RequestAborted);
-            }
-        }
+        // MAT-04: el vencimiento se calcula al leer (EstadoEfectivo) y lo
+        // persiste la revisión programada. Antes se escribía desde este GET: una
+        // consulta de sólo lectura modificaba la base y la auditoría.
 
         // MAT-04 / MAT-14: se listan todas las autorizaciones, no sólo las
         // vigentes, para conservar el historial de respuestas y revocaciones.
@@ -539,6 +528,7 @@ public class AlumnosController : Controller
             SaleSolo = estudiante.SaleSoloFinalJornada,
             TieneSituacionMedica = salud?.TieneSituacionMedica,
             NecesidadesAtencion = salud?.NecesidadesAtencion,
+            SaleAlBano = salud?.SaleAlBano,
             Matriculas = matriculas
                 .Select(m => new PerfilAlumno.MatriculaPerfil
                 {
@@ -995,11 +985,19 @@ public class AlumnosController : Controller
 
         var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var idFuncionario)
             ? idFuncionario
-            : 0;
+            : (int?)null;
+
+        // Sin funcionario no hay responsable de la firma: antes se guardaba con
+        // id 0 y dejaba un evento de auditoría sin autor.
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para registrar la firma de la ficha.";
+            return RedirectToAction(nameof(Detalle), new { id = matricula.EstudianteId });
+        }
 
         string? error = null;
 
-        await _escritura.EjecutarAsync(funcionarioId, async ct =>
+        await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
         {
             error = await _registro.RegistrarFirmaAsync(id, dia, ct);
         }, HttpContext.RequestAborted);
@@ -1107,7 +1105,7 @@ public class AlumnosController : Controller
             TempData["Aviso"] = ex.Message;
             return RedirectToAction(nameof(Detalle), new { id });
         }
-        catch (Exception ex) when (ex is DbUpdateException or IOException)
+        catch (Exception ex) when (ex is DbUpdateException or IOException or UnauthorizedAccessException)
         {
             if (guardado is not null)
             {
@@ -1337,7 +1335,7 @@ public class AlumnosController : Controller
             TempData["Aviso"] = ex.Message;
             return RedirectToAction(nameof(Detalle), new { id });
         }
-        catch (Exception ex) when (ex is DbUpdateException or IOException)
+        catch (Exception ex) when (ex is DbUpdateException or IOException or UnauthorizedAccessException)
         {
             if (guardado is not null)
             {
@@ -1369,6 +1367,14 @@ public class AlumnosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RegistrarDosis(int id, int prescripcionId, string? administradoEn, string? incidencias)
     {
+        // La funcionalidad existe pero el protocolo TENS (MAT-05) no está
+        // aprobado: se bloquea en el servidor, no sólo en la vista.
+        if (!_configuracion.GetValue("Medicacion:Habilitada", false))
+        {
+            TempData["Aviso"] = "El registro de medicación está deshabilitado: falta la aprobación del protocolo TENS (MAT-05).";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
         var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
             ? valor
             : (int?)null;

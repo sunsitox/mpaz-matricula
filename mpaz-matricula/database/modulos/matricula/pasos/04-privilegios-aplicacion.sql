@@ -23,10 +23,10 @@ GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA mpaz_matricula TO mpaz_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA mpaz_matricula TO mpaz_app;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA mpaz_matricula TO mpaz_app;
 
--- La implementación actual reemplaza las situaciones médicas del borrador
--- mediante DELETE + INSERT. Este permiso debe retirarse cuando ese flujo use
--- vigencia o actualización sin borrado.
-GRANT DELETE ON TABLE mpaz_matricula.situacion_medica TO mpaz_app;
+-- El historial clínico ya no se reemplaza: una condición que deja de
+-- declararse se cierra con vigente_hasta (paso 16 del flujo de la ficha). El
+-- borrado queda revocado, igual que en el resto de las tablas.
+REVOKE DELETE ON TABLE mpaz_matricula.situacion_medica FROM mpaz_app;
 
 -- Auditoría y medicación son solo-inserción. Los triggers del DDL también
 -- rechazan UPDATE/DELETE, pero se revocan aquí como defensa adicional.
@@ -73,6 +73,6 @@ COMMIT;
 SELECT
     has_table_privilege('mpaz_app', 'mpaz_matricula.estudiante', 'SELECT') AS puede_leer_estudiante,
     has_table_privilege('mpaz_app', 'mpaz_matricula.estudiante', 'DELETE') AS puede_borrar_estudiante,
-    has_table_privilege('mpaz_app', 'mpaz_matricula.situacion_medica', 'DELETE') AS puede_reemplazar_situacion,
+    has_table_privilege('mpaz_app', 'mpaz_matricula.situacion_medica', 'DELETE') AS puede_borrar_situacion_medica,
     has_table_privilege('mpaz_app', 'mpaz_matricula.registros_acceso', 'UPDATE') AS puede_modificar_auditoria,
     has_table_privilege('mpaz_app', 'mpaz_matricula."AspNetUsers"', 'UPDATE') AS puede_actualizar_identity;

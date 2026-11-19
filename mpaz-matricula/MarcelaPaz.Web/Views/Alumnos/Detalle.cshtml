@@ -735,6 +735,10 @@
         <strong>@(Model.TieneSituacionMedica is bool tiene ? (tiene ? "Sí" : "No") : "—")</strong>
     </div>
     <div class="perfil__dato">
+        <span>¿Sale solo al baño durante la jornada?</span>
+        <strong>@(Model.SaleAlBano is bool sale ? (sale ? "Sí" : "No") : "—")</strong>
+    </div>
+    <div class="perfil__dato">
         <span>Necesidades de atención</span>
         <strong>@(Model.NecesidadesAtencion ?? "—")</strong>
     </div>

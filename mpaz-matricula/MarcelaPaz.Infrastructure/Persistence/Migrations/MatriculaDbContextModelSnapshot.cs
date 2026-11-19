@@ -72,9 +72,23 @@ namespace MarcelaPaz.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("estudiante_id");
 
+                    b.Property<string>("ContactoSanitarioNombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("contacto_sanitario_nombre");
+
+                    b.Property<string>("ContactoSanitarioTelefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("contacto_sanitario_telefono");
+
                     b.Property<string>("NecesidadesAtencion")
                         .HasColumnType("text")
                         .HasColumnName("necesidades_atencion");
+
+                    b.Property<bool?>("SaleAlBano")
+                        .HasColumnType("boolean")
+                        .HasColumnName("sale_al_bano");
 
                     b.Property<bool?>("TieneSituacionMedica")
                         .HasColumnType("boolean")

@@ -3,26 +3,59 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
+using System.Security.Cryptography.X509Certificates;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace MarcelaPaz.Web.Seguridad;
 
 /// <summary>
+/// Indica si el emisor SSO quedó activo en este despliegue. La pantalla de
+/// autorización lo consulta para no ofrecer endpoints que no existen.
+/// </summary>
+public sealed class ConfiguracionSso
+{
+    public ConfiguracionSso(bool habilitado) => Habilitado = habilitado;
+
+    public bool Habilitado { get; }
+}
+
+/// <summary>
 /// Emisor SSO del portal (prototipo del login único): convierte el login de
 /// Identity en credenciales OpenID Connect para los demás sistemas del colegio.
-/// Sólo desarrollo: en producción se detiene el arranque hasta configurar el
-/// certificado real del emisor.
+///
+/// El emisor se habilita con <c>Sso:Habilitado</c>. Por omisión está activo sólo
+/// en Desarrollo: un portal en producción puede desplegarse sin SSO mientras el
+/// colegio no entregue el certificado de firma, en vez de impedir el arranque.
+/// Si se habilita en producción, se exige el certificado configurado.
 /// </summary>
 public static class EmisorSso
 {
     /// <summary>Alcance reservado para el futuro web service de datos.</summary>
     public const string AlcanceApi = "mpaz_api";
 
+    /// <summary>
+    /// ¿El emisor está activo? Se puede forzar con <c>Sso:Habilitado</c>;
+    /// sin ese valor, sólo se activa en Desarrollo.
+    /// </summary>
+    public static bool EstaHabilitado(IConfiguration configuracion, IHostEnvironment entorno) =>
+        configuracion.GetValue("Sso:Habilitado", entorno.IsDevelopment());
+
     public static IServiceCollection AddEmisorSso(
         this IServiceCollection servicios,
         IConfiguration configuracion,
         IHostEnvironment entorno)
     {
+        var habilitado = EstaHabilitado(configuracion, entorno);
+
+        servicios.AddSingleton(new ConfiguracionSso(habilitado));
+
+        if (!habilitado)
+        {
+            // Sin emisor no se registra OpenIddict: el resto del portal no
+            // depende de él y el despliegue sigue funcionando.
+            return servicios;
+        }
+
         servicios.AddOpenIddict()
             .AddCore(opciones =>
             {
@@ -45,8 +78,14 @@ public static class EmisorSso
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        "El emisor SSO aún no está configurado para producción: falta el certificado de firma.");
+                    var certificado = CertificadoFirma(configuracion)
+                        ?? throw new InvalidOperationException(
+                            "El emisor SSO está habilitado en producción y falta el certificado de firma: "
+                            + "configure Sso:CertificadoPfx (con Sso:CertificadoClave) o "
+                            + "Sso:CertificadoPem/Sso:CertificadoPemClave; o deje Sso:Habilitado=false.");
+
+                    opciones.AddSigningCertificate(certificado)
+                        .AddEncryptionCertificate(certificado);
                 }
 
                 var aspNetCore = opciones.UseAspNetCore()
@@ -63,14 +102,44 @@ public static class EmisorSso
     }
 
     /// <summary>
-    /// Registra el cliente y los scopes de prueba. Sólo en desarrollo: el
-    /// registro real de clientes (Asistencia, web, Notas) es tarea del despliegue.
+    /// Certificado real del emisor: PKCS#12 (<c>Sso:CertificadoPfx</c>) o par
+    /// PEM (<c>Sso:CertificadoPem</c> + <c>Sso:CertificadoPemClave</c>). El
+    /// archivo se mantiene fuera del repositorio, igual que el resto de claves.
+    /// </summary>
+    private static X509Certificate2? CertificadoFirma(IConfiguration configuracion)
+    {
+        var pfx = configuracion["Sso:CertificadoPfx"];
+
+        if (!string.IsNullOrWhiteSpace(pfx))
+        {
+            var clave = configuracion["Sso:CertificadoClave"];
+
+            return X509CertificateLoader.LoadPkcs12FromFile(
+                pfx, string.IsNullOrWhiteSpace(clave) ? null : clave);
+        }
+
+        var pem = configuracion["Sso:CertificadoPem"];
+        var clavePem = configuracion["Sso:CertificadoPemClave"];
+
+        if (!string.IsNullOrWhiteSpace(pem) && !string.IsNullOrWhiteSpace(clavePem))
+        {
+            return X509Certificate2.CreateFromPemFile(pem, clavePem);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Registra el cliente y los scopes de prueba. Sólo en desarrollo y con el
+    /// emisor activo: el registro real de clientes (Asistencia, web, Notas) es
+    /// tarea del despliegue.
     /// </summary>
     public static async Task SembrarAsync(IServiceProvider proveedor)
     {
         var entorno = proveedor.GetRequiredService<IHostEnvironment>();
+        var habilitado = proveedor.GetRequiredService<ConfiguracionSso>().Habilitado;
 
-        if (!entorno.IsDevelopment())
+        if (!entorno.IsDevelopment() || !habilitado)
         {
             return;
         }

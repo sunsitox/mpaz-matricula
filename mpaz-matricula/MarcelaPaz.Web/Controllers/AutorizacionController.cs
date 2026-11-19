@@ -24,11 +24,16 @@ public class AutorizacionController : Controller
 {
     private readonly UserManager<IdentityUser> _usuarios;
     private readonly MatriculaDbContext _db;
+    private readonly ConfiguracionSso _sso;
 
-    public AutorizacionController(UserManager<IdentityUser> usuarios, MatriculaDbContext db)
+    public AutorizacionController(
+        UserManager<IdentityUser> usuarios,
+        MatriculaDbContext db,
+        ConfiguracionSso sso)
     {
         _usuarios = usuarios;
         _db = db;
+        _sso = sso;
     }
 
     [Authorize]
@@ -36,6 +41,13 @@ public class AutorizacionController : Controller
     [HttpGet("~/connect/authorize")]
     public async Task<IActionResult> Autorizar()
     {
+        // El emisor puede estar apagado (Sso:Habilitado=false): en ese caso los
+        // endpoints no existen y la respuesta correcta es 404, no un error.
+        if (!_sso.Habilitado)
+        {
+            return NotFound();
+        }
+
         var solicitud = HttpContext.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("Petición OpenID Connect inválida.");
 

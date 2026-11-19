@@ -527,6 +527,8 @@ CREATE TABLE antecedente_salud (
     -- Ficha: "cuenta con alguna situación médica, cualquiera que sea". NULL = sin responder.
     tiene_situacion_medica     BOOLEAN,
     necesidades_atencion       TEXT,
+    -- ¿Requiere salir al baño durante la jornada? (MAT-05, columna propia).
+    sale_al_bano               BOOLEAN,
     contacto_sanitario_nombre  VARCHAR(150),
     contacto_sanitario_telefono VARCHAR(20),
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT now(),

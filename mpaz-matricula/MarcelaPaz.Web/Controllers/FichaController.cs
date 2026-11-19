@@ -445,13 +445,26 @@ public class FichaController : Controller
                     ? anioBorrador
                     : anio;
 
-                await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+                try
                 {
-                    // Guarda todos los datos de los pasos 1 a 7 en Neon en una sola transacción
-                    avisoGuardado = await _registro.AplicarTodoAsync(datos, anioCierre, funcionarioId.Value, ct);
+                    await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
+                    {
+                        // Guarda todos los datos de los pasos 1 a 7 en una sola transacción.
+                        var guardado = await _registro.AplicarTodoAsync(datos, anioCierre, funcionarioId.Value, ct);
+                        avisoGuardado = guardado.Aviso;
 
-                    cierre = await _registro.CerrarFichaAsync(datos, anioCierre, funcionarioId.Value, ct);
-                }, HttpContext.RequestAborted);
+                        // Si la escritura falló no se cierra la ficha: el folio no
+                        // puede emitirse sobre un expediente incompleto.
+                        if (guardado.Guardado)
+                        {
+                            cierre = await _registro.CerrarFichaAsync(datos, anioCierre, funcionarioId.Value, ct);
+                        }
+                    }, HttpContext.RequestAborted);
+                }
+                catch (DbUpdateException)
+                {
+                    avisoGuardado = "No se pudo guardar la ficha en la base de datos. No se emitió folio: revise los datos e intente nuevamente.";
+                }
 
                 var cerrada = cierre;
 
@@ -1560,16 +1573,9 @@ public class FichaController : Controller
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(salud?.NecesidadesAtencion))
+        if (salud?.SaleAlBano is bool saleAlBano)
         {
-            if (salud.NecesidadesAtencion.Contains(": SI", StringComparison.Ordinal))
-            {
-                agregados += PonerSiFalta(datos, "salida al baño (SI/NO)", "Si");
-            }
-            else if (salud.NecesidadesAtencion.Contains(": NO", StringComparison.Ordinal))
-            {
-                agregados += PonerSiFalta(datos, "salida al baño (SI/NO)", "No");
-            }
+            agregados += PonerSiFalta(datos, "salida al baño (SI/NO)", saleAlBano ? "Si" : "No");
         }
 
         var situaciones = situacionesMedicas.Where(s => s.Tipo != "ALERGIA").Take(3).ToList();

@@ -320,6 +320,7 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
             e.Property(x => x.TieneSituacionMedica).HasColumnName("tiene_situacion_medica");
             e.Property(x => x.NecesidadesAtencion).HasColumnName("necesidades_atencion");
+            e.Property(x => x.SaleAlBano).HasColumnName("sale_al_bano");
             e.Property(x => x.ContactoSanitarioNombre).HasColumnName("contacto_sanitario_nombre").HasMaxLength(150);
             e.Property(x => x.ContactoSanitarioTelefono).HasColumnName("contacto_sanitario_telefono").HasMaxLength(20);
         });

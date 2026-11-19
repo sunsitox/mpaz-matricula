@@ -19,7 +19,7 @@
     <form method="get" asp-controller="Reportes" asp-action="Faltantes" class="alumnos__filtros">
         <div class="acceso__campo">
             <label class="acceso__etiqueta" for="anio">Año escolar</label>
-            <select class="acceso__input" id="anio" name="anio" onchange="this.form.submit()">
+            <select class="acceso__input" id="anio" name="anio" data-ux-enviar-al-cambiar>
                 @foreach (var anio in Model.Anios)
                 {
                     <option value="@anio" selected="@(anio == Model.Anio ? "selected" : null)">@anio</option>

@@ -11,6 +11,11 @@ namespace MarcelaPaz.Web.Seguridad;
 /// los que inició sesión. Cubre el caso de despedir a alguien o cerrarle un rol
 /// mientras su cookie sigue vigente (S-03).
 ///
+/// La comprobación exige que **todos** los permisos de la cookie sigan vigentes:
+/// quitar un rol invalida la sesión de inmediato. Un permiso **nuevo** no la
+/// invalida (la cookie no lo trae hasta el próximo ingreso, pero tampoco concede
+/// nada de más), así que ajustar la matriz no expulsa a quien está trabajando.
+///
 /// La consulta se memoriza 60 segundos por funcionario: la desactivación surte
 /// efecto en ese plazo sin golpear la base en cada recurso.
 /// </summary>
@@ -63,13 +68,13 @@ public sealed class VigilanteSesion
             return false;
         }
 
-        var enSesion = usuario.FindAll("permiso")
-            .Select(claim => claim.Value)
-            .Distinct()
-            .OrderBy(permiso => permiso)
-            .ToList();
+        var vigentesHoy = vigentes.ToHashSet(StringComparer.Ordinal);
 
-        return vigentes.SequenceEqual(enSesion);
+        // Se recorren los permisos de la sesión, no los de la base: si a la
+        // persona le quitaron uno, la cookie deja de servir.
+        return usuario.FindAll("permiso")
+            .Select(claim => claim.Value)
+            .All(vigentesHoy.Contains);
     }
 
     /// <summary>Olvida la comprobación memorizada: la próxima petición vuelve a la base.</summary>

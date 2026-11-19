@@ -18,6 +18,18 @@ namespace MarcelaPaz.Web.Servicios;
 /// estudiante o de una persona no hay forma de identificarla en la base y el
 /// servicio devuelve un aviso para que el funcionario sepa qué quedó sin registrar.
 /// </summary>
+/// <summary>
+/// Resultado de una escritura de la ficha. <see cref="Guardado"/> distingue
+/// "se guardó con avisos" de "no se guardó": sólo en el primer caso se puede
+/// cerrar la ficha y emitir folio.
+/// </summary>
+public readonly record struct ResultadoGuardado(bool Guardado, string? Aviso)
+{
+    public static ResultadoGuardado Ok(string? aviso = null) => new(true, aviso);
+
+    public static ResultadoGuardado Fallido(string aviso) => new(false, aviso);
+}
+
 public class RegistroFicha
 {
     private readonly MatriculaDbContext _db;
@@ -28,7 +40,7 @@ public class RegistroFicha
     /// Escribe todos los bloques de la ficha (pasos 1 a 7) en una sola pasada y transacción.
     /// Se invoca al confirmar en el paso 8 para evitar llamadas remotas a la base en cada paso intermedio.
     /// </summary>
-    public async Task<string?> AplicarTodoAsync(
+    public async Task<ResultadoGuardado> AplicarTodoAsync(
         IReadOnlyDictionary<string, string> datos,
         int anio,
         int? funcionarioId = null,
@@ -50,21 +62,28 @@ public class RegistroFicha
         }
         catch (DbUpdateConcurrencyException)
         {
-            return MensajeConflicto;
+            // El contexto queda con cambios sin confirmar: se descarta para que
+            // el llamador no confirme media ficha en el siguiente guardado.
+            _db.ChangeTracker.Clear();
+
+            return ResultadoGuardado.Fallido(MensajeConflicto);
         }
         catch (DbUpdateException ex)
         {
-            return $"No se pudo guardar en la base de datos: {ex.InnerException?.Message ?? ex.Message}";
+            _db.ChangeTracker.Clear();
+
+            return ResultadoGuardado.Fallido(
+                $"No se pudo guardar en la base de datos: {ex.InnerException?.Message ?? ex.Message}");
         }
 
-        return avisos.Count == 0 ? null : string.Join(" ", avisos);
+        return ResultadoGuardado.Ok(avisos.Count == 0 ? null : string.Join(" ", avisos));
     }
 
     /// <summary>
     /// Escribe el paso indicado. Devuelve un aviso para mostrar en pantalla, o
     /// <c>null</c> cuando todo se guardó sin observaciones.
     /// </summary>
-    public async Task<string?> AplicarAsync(
+    public async Task<ResultadoGuardado> AplicarAsync(
         int paso,
         IReadOnlyDictionary<string, string> datos,
         int anio,
@@ -104,14 +123,21 @@ public class RegistroFicha
         }
         catch (DbUpdateConcurrencyException)
         {
-            return MensajeConflicto;
+            // El contexto queda con cambios sin confirmar: se descarta para que
+            // el llamador no confirme media ficha en el siguiente guardado.
+            _db.ChangeTracker.Clear();
+
+            return ResultadoGuardado.Fallido(MensajeConflicto);
         }
         catch (DbUpdateException ex)
         {
-            return $"No se pudo guardar en la base de datos: {ex.InnerException?.Message ?? ex.Message}";
+            _db.ChangeTracker.Clear();
+
+            return ResultadoGuardado.Fallido(
+                $"No se pudo guardar en la base de datos: {ex.InnerException?.Message ?? ex.Message}");
         }
 
-        return avisos.Count == 0 ? null : string.Join(" ", avisos);
+        return ResultadoGuardado.Ok(avisos.Count == 0 ? null : string.Join(" ", avisos));
     }
 
     // ── Paso 1 · Estudiante, curso y matrícula del año ───────────────────────
@@ -468,6 +494,7 @@ public class RegistroFicha
             return;
         }
 
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
         var tieneSituacion = SiNo(Texto(datos, "situación médica (SI/NO)"));
         var saleAlBano = SiNo(Texto(datos, "salida al baño (SI/NO)"));
 
@@ -481,9 +508,10 @@ public class RegistroFicha
         }
 
         antecedente.TieneSituacionMedica = tieneSituacion ?? antecedente.TieneSituacionMedica;
-        antecedente.NecesidadesAtencion = saleAlBano is null
-            ? antecedente.NecesidadesAtencion
-            : $"Sale al baño durante la jornada: {(saleAlBano.Value ? "SI" : "NO")}.";
+
+        // La salida al baño tiene su propia columna: antes se escribía dentro de
+        // "necesidades de atención", que perdía su contenido y decía otra cosa.
+        antecedente.SaleAlBano = saleAlBano ?? antecedente.SaleAlBano;
         antecedente.ContactoSanitarioNombre = Texto(datos, "contacto sanitario: nombre") ?? antecedente.ContactoSanitarioNombre;
         antecedente.ContactoSanitarioTelefono = Texto(datos, "contacto sanitario: teléfono") ?? antecedente.ContactoSanitarioTelefono;
 
@@ -519,13 +547,32 @@ public class RegistroFicha
             });
         }
 
-        if (declaradas.Count > 0)
+        // El historial clínico no se borra (MAT-14): una condición que ya no se
+        // declara se cierra con fecha de término y queda consultable. Las que
+        // siguen vigentes se actualizan en su fila, sin duplicarlas.
+        var respondioSalud = tieneSituacion is not null || declaradas.Count > 0;
+
+        if (respondioSalud)
         {
-            var anteriores = await _db.SituacionesMedicas
+            var abiertas = await _db.SituacionesMedicas
                 .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null && s.Tipo != "ALERGIA")
                 .ToListAsync(ct);
 
-            _db.SituacionesMedicas.RemoveRange(anteriores);
+            foreach (var anterior in abiertas)
+            {
+                var vigente = declaradas.FirstOrDefault(d => d.Descripcion == anterior.Descripcion);
+
+                if (vigente is null)
+                {
+                    anterior.VigenteHasta = hoy;
+                }
+                else
+                {
+                    anterior.EnTratamiento = vigente.EnTratamiento;
+                    declaradas.Remove(vigente);
+                }
+            }
+
             _db.SituacionesMedicas.AddRange(declaradas);
         }
 
@@ -537,9 +584,20 @@ public class RegistroFicha
                 .Where(s => s.EstudianteId == estudiante.Id && s.VigenteHasta == null && s.Tipo == "ALERGIA")
                 .ToListAsync(ct);
 
-            _db.SituacionesMedicas.RemoveRange(alergiasAnteriores);
+            // Misma regla que las condiciones: se cierra lo que dejó de
+            // declararse y se conserva el historial. Si el texto es el mismo, no
+            // se duplica la fila.
+            var mismaAlergia = alergiasAnteriores.FirstOrDefault(a => a.Descripcion == alergias);
 
-            if (!SinAlergias(alergias))
+            foreach (var anterior in alergiasAnteriores)
+            {
+                if (anterior != mismaAlergia)
+                {
+                    anterior.VigenteHasta = hoy;
+                }
+            }
+
+            if (mismaAlergia is null && !SinAlergias(alergias))
             {
                 _db.SituacionesMedicas.Add(new SituacionMedica
                 {
@@ -1195,8 +1253,26 @@ public class RegistroFicha
             return $"La fecha de la firma no puede ser anterior a la generación de la ficha ({generadaEl:dd-MM-yyyy}).";
         }
 
-        // La ficha cerrada es inmutable (trigger del DDL): la fecha de la firma
-        // queda en el evento de auditoría y el estado de la matrícula.
+        // La fecha de la firma pertenece a la versión de la ficha: es la
+        // evidencia que Dirección exige para poder validar la documentación
+        // (MAT-12). El trigger del DDL permite escribirla mientras la ficha no
+        // esté VALIDADA; si no se guarda aquí, la validación nunca es posible.
+        var firmante = await _db.EstudiantesPersonas
+            .AsNoTracking()
+            .Where(v => v.EstudianteId == matricula.EstudianteId && v.VigenteHasta == null)
+            .OrderBy(v => v.TipoApoderado == "PRINCIPAL" ? 0 : 1)
+            .Select(v => (int?)v.PersonaId)
+            .FirstOrDefaultAsync(ct);
+
+        ficha.FechaFirma = fechaFirma;
+
+        if (firmante is not null)
+        {
+            ficha.FirmantePersonaId = firmante;
+        }
+
+        // La ficha cerrada es inmutable salvo estos campos de firma; el estado
+        // de la matrícula avanza aparte.
         matricula.Estado = "FIRMADA";
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1276,8 +1352,14 @@ public class RegistroFicha
             return "Indique el motivo de la anulación.";
         }
 
+        // Las observaciones pueden tener contenido previo: la anulación se
+        // agrega en vez de sobrescribirlo.
+        var motivoAnulacion = motivo.Trim();
+
         matricula.Estado = "ANULADA";
-        matricula.Observaciones = motivo.Trim();
+        matricula.Observaciones = string.IsNullOrWhiteSpace(matricula.Observaciones)
+            ? motivoAnulacion
+            : $"{matricula.Observaciones} · Anulada: {motivoAnulacion}";
         matricula.UpdatedAt = DateTimeOffset.UtcNow;
 
         return await GuardarMatriculaAsync(ct);
@@ -1329,6 +1411,10 @@ public class RegistroFicha
         }
         catch (DbUpdateConcurrencyException)
         {
+            // El contexto queda con cambios sin confirmar: se descarta para que
+            // el llamador no confirme media ficha en el siguiente guardado.
+            _db.ChangeTracker.Clear();
+
             return MensajeConflicto;
         }
     }
@@ -1424,16 +1510,27 @@ public class RegistroFicha
 
     /// <summary>
     /// MAT-04: pasa a VENCIDA las autorizaciones otorgadas cuyo plazo terminó.
-    /// Devuelve cuántas cambió, para registrar el evento sólo cuando hubo algo.
+    /// Con <paramref name="estudianteId"/> nulo revisa a todos los estudiantes;
+    /// así lo hace la revisión programada, porque abrir una ficha (GET) ya no
+    /// escribe en la base. Devuelve cuántas cambió, para registrar el evento
+    /// sólo cuando hubo algo.
     /// </summary>
-    public async Task<int> MarcarVencidasAsync(int estudianteId, DateOnly hoy, CancellationToken ct = default)
+    public async Task<int> MarcarVencidasAsync(
+        DateOnly hoy,
+        int? estudianteId = null,
+        CancellationToken ct = default)
     {
-        var vencidas = await _db.Autorizaciones
-            .Where(a => a.EstudianteId == estudianteId
-                        && a.Estado == "OTORGADA"
+        var consulta = _db.Autorizaciones
+            .Where(a => a.Estado == "OTORGADA"
                         && a.VigenteHasta != null
-                        && a.VigenteHasta < hoy)
-            .ToListAsync(ct);
+                        && a.VigenteHasta < hoy);
+
+        if (estudianteId is int id)
+        {
+            consulta = consulta.Where(a => a.EstudianteId == id);
+        }
+
+        var vencidas = await consulta.ToListAsync(ct);
 
         foreach (var autorizacion in vencidas)
         {

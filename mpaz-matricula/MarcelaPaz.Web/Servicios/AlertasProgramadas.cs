@@ -48,6 +48,22 @@ public sealed class AlertasProgramadas : BackgroundService
             await using var alcance = _alcances.CreateAsyncScope();
             var proveedor = alcance.ServiceProvider;
 
+            var db = proveedor.GetRequiredService<MatriculaDbContext>();
+
+            // MAT-04: el vencimiento se persiste aquí. Antes lo hacía el GET de la
+            // ficha, que ya no escribe; sin esta revisión una autorización
+            // otorgada se quedaba OTORGADA para siempre en la base.
+            var registro = proveedor.GetRequiredService<RegistroFicha>();
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            var vencidas = await registro.MarcarVencidasAsync(hoy, ct: ct);
+
+            if (vencidas > 0)
+            {
+                _log.LogInformation(
+                    "Revisión programada: {Cantidad} autorizaciones marcadas como vencidas.",
+                    vencidas);
+            }
+
             var anios = proveedor.GetRequiredService<AnioEscolar>();
             var anio = await anios.ActivoAsync();
 
@@ -56,7 +72,6 @@ public sealed class AlertasProgramadas : BackgroundService
                 return;
             }
 
-            var db = proveedor.GetRequiredService<MatriculaDbContext>();
             var resumen = await db.Database.SqlQueryRaw<ResumenAlertas>(SqlResumen, anio.Value).SingleAsync(ct);
 
             var texto = $"Vencidas: {resumen.VencidasAutorizaciones} autorizaciones, {resumen.VencidasPrescripciones} órdenes médicas; " +

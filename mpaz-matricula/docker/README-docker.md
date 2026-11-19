@@ -26,7 +26,7 @@ docker compose ps
 ```
 
 La base se carga **solo la primera vez**, cuando el volumen `datos-db` está vacío.
-Orden de carga: `00-rol-app.sql` → `01-ddl-institucional.sql` →
+Orden de carga: `00-rol-app.sh` → `01-ddl-institucional.sql` →
 `02-identidad-auth.sql` → `03-datos-mock.sql` → `04-datos-gestion-expediente.sql`
 → `05-privilegios-app.sql` → `06-anio-escolar.sql`.
 
@@ -55,8 +55,15 @@ funcionarios sin cuenta de Identity: se define para el primer arranque y se
 retira enseguida. En producción el portal aborta si detecta una de las claves
 que alguna vez estuvieron en el repositorio.
 
-Si cambias `CLAVE_APP`, actualiza también `db-init/00-rol-app.sql` antes del
-primer arranque.
+El rol `mpaz_app` lo crea `db-init/00-rol-app.sh` con la clave de `.env` (no hay
+contraseña fija en el repositorio). Como los scripts de `db-init` corren sólo con
+el volumen vacío, cambiar `CLAVE_APP` después del primer arranque no actualiza el
+rol: hágalo con `ALTER ROLE mpaz_app PASSWORD '...'` o recree el volumen.
+
+El expediente documental se guarda en el volumen `documentos`
+(`Documentos__RutaBase=/datos/documentos`), fuera de la imagen: sobrevive a los
+`docker compose up --build`. La medicación (MAT-05) queda apagada con
+`Medicacion__Habilitada=false` hasta que el colegio apruebe el protocolo TENS.
 
 ## Exposición pública
 

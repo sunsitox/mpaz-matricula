@@ -256,22 +256,22 @@ await using (var alcance = app.Services.CreateAsyncScope())
         // Sin base de datos el portal igual abre el login y avisa en pantalla.
         app.Logger.LogError(ex, "No se pudieron preparar las cuentas de los funcionarios.");
     }
-    }
+}
 
-    // Emisor SSO (prototipo del login único): registra el cliente y los scopes
-    // de prueba. Sólo siembra en desarrollo; el registro real de clientes es
-    // tarea del despliegue.
-    await using (var alcanceSso = app.Services.CreateAsyncScope())
+// Emisor SSO (prototipo del login único): registra el cliente y los scopes
+// de prueba. Sólo siembra en desarrollo y con el emisor habilitado; el registro
+// real de clientes es tarea del despliegue.
+await using (var alcanceSso = app.Services.CreateAsyncScope())
+{
+    try
     {
-        try
-        {
-            await EmisorSso.SembrarAsync(alcanceSso.ServiceProvider);
-        }
-        catch (Exception ex)
-        {
-            app.Logger.LogError(ex, "No se pudo sembrar el emisor SSO de prueba.");
-        }
+        await EmisorSso.SembrarAsync(alcanceSso.ServiceProvider);
     }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "No se pudo sembrar el emisor SSO de prueba.");
+    }
+}
 
 app.UseForwardedHeaders();
 

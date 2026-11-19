@@ -27,6 +27,12 @@ RUN mkdir -p /keys && chown -R "$APP_UID":"0" /keys
 
 COPY --from=build /app/publish .
 
+# El expediente documental se escribe en App_Data cuando no se configura
+# Documentos:RutaBase: debe existir y pertenecer al usuario sin privilegios, o
+# la subida falla con UnauthorizedAccessException. En compose se monta un
+# volumen dedicado en /datos/documentos.
+RUN mkdir -p /app/App_Data/documentos && chown -R "$APP_UID":"0" /app/App_Data
+
 EXPOSE 8080
 USER $APP_UID
 

@@ -61,6 +61,13 @@ public class HomeController : Controller
     /// </summary>
     public async Task<IActionResult> Actividad()
     {
+        // El registro de accesos dice quién consultó qué área: es auditoría y
+        // exige el permiso de auditoría, no basta con tener sesión.
+        if (!User.HasClaim("permiso", "AUDITORIA:LEER"))
+        {
+            return Forbid();
+        }
+
         try
         {
             return View(new ActividadPanel { Accesos = await _panel.ActividadAsync(100) });
