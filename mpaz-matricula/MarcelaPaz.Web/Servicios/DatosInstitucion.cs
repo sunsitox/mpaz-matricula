@@ -26,10 +26,15 @@ public sealed class DatosInstitucion
 
     public string LugarEmision { get; set; } = string.Empty;
 
-    /// <summary>Nombre de quien firma. Vacío = firma el funcionario que emite.</summary>
+    /// <summary>
+    /// Nombre de quien firma (decisión 17, paso 20): firma el subrogante, es
+    /// decir el funcionario que emite; este valor ya no se usa para el nombre.
+    /// Se conserva por compatibilidad de configuración.
+    /// </summary>
     public string FirmanteNombre { get; set; } = string.Empty;
 
-    public string FirmanteCargo { get; set; } = "Directora";
+    /// <summary>Cargo impreso en el certificado: «Director».</summary>
+    public string FirmanteCargo { get; set; } = "Director";
 
     /// <summary>
     /// Origen público del portal para el QR de verificación (por ejemplo

@@ -194,6 +194,17 @@ if (!builder.Environment.IsDevelopment() && !exigirInicioSesion)
         "Producción no puede arrancar con Seguridad__ExigirInicioSesion=false: el portal quedaría sin autorización.");
 }
 
+// S-09: las cuentas con la clave inicial compartida deben cambiarla al primer
+// ingreso. Sólo se desactiva en desarrollo local (cuentas de prueba). Falla
+// cerrado, igual que ExigirInicioSesion.
+var forzarCambioClaveInicial = builder.Configuration.GetValue("Seguridad:ForzarCambioContrasenaInicial", true);
+
+if (!builder.Environment.IsDevelopment() && !forzarCambioClaveInicial)
+{
+    throw new InvalidOperationException(
+        "Producción no puede arrancar con Seguridad__ForzarCambioContrasenaInicial=false: la clave inicial compartida quedaría vigente.");
+}
+
 builder.Services.AddSingleton(new ConfiguracionSeguridad(exigirInicioSesion));
 
 // Credenciales conocidas del repositorio y de la documentación: si alguna

@@ -170,6 +170,15 @@ public class CertificadosController : Controller
             ? EmisionCertificado.PropositoGenerico
             : proposito.Trim()[..Math.Min(200, proposito.Trim().Length)];
 
+        // Decisión 17 (paso 20): sin director presente firma el subrogante,
+        // que es el funcionario que emite; en el documento el cargo impreso
+        // es «Director». Ambos quedan persistidos en la emisión.
+        var nombreFirmante = await _db.Funcionarios
+            .AsNoTracking()
+            .Where(f => f.Id == funcionarioId.Value)
+            .Select(f => f.Nombre)
+            .FirstOrDefaultAsync() ?? "La Dirección";
+
         var emitido = new CertificadoEmitido
         {
             Folio = $"CAR-{anioActivo.Value}-TMP-{Guid.NewGuid():N}",
@@ -180,6 +189,8 @@ public class CertificadosController : Controller
             EmitidoPor = funcionarioId,
             EmitidoEn = DateTimeOffset.UtcNow,
             Proposito = propositoFinal,
+            FirmanteNombre = nombreFirmante,
+            FirmanteCargo = "Director",
         };
 
         await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
@@ -197,16 +208,7 @@ public class CertificadosController : Controller
             estudianteId: id,
             recursoId: emitido.Id);
 
-        var firmante = _institucion.FirmanteNombre;
-
-        if (string.IsNullOrWhiteSpace(firmante))
-        {
-            firmante = await _db.Funcionarios
-                .AsNoTracking()
-                .Where(f => f.Id == funcionarioId.Value)
-                .Select(f => f.Nombre)
-                .FirstOrDefaultAsync() ?? "La Dirección";
-        }
+        var firmante = emitido.FirmanteNombre ?? "La Dirección";
 
         var hoy = DateOnly.FromDateTime(DateTime.Today);
         var baseValidacion = string.IsNullOrWhiteSpace(_institucion.UrlValidacion)
@@ -232,7 +234,7 @@ public class CertificadosController : Controller
             Vigencia = $"Válido por {EmisionCertificado.DiasVigencia} días, hasta el " +
                 $"{EmisionCertificado.VenceEn(emitido.EmitidoEn).ToLocalTime().ToString("d 'de' MMMM 'de' yyyy", EspanolChile)}.",
             FirmanteNombre = firmante,
-            FirmanteCargo = _institucion.FirmanteCargo,
+            FirmanteCargo = emitido.FirmanteCargo ?? "Director",
             Folio = emitido.Folio,
             Codigo = codigo,
             UrlValidacion = urlValidacion,
@@ -339,13 +341,10 @@ public class CertificadosController : Controller
     }
 
     /// <summary>
-    /// DOCENTE y otros roles de sólo lectura no emiten ni consultan el historial:
-    /// hace falta crear, editar o validar institucionalmente.
+    /// El certificado de alumno regular se reserva a Dirección: ningún otro
+    /// perfil emite ni consulta el historial de emisiones.
     /// </summary>
-    private bool PuedeEmitir() =>
-        User.HasClaim("permiso", "GENERAL:CREAR")
-        || User.HasClaim("permiso", "GENERAL:EDITAR")
-        || User.HasClaim("permiso", "GENERAL:VALIDAR");
+    private bool PuedeEmitir() => User.IsInRole("DIRECCION");
 
     /// <summary>
     /// Lee el escudo desde wwwroot (el mismo PNG con lema de la ficha);

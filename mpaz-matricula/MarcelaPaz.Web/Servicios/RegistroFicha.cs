@@ -1021,10 +1021,6 @@ public class RegistroFicha
             return null;
         }
 
-        // La clave del nivel sigue el nombre del curso en la base: «PK A»,
-        // «K A», «1° A» … «8° B». Sin clave no se puede elegir un curso.
-        var token = NivelesCurso.Token(nivel);
-
         if (_cursosCache is null)
         {
             await _cursosSemaforo.WaitAsync(ct);
@@ -1039,6 +1035,18 @@ public class RegistroFicha
         }
 
         var cursos = _cursosCache;
+
+        // Pre-kínder y Kínder son cursos neutros (sin letra): se buscan por
+        // el nivel del nombre del curso («Pre-kínder», «Kínder»).
+        if (NivelesCurso.EsSinLetra(nivel))
+        {
+            return cursos.FirstOrDefault(c =>
+                string.Equals(NivelesCurso.DesdeNombre(c.Nombre), nivel, StringComparison.Ordinal));
+        }
+
+        // La clave del nivel sigue el nombre del curso en la base: «1° A» … «8° B».
+        // Sin clave no se puede elegir un curso.
+        var token = NivelesCurso.Token(nivel);
 
         if (token is null)
         {

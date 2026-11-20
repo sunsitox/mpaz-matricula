@@ -37,14 +37,15 @@
                     </select>
                     <span asp-validation-for="Curso_Nivel" class="acceso__error"></span>
                 </div>
-                <div class="acceso__campo">
-                    <label asp-for="Curso_Letra" class="acceso__etiqueta">Letra *</label>
+                <div class="acceso__campo" data-ux-curso-letra>
+                    <label asp-for="Curso_Letra" class="acceso__etiqueta">Letra</label>
                     <select asp-for="Curso_Letra" class="acceso__input">
                         <option value="">— Seleccione —</option>
                         <option>A</option>
                         <option>B</option>
                     </select>
                     <span asp-validation-for="Curso_Letra" class="acceso__error"></span>
+                    <span class="acceso__ayuda">Sólo de 1º a 8º básico: Pre-kínder y Kínder no llevan letra.</span>
                 </div>
                 <div class="acceso__campo">
                     <label asp-for="Curso_Anio" class="acceso__etiqueta">Año escolar</label>

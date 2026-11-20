@@ -266,6 +266,16 @@ public class AlumnosController : Controller
         // falta, ni se consulta ni se proyecta.
         var puedeFamilia = Puede("FAMILIA");
         var puedeRetiro = Puede("RETIRO");
+        // UTP registra las notas de retiro (pasos/17); Secretaría conserva la
+        // misma capacidad por su permiso de edición del área.
+        var puedeNotaRetiro = User.HasClaim("permiso", "RETIRO:EDITAR")
+            || User.HasClaim("permiso", "RETIRO:CREAR");
+        // Observaciones de situación familiar (pasos/21): área propia. UTP y
+        // Convivencia escriben; Dirección solo lee. Sin el permiso ni se
+        // consultan.
+        var puedeVerObservaciones = Puede("SITUACION_FAMILIAR");
+        var puedeObservacionFamiliar = User.HasClaim("permiso", "SITUACION_FAMILIAR:CREAR")
+            || User.HasClaim("permiso", "SITUACION_FAMILIAR:EDITAR");
         var puedeSalud = Puede("SALUD");
         var puedePie = Puede("PIE");
         var puedeAutorizaciones = Puede("AUTORIZACIONES");
@@ -325,6 +335,26 @@ public class AlumnosController : Controller
                 .OrderBy(r => r.Id)
                 .ToListAsync()
             : new List<RetiroAutorizado>();
+
+        var notasRetiro = puedeRetiro
+            ? await _db.NotasRetiro
+                .AsNoTracking()
+                .Where(n => n.EstudianteId == id)
+                .OrderByDescending(n => n.RegistradoEn)
+                .ThenByDescending(n => n.Id)
+                .Take(50)
+                .ToListAsync()
+            : new List<NotaRetiro>();
+
+        var observacionesFamiliares = puedeVerObservaciones
+            ? await _db.ObservacionesFamiliares
+                .AsNoTracking()
+                .Where(o => o.EstudianteId == id)
+                .OrderByDescending(o => o.RegistradoEn)
+                .ThenByDescending(o => o.Id)
+                .Take(50)
+                .ToListAsync()
+            : new List<ObservacionSituacionFamiliar>();
 
         var salud = puedeSalud
             ? await _db.AntecedentesSalud
@@ -566,6 +596,29 @@ public class AlumnosController : Controller
                     Vinculo = r.Vinculo,
                 })
                 .ToList(),
+            NotasRetiro = notasRetiro
+                .Select(n => new PerfilAlumno.NotaRetiroPerfil
+                {
+                    Tipo = n.Tipo,
+                    Etiqueta = EtiquetaNotaRetiro(n.Tipo),
+                    Detalle = n.Detalle,
+                    VigenteDesde = n.VigenteDesde,
+                    VigenteHasta = n.VigenteHasta,
+                    RegistradoEn = n.RegistradoEn,
+                })
+                .ToList(),
+            PuedeNotaRetiro = puedeNotaRetiro,
+            ObservacionesFamiliares = observacionesFamiliares
+                .Select(o => new PerfilAlumno.ObservacionFamiliarPerfil
+                {
+                    Detalle = o.Detalle,
+                    VigenteDesde = o.VigenteDesde,
+                    VigenteHasta = o.VigenteHasta,
+                    RegistradoEn = o.RegistradoEn,
+                })
+                .ToList(),
+            PuedeObservacionFamiliar = puedeObservacionFamiliar,
+            PuedeVerObservacionesFamiliares = puedeVerObservaciones,
             Situaciones = situaciones
                 .Select(s => new PerfilAlumno.SituacionPerfil
                 {
@@ -658,6 +711,7 @@ public class AlumnosController : Controller
                     Medicamento = p.Medicamento,
                     Dosis = $"{p.DosisCantidad} {p.DosisUnidad}",
                     Frecuencia = p.Frecuencia,
+                    Horario = p.Horario,
                     VigenteHasta = p.VigenteHasta,
                     Estado = p.Estado,
                 })
@@ -672,8 +726,8 @@ public class AlumnosController : Controller
                 })
                 .ToList(),
             PuedeCorregirFicha = puedeEditarMatricula && ficha is not null,
-            // DOCENTE/PIE/TENS/UTP/CONVIVENCIA solo leen: emitir exige CREAR, EDITAR o VALIDAR.
-            PuedeEmitirCertificado = (puedeCrearMatricula || puedeEditarMatricula || User.HasClaim("permiso", "GENERAL:VALIDAR"))
+            // El certificado de alumno regular se reserva a Dirección.
+            PuedeEmitirCertificado = User.IsInRole("DIRECCION")
                 && vigente is not null
                 && vigente.Estado != "ANULADA"
                 && (vigente.Estado is "FIRMADA" or "CONFIRMADA" || vigente.ValidadaEn is not null),
@@ -1357,6 +1411,134 @@ public class AlumnosController : Controller
         TempData["Notificacion"] = "Escaneo de la ficha firmada adjuntado a la versión vigente.";
         return RedirectToAction(nameof(Detalle), new { id });
     }
+
+    /// <summary>
+    /// Registra una nota de retiro: orden de alejamiento, retiro autorizado o
+    /// retiro no autorizado. La escribe UTP (o Secretaría) y queda auditada.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "RETIRO:EDITAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AgregarNotaRetiro(
+        int id, string tipo, string? detalle, string? vigenteHasta)
+    {
+        var tiposValidos = new[] { "ORDEN_ALEJAMIENTO", "AUTORIZADO", "NO_AUTORIZADO" };
+        var tipoLimpio = (tipo ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (!tiposValidos.Contains(tipoLimpio))
+        {
+            TempData["Aviso"] = "Seleccione una situación de retiro válida.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        if (string.IsNullOrWhiteSpace(detalle))
+        {
+            TempData["Aviso"] = "Escriba el detalle de la nota de retiro.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para registrar la nota de retiro.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var nota = new NotaRetiro
+        {
+            EstudianteId = id,
+            Tipo = tipoLimpio,
+            Detalle = detalle.Trim()[..Math.Min(1000, detalle.Trim().Length)],
+            VigenteDesde = DateOnly.FromDateTime(DateTime.Today),
+            VigenteHasta = DateOnly.TryParse(vigenteHasta, out var vence) ? vence : null,
+            RegistradoPor = funcionarioId.Value,
+            RegistradoEn = DateTimeOffset.UtcNow,
+        };
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, ct =>
+        {
+            _db.NotasRetiro.Add(nota);
+            return Task.CompletedTask;
+        }, HttpContext.RequestAborted);
+
+        await _auditoria.RegistrarAsync(
+            "CREAR",
+            "RETIRO",
+            "nota_retiro",
+            detalle: $"{{\"evento\":\"nota_retiro\",\"tipo\":\"{tipoLimpio}\"}}",
+            estudianteId: id,
+            recursoId: nota.Id);
+
+        TempData["Notificacion"] = "Nota de retiro registrada.";
+
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>
+    /// Registra una observación de situación familiar (pasos/21). La escriben
+    /// UTP y Convivencia con el permiso del área; queda auditada.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "SITUACION_FAMILIAR:CREAR")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AgregarObservacionFamiliar(
+        int id, string? detalle, string? vigenteHasta)
+    {
+        if (string.IsNullOrWhiteSpace(detalle))
+        {
+            TempData["Aviso"] = "Escriba el detalle de la observación de situación familiar.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var funcionarioId = int.TryParse(User.FindFirstValue("funcionario_id"), out var valor)
+            ? valor
+            : (int?)null;
+
+        if (funcionarioId is null)
+        {
+            TempData["Aviso"] = "Inicie sesión como funcionario para registrar la observación.";
+            return RedirectToAction(nameof(Detalle), new { id });
+        }
+
+        var observacion = new ObservacionSituacionFamiliar
+        {
+            EstudianteId = id,
+            Detalle = detalle.Trim()[..Math.Min(2000, detalle.Trim().Length)],
+            VigenteDesde = DateOnly.FromDateTime(DateTime.Today),
+            VigenteHasta = DateOnly.TryParse(vigenteHasta, out var vence) ? vence : null,
+            RegistradoPor = funcionarioId.Value,
+            RegistradoEn = DateTimeOffset.UtcNow,
+        };
+
+        await _escritura.EjecutarAsync(funcionarioId.Value, ct =>
+        {
+            _db.ObservacionesFamiliares.Add(observacion);
+            return Task.CompletedTask;
+        }, HttpContext.RequestAborted);
+
+        await _auditoria.RegistrarAsync(
+            "CREAR",
+            "SITUACION_FAMILIAR",
+            "observacion_situacion_familiar",
+            detalle: "{\"evento\":\"observacion_familiar\"}",
+            estudianteId: id,
+            recursoId: observacion.Id);
+
+        TempData["Notificacion"] = "Observación de situación familiar registrada.";
+
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    private static string EtiquetaNotaRetiro(string tipo) => tipo switch
+    {
+        "ORDEN_ALEJAMIENTO" => "Orden de alejamiento",
+        "AUTORIZADO" => "Retiro autorizado",
+        "NO_AUTORIZADO" => "Retiro no autorizado",
+        _ => tipo,
+    };
 
     /// <summary>
     /// MAT-05: registra una dosis administrada por un TENS. El trigger valida

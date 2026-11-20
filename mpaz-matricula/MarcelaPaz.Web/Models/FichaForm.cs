@@ -16,8 +16,10 @@ public class FichaForm
     [Required(ErrorMessage = "Seleccione el curso al que postula el estudiante.")]
     public string? Curso_Nivel { get; set; }
 
-    [Required(ErrorMessage = "Seleccione la letra del curso.")]
-    [RegularExpression("^(A|B)$", ErrorMessage = "La letra del curso debe ser A o B: el colegio tiene dos cursos por nivel.")]
+    /// <summary>
+    /// Letra del curso: obligatoria de 1º a 8º básico y vacía en Pre-kínder y
+    /// Kínder, que son cursos neutros. La regla se revisa en <see cref="ValidadorFicha"/>.
+    /// </summary>
     public string? Curso_Letra { get; set; }
 
     [Required(ErrorMessage = "Falta el año escolar.")]

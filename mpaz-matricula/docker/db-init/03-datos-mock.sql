@@ -21,10 +21,8 @@ insert into comuna (nombre) values ('San Bernardo') on conflict (nombre) do noth
 
 -- Cursos usados por los casos de prueba.
 insert into curso (nombre) values
-    ('PK A'),
-    ('PK B'),
-    ('K A'),
-    ('K B'),
+    ('Pre-kínder'),
+    ('Kínder'),
     ('1° A'),
     ('1° B'),
     ('2° A'),

@@ -100,6 +100,11 @@ public sealed class AlertasProgramadas : BackgroundService
                 """,
                 parametros);
 
+            // Decisión 13 (conservación): expediente y auditoría no se borran;
+            // solo se poda el resumen técnico de alertas a 24 meses.
+            await db.Database.ExecuteSqlRawAsync(
+                "delete from alerta_revision where revisada_en < now() - interval '24 months'");
+
             _log.LogInformation(
                 "Revisión programada de alertas {Anio}: {Resumen}",
                 anio.Value,

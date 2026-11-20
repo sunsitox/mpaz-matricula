@@ -176,6 +176,13 @@ public class FichaController : Controller
     {
         foreach (var (paso, clave, campo, etiqueta) in Obligatorios)
         {
+            // Pre-kínder y Kínder no llevan letra que completar.
+            if (clave == "curso: letra"
+                && NivelesCurso.EsParvularia(datos.GetValueOrDefault("curso: nivel")))
+            {
+                continue;
+            }
+
             if (!datos.TryGetValue(clave, out var valor) || string.IsNullOrWhiteSpace(valor))
             {
                 return (paso, campo, etiqueta);

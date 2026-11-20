@@ -74,9 +74,15 @@ public class FuncionarioClaimsPrincipalFactory : UserClaimsPrincipalFactory<Iden
         // cuenta todavía usa la inicial compartida o cuando Administración acaba
         // de restablecerla (claim guardado en Identity). El claim desaparece
         // cuando la persona define su propia contraseña.
+        // El interruptor Seguridad:ForzarCambioContrasenaInicial (defecto: sí)
+        // permite desactivar la obligación en desarrollo local, donde las
+        // cuentas de prueba se crean en la base con la clave inicial y no
+        // deben cambiarla. Producción no puede desactivarlo (Program.cs).
+        var forzarCambio = _configuracion.GetValue("Seguridad:ForzarCambioContrasenaInicial", true);
         var inicial = _configuracion["Seguridad:ContrasenaInicial"];
 
-        if (!identidad.HasClaim("debe_cambiar_contrasena", "1")
+        if (forzarCambio
+            && !identidad.HasClaim("debe_cambiar_contrasena", "1")
             && !string.IsNullOrWhiteSpace(inicial)
             && await UserManager.CheckPasswordAsync(usuario, inicial))
         {

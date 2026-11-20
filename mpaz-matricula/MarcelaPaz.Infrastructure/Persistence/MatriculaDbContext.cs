@@ -60,6 +60,10 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<RetiroAutorizado> RetirosAutorizados => Set<RetiroAutorizado>();
 
+    public DbSet<NotaRetiro> NotasRetiro => Set<NotaRetiro>();
+
+    public DbSet<ObservacionSituacionFamiliar> ObservacionesFamiliares => Set<ObservacionSituacionFamiliar>();
+
     public DbSet<SituacionMedica> SituacionesMedicas => Set<SituacionMedica>();
 
     public DbSet<AntecedenteSalud> AntecedentesSalud => Set<AntecedenteSalud>();
@@ -85,6 +89,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Prescripcion> Prescripciones => Set<Prescripcion>();
 
     public DbSet<AdministracionMedicamento> AdministracionesMedicamento => Set<AdministracionMedicamento>();
+
+    public DbSet<FichaMedicaFuncionario> FichasMedicasFuncionario => Set<FichaMedicaFuncionario>();
 
     /// <summary>Auditoría de cambios (solo lectura: la escribe el trigger).</summary>
     public DbSet<HistorialCambio> HistorialCambios => Set<HistorialCambio>();
@@ -298,6 +304,35 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
         });
 
+        // Notas de retiro (pasos/17): las registra UTP con permiso RETIRO:EDITAR.
+        builder.Entity<NotaRetiro>(e =>
+        {
+            e.ToTable("nota_retiro", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(20).IsRequired();
+            e.Property(x => x.Detalle).HasColumnName("detalle").IsRequired();
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
+            e.Property(x => x.RegistradoEn).HasColumnName("registrado_en").HasDefaultValueSql("now()");
+        });
+
+        // Observaciones de situación familiar (pasos/21): área SITUACION_FAMILIAR.
+        builder.Entity<ObservacionSituacionFamiliar>(e =>
+        {
+            e.ToTable("observacion_situacion_familiar", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.EstudianteId).HasColumnName("estudiante_id");
+            e.Property(x => x.Detalle).HasColumnName("detalle").IsRequired();
+            e.Property(x => x.VigenteDesde).HasColumnName("vigente_desde");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
+            e.Property(x => x.RegistradoEn).HasColumnName("registrado_en").HasDefaultValueSql("now()");
+        });
+
         builder.Entity<SituacionMedica>(e =>
         {
             e.ToTable("situacion_medica", Esquema, t => t.ExcludeFromMigrations());
@@ -492,6 +527,24 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Estado).HasColumnName("estado").HasMaxLength(20).IsRequired();
         });
 
+        // Fichas y certificados médicos de funcionarios (pasos/17): sólo UTP.
+        builder.Entity<FichaMedicaFuncionario>(e =>
+        {
+            e.ToTable("ficha_medica_funcionario", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.FuncionarioId).HasColumnName("funcionario_id");
+            e.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(80).IsRequired();
+            e.Property(x => x.Descripcion).HasColumnName("descripcion");
+            e.Property(x => x.Emisor).HasColumnName("emisor").HasMaxLength(150);
+            e.Property(x => x.EmitidoEn).HasColumnName("emitido_en");
+            e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
+            e.Property(x => x.ArchivoRuta).HasColumnName("archivo_ruta");
+            e.Property(x => x.ArchivoNombre).HasColumnName("archivo_nombre").HasMaxLength(255);
+            e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
+            e.Property(x => x.RegistradoEn).HasColumnName("registrado_en").HasDefaultValueSql("now()");
+        });
+
         builder.Entity<AdministracionMedicamento>(e =>
         {
             e.ToTable("administracion_medicamento", Esquema, t => t.ExcludeFromMigrations());
@@ -523,6 +576,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.Proposito).HasColumnName("proposito");
             e.Property(x => x.AnuladoEn).HasColumnName("anulado_en");
             e.Property(x => x.AnuladoPor).HasColumnName("anulado_por");
+            e.Property(x => x.FirmanteNombre).HasColumnName("firmante_nombre").HasMaxLength(150);
+            e.Property(x => x.FirmanteCargo).HasColumnName("firmante_cargo").HasMaxLength(120);
             e.HasIndex(x => x.Folio).IsUnique();
         });
     }

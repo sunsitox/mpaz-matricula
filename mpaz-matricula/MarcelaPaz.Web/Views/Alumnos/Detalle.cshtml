@@ -716,6 +716,127 @@
                 </table>
             </div>
         }
+
+        @if (Model.NotasRetiro.Count > 0)
+        {
+            <h3 class="admin__subtitulo">Notas de retiro</h3>
+            <div class="tabla-envoltura" tabindex="0">
+                <table class="admin__tabla">
+                    <caption class="sr-only">Notas de retiro registradas: orden de alejamiento, retiro autorizado o no autorizado.</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Situación</th>
+                            <th scope="col">Nota</th>
+                            <th scope="col">Vigencia</th>
+                            <th scope="col">Registrada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var nota in Model.NotasRetiro)
+                        {
+                            <tr>
+                                <td>@nota.Etiqueta</td>
+                                <td>@nota.Detalle</td>
+                                <td>
+                                    @(nota.VigenteDesde?.ToString("dd-MM-yyyy") ?? "—")
+                                    @if (nota.VigenteHasta is DateOnly hasta)
+                                    {
+                                        <span> → @hasta.ToString("dd-MM-yyyy")</span>
+                                    }
+                                </td>
+                                <td>@nota.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.PuedeNotaRetiro)
+        {
+            <h3 class="admin__subtitulo">Agregar nota de retiro</h3>
+            <form method="post" asp-action="AgregarNotaRetiro" asp-route-id="@Model.Id"
+                  data-ux-envio="Guardando la nota de retiro…">
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="nota-retiro-tipo">Situación</label>
+                    <select class="acceso__input" id="nota-retiro-tipo" name="tipo" required>
+                        <option value="ORDEN_ALEJAMIENTO">Orden de alejamiento</option>
+                        <option value="AUTORIZADO">Retiro autorizado</option>
+                        <option value="NO_AUTORIZADO">Retiro no autorizado</option>
+                    </select>
+                </div>
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="nota-retiro-detalle">Nota</label>
+                    <textarea class="acceso__input" id="nota-retiro-detalle" name="detalle" rows="3"
+                              maxlength="1000" required
+                              placeholder="Ej: orden judicial vigente; retiro sólo por el apoderado titular"></textarea>
+                </div>
+                <div class="acceso__campo">
+                    <label class="acceso__etiqueta" for="nota-retiro-vigencia">Vigente hasta (opcional)</label>
+                    <input class="acceso__input" id="nota-retiro-vigencia" name="vigenteHasta" type="date" />
+                </div>
+                <button type="submit" class="admin__boton admin__boton--primario">Guardar nota</button>
+            </form>
+        }
+
+        @if (Model.PuedeVerObservacionesFamiliares)
+        {
+            <h3 class="admin__subtitulo">Observaciones de situación familiar</h3>
+            @if (Model.ObservacionesFamiliares.Count == 0)
+            {
+                <p class="admin__ayuda">Sin observaciones registradas.</p>
+            }
+            else
+            {
+                <div class="tabla-envoltura" tabindex="0">
+                    <table class="admin__tabla">
+                        <caption class="sr-only">Observaciones de situación familiar registradas.</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Observación</th>
+                                <th scope="col">Vigencia</th>
+                                <th scope="col">Registrada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var observacion in Model.ObservacionesFamiliares)
+                            {
+                                <tr>
+                                    <td>@observacion.Detalle</td>
+                                    <td>
+                                        @(observacion.VigenteDesde?.ToString("dd-MM-yyyy") ?? "—")
+                                        @if (observacion.VigenteHasta is DateOnly hasta)
+                                        {
+                                            <span> → @hasta.ToString("dd-MM-yyyy")</span>
+                                        }
+                                    </td>
+                                    <td>@observacion.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (Model.PuedeObservacionFamiliar)
+            {
+                <h3 class="admin__subtitulo">Agregar observación de situación familiar</h3>
+                <form method="post" asp-action="AgregarObservacionFamiliar" asp-route-id="@Model.Id"
+                      data-ux-envio="Guardando la observación…">
+                    <div class="acceso__campo">
+                        <label class="acceso__etiqueta" for="observacion-familiar-detalle">Observación</label>
+                        <textarea class="acceso__input" id="observacion-familiar-detalle" name="detalle" rows="3"
+                                  maxlength="2000" required
+                                  placeholder="Ej: cambio de domicilio informado por el apoderado; revisar contacto de emergencia"></textarea>
+                    </div>
+                    <div class="acceso__campo">
+                        <label class="acceso__etiqueta" for="observacion-familiar-vigencia">Vigente hasta (opcional)</label>
+                        <input class="acceso__input" id="observacion-familiar-vigencia" name="vigenteHasta" type="date" />
+                    </div>
+                    <button type="submit" class="admin__boton admin__boton--primario">Guardar observación</button>
+                </form>
+            }
+        }
     </section>
 </div>
 
@@ -813,11 +934,11 @@
         <div class="tabla-envoltura" tabindex="0">
             <table class="admin__tabla">
                 <caption class="sr-only">Prescripciones y últimas dosis del estudiante.</caption>
-                <thead><tr><th scope="col">Medicamento</th><th scope="col">Dosis</th><th scope="col">Frecuencia</th><th scope="col">Vigencia</th><th scope="col">Estado</th></tr></thead>
+                <thead><tr><th scope="col">Medicamento</th><th scope="col">Dosis</th><th scope="col">Frecuencia</th><th scope="col">Hora de toma</th><th scope="col">Vigencia</th><th scope="col">Estado</th></tr></thead>
                 <tbody>
                 @foreach (var p in Model.Prescripciones)
                 {
-                    <tr><td>@p.Medicamento</td><td>@p.Dosis</td><td>@p.Frecuencia</td><td>@p.VigenteHasta.ToString("dd-MM-yyyy")</td><td>@p.Estado</td></tr>
+                    <tr><td>@p.Medicamento</td><td>@p.Dosis</td><td>@p.Frecuencia</td><td>@(string.IsNullOrWhiteSpace(p.Horario) ? "—" : p.Horario)</td><td>@p.VigenteHasta.ToString("dd-MM-yyyy")</td><td>@p.Estado</td></tr>
                 }
                 </tbody>
             </table>
@@ -840,7 +961,7 @@
                     <select class="acceso__input" id="prescripcionId" name="prescripcionId">
                     @foreach (var p in Model.Prescripciones.Where(x => x.Estado == "VIGENTE"))
                     {
-                        <option value="@p.Id">@p.Medicamento · @p.Dosis</option>
+                        <option value="@p.Id">@p.Medicamento · @p.Dosis@(string.IsNullOrWhiteSpace(p.Horario) ? "" : " · " + p.Horario)</option>
                     }
                     </select>
                 </div>

@@ -1,14 +1,23 @@
 namespace MarcelaPaz.Domain.Identificacion;
 
 /// <summary>
-/// Niveles que imparte el colegio: de pre-kínder a 8º básico. El catálogo vive
-/// en un solo lugar para que el formulario, la propuesta del curso anterior, la
-/// búsqueda del curso en la base y el orden del panel no se contradigan.
+/// Niveles que imparte el colegio: parvularia y de 1º a 8º básico. El catálogo
+/// vive en un solo lugar para que el formulario, la propuesta del curso anterior,
+/// la búsqueda del curso en la base y el orden del panel no se contradigan.
 /// </summary>
 public static class NivelesCurso
 {
+    /// <summary>
+    /// Pre-kínder y Kínder son cursos separados (cada uno es un nivel
+    /// propio) pero neutros: ninguno lleva letra A/B, que queda reservada
+    /// de 1º a 8º básico.
+    /// </summary>
     public const string PreKinder = "Pre-kínder";
+
     public const string Kinder = "Kínder";
+
+    /// <summary>Nombre legacy del curso único antiguo; ya no se ofrece.</summary>
+    public const string Parvularia = "Parvularia";
 
     /// <summary>De menor a mayor: el orden en que se muestran y se recorren.</summary>
     public static readonly IReadOnlyList<string> Todos = new[]
@@ -26,8 +35,9 @@ public static class NivelesCurso
     };
 
     /// <summary>
-    /// Clave corta que usa el nombre del curso en la base: «PK A», «K A»,
-    /// «1° A» … «8° B». Devuelve null si el nivel no pertenece al colegio.
+    /// Clave corta del nivel: «PK» y «K» para Pre-kínder y Kínder (sin letra)
+    /// y «1» … «8» para los cursos con letra («1° A»). Devuelve null si el
+    /// nivel no pertenece al colegio.
     /// </summary>
     public static string? Token(string? nivel)
     {
@@ -41,10 +51,16 @@ public static class NivelesCurso
 
         switch (texto)
         {
-            case "pre-kinder" or "pre kinder" or "prekinder" or "nt1":
+            // Pre-kínder y Kínder son niveles separados, sin letra.
+            case "pre-kinder" or "pre kinder" or "prekinder" or "pk" or "nt1":
                 return "PK";
-            case "kinder" or "nt2":
+
+            case "kinder" or "k" or "nt2":
                 return "K";
+
+            // Nombre legacy del curso único antiguo.
+            case "parvularia":
+                return "PARV";
         }
 
         var numero = Digitos(texto);
@@ -53,8 +69,10 @@ public static class NivelesCurso
     }
 
     /// <summary>
-    /// Nivel a partir del nombre del curso: «PK A» → «Pre-kínder», «K B» →
-    /// «Kínder», «1° A» → «1º básico». Sirve para proponer el curso anterior.
+    /// Nivel a partir del nombre del curso: «Pre-kínder» → «Pre-kínder»,
+    /// «Kínder» → «Kínder», «1° A» → «1º básico». También reconoce los
+    /// nombres antiguos «PK A», «K B» y «Parvularia» para proponer el curso
+    /// anterior de una matrícula ya registrada.
     /// </summary>
     public static string? DesdeNombre(string? curso)
     {
@@ -77,8 +95,14 @@ public static class NivelesCurso
         {
             case "pk" or "pre-kinder" or "prekinder" or "nt1":
                 return PreKinder;
+
             case "k" or "kinder" or "nt2":
                 return Kinder;
+
+            // El curso único antiguo no distinguía el nivel: se trata como
+            // Pre-kínder para no perder la propuesta del curso anterior.
+            case "parvularia":
+                return PreKinder;
         }
 
         var numero = Digitos(clave);
@@ -97,6 +121,16 @@ public static class NivelesCurso
     /// no existe un curso superior al que renovar.
     /// </summary>
     public static bool EsUltimo(string? nivel) => nivel == Todos[^1];
+
+    /// <summary>Pre-kínder y Kínder son cursos sin letra (neutros).</summary>
+    public static bool EsParvularia(string? nivel) => EsSinLetra(nivel);
+
+    /// <summary>True cuando el nivel no lleva letra: Pre-kínder/Kínder.</summary>
+    public static bool EsSinLetra(string? nivel)
+    {
+        var token = Token(nivel);
+        return token is "PK" or "K" or "PARV";
+    }
 
     public static int Orden(string? curso)
     {

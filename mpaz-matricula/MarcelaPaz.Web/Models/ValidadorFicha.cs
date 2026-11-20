@@ -23,6 +23,9 @@ public static class ValidadorFicha
     /// <summary>Tipos de restricción que ofrece el paso 2.</summary>
     private static readonly string[] TiposRestriccion = { "Judicial", "Familiar" };
 
+    /// <summary>Letras de curso que ofrece el paso 1 para 1º a 8º básico.</summary>
+    private static readonly string[] LetrasCurso = { "A", "B" };
+
     /// <summary>Escolaridades que ofrece el paso 2, en el mismo orden de la vista.</summary>
     private static readonly string[] Escolaridades =
     {
@@ -46,6 +49,26 @@ public static class ValidadorFicha
 
         switch (paso)
         {
+            case 1:
+                // Pre-kínder y Kínder son cursos neutros: no llevan letra.
+                if (NivelesCurso.EsParvularia(form.Curso_Nivel))
+                {
+                    break;
+                }
+
+                if (string.IsNullOrWhiteSpace(form.Curso_Letra))
+                {
+                    errores.Add(new ErrorValidacion(nameof(FichaForm.Curso_Letra),
+                        "Seleccione la letra del curso."));
+                }
+                else if (!ValorPermitido(form.Curso_Letra, LetrasCurso))
+                {
+                    errores.Add(new ErrorValidacion(nameof(FichaForm.Curso_Letra),
+                        "La letra del curso debe ser A o B: el colegio tiene dos cursos por nivel."));
+                }
+
+                break;
+
             case 2:
                 var madre = ConDatos(form.Madre_Nombre_Apellido, form.Madre_Cedula_Identidad,
                     form.Madre_Telefono, form.Madre_Escolaridad, form.Madre_Domicilio, form.Madre_Correo);

@@ -22,6 +22,43 @@
         });
     });
 
+    // Pre-kínder y Kínder son cursos neutros, sin letra. La letra sólo se
+    // pide de 1º a 8º básico.
+    const ajustarCurso = () => {
+        const nivel = document.getElementById('Curso_Nivel');
+        const letra = document.getElementById('Curso_Letra');
+        const campo = letra ? letra.closest('[data-ux-curso-letra]') : null;
+
+        if (!nivel || !letra || !campo) {
+            return;
+        }
+
+        const sinLetra = nivel.value === 'Pre-kínder' || nivel.value === 'Kínder';
+
+        campo.hidden = sinLetra;
+        campo.style.display = sinLetra ? 'none' : '';
+        letra.disabled = sinLetra;
+
+        if (sinLetra) {
+            letra.value = '';
+        }
+    };
+
+    document.addEventListener('change', evento => {
+        if (evento.target instanceof HTMLElement && evento.target.id === 'Curso_Nivel') {
+            ajustarCurso();
+        }
+    });
+
+    // El wizard reemplaza el paso sin recargar la página: se reajusta al cambiar.
+    const pasoFicha = document.getElementById('ficha-paso');
+
+    if (pasoFicha) {
+        new MutationObserver(ajustarCurso).observe(pasoFicha, { childList: true });
+    }
+
+    ajustarCurso();
+
     // Grupos opcionales: repetir clic o Espacio quita la respuesta marcada.
     document.querySelectorAll('[data-ux-radio-desmarcable]').forEach(grupo => {
         const radios = Array.from(grupo.querySelectorAll('input[type="radio"]'));

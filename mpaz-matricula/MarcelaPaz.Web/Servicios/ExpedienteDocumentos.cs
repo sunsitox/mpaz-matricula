@@ -81,9 +81,19 @@ public sealed class ExpedienteDocumentos
     /// Guarda el archivo con nombre aleatorio bajo la raíz configurada y
     /// devuelve la ruta relativa que se persiste en la base.
     /// </summary>
-    public async Task<ResultadoArchivo> GuardarAsync(
+    public Task<ResultadoArchivo> GuardarAsync(
         IFormFile archivo,
         int estudianteId,
+        CancellationToken ct = default) =>
+        GuardarEnAsync(archivo, estudianteId.ToString(), ct);
+
+    /// <summary>
+    /// Igual que <see cref="GuardarAsync"/>, pero en una carpeta con nombre
+    /// propio (por ejemplo, las fichas médicas de un funcionario).
+    /// </summary>
+    public async Task<ResultadoArchivo> GuardarEnAsync(
+        IFormFile archivo,
+        string carpeta,
         CancellationToken ct = default)
     {
         var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
@@ -119,7 +129,7 @@ public sealed class ExpedienteDocumentos
         }
 
         var relativa = Path.Combine(
-            estudianteId.ToString(),
+            carpeta,
             $"{Guid.NewGuid():N}{extension}");
 
         var fisica = Path.Combine(_raiz, relativa);

@@ -35,4 +35,13 @@ public class CertificadoEmitido
     public DateTimeOffset? AnuladoEn { get; set; }
 
     public int? AnuladoPor { get; set; }
+
+    /// <summary>
+    /// Nombre del subrogante que firma: el funcionario que emite. Nulo en
+    /// certificados emitidos antes del paso 20.
+    /// </summary>
+    public string? FirmanteNombre { get; set; }
+
+    /// <summary>Cargo impreso en el certificado: «Director» (paso 20).</summary>
+    public string? FirmanteCargo { get; set; }
 }

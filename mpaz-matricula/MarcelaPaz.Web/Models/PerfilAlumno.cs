@@ -47,6 +47,21 @@ public class PerfilAlumno
 
     public List<RetiroPerfil> Retiros { get; set; } = new();
 
+    /// <summary>Notas de retiro registradas por UTP o Secretaría (pasos/17).</summary>
+    public List<NotaRetiroPerfil> NotasRetiro { get; set; } = new();
+
+    /// <summary>La sesión puede agregar notas de retiro.</summary>
+    public bool PuedeNotaRetiro { get; set; }
+
+    /// <summary>Observaciones de situación familiar (pasos/21, decisión 19).</summary>
+    public List<ObservacionFamiliarPerfil> ObservacionesFamiliares { get; set; } = new();
+
+    /// <summary>La sesión puede agregar observaciones familiares.</summary>
+    public bool PuedeObservacionFamiliar { get; set; }
+
+    /// <summary>La sesión puede ver observaciones familiares.</summary>
+    public bool PuedeVerObservacionesFamiliares { get; set; }
+
     public List<SituacionPerfil> Situaciones { get; set; } = new();
 
     /// <summary>Restricciones vigentes que afectan a algún vínculo familiar.</summary>
@@ -262,6 +277,32 @@ public class PerfilAlumno
         public string Vinculo { get; set; } = string.Empty;
     }
 
+    public class NotaRetiroPerfil
+    {
+        public string Tipo { get; set; } = string.Empty;
+
+        public string Etiqueta { get; set; } = string.Empty;
+
+        public string Detalle { get; set; } = string.Empty;
+
+        public DateOnly? VigenteDesde { get; set; }
+
+        public DateOnly? VigenteHasta { get; set; }
+
+        public DateTimeOffset RegistradoEn { get; set; }
+    }
+
+    public class ObservacionFamiliarPerfil
+    {
+        public string Detalle { get; set; } = string.Empty;
+
+        public DateOnly? VigenteDesde { get; set; }
+
+        public DateOnly? VigenteHasta { get; set; }
+
+        public DateTimeOffset RegistradoEn { get; set; }
+    }
+
     public class SituacionPerfil
     {
         public string Tipo { get; set; } = string.Empty;
@@ -280,6 +321,9 @@ public class PerfilAlumno
         public string Dosis { get; set; } = string.Empty;
 
         public string Frecuencia { get; set; } = string.Empty;
+
+        /// <summary>Hora o horas indicadas en la orden médica (p. ej. 08:00 y 14:00).</summary>
+        public string? Horario { get; set; }
 
         public DateOnly VigenteHasta { get; set; }
 
