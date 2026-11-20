@@ -47,7 +47,7 @@ public class PerfilAlumno
 
     public List<RetiroPerfil> Retiros { get; set; } = new();
 
-    /// <summary>Notas de retiro registradas por UTP o Secretaría (pasos/17).</summary>
+    /// <summary>Notas de retiro registradas por UTP o Convivencia (pasos/17 y 24).</summary>
     public List<NotaRetiroPerfil> NotasRetiro { get; set; } = new();
 
     /// <summary>La sesión puede agregar notas de retiro.</summary>

@@ -304,7 +304,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
         });
 
-        // Notas de retiro (pasos/17): las registra UTP con permiso RETIRO:EDITAR.
+        // Notas de retiro (pasos/17 y 24): las registran UTP y Convivencia
+        // con permiso RETIRO:EDITAR.
         builder.Entity<NotaRetiro>(e =>
         {
             e.ToTable("nota_retiro", Esquema, t => t.ExcludeFromMigrations());

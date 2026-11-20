@@ -266,8 +266,8 @@ public class AlumnosController : Controller
         // falta, ni se consulta ni se proyecta.
         var puedeFamilia = Puede("FAMILIA");
         var puedeRetiro = Puede("RETIRO");
-        // UTP registra las notas de retiro (pasos/17); Secretaría conserva la
-        // misma capacidad por su permiso de edición del área.
+        // UTP y Convivencia registran las notas de retiro (pasos/17 y 24);
+        // Secretaría e Inspectoría sólo las leen.
         var puedeNotaRetiro = User.HasClaim("permiso", "RETIRO:EDITAR")
             || User.HasClaim("permiso", "RETIRO:CREAR");
         // Observaciones de situación familiar (pasos/21): área propia. UTP y
