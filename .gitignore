@@ -38,17 +38,6 @@ scripts/fill_informe_plan_trabajo.py
 # nunca subir al repositorio, ni siquiera con git add -f
 datos-alumnos/
 
-# Datos reales en la carpeta de importación (Ley 21.719):
-# se versionan README y scripts del procedimiento, nunca los Excel/Access
-# ni las salidas con datos (cuarentena) o agregados locales.
-importacion/*.accdb
-importacion/*.mdb
-importacion/*.xlsx
-importacion/*.xls
-importacion/*.csv
-importacion/cuarentena/
-importacion/perfilado/
-importacion/informes/
-importacion/limpios/
-importacion/fuentes/
-importacion/scripts/__pycache__/
+# Carpeta de importación (Ley 21.719): no se versiona nada de ella. Las
+# fuentes reales, los scripts y las salidas quedan sólo en el equipo local.
+importacion/
