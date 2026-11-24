@@ -1,0 +1,35 @@
+\section{Pruebas y estado}
+
+\subsection{Pruebas automatizadas}
+
+Proyecto \codigo{mpaz-matricula/tests} (xUnit): RUN/IPE/IPA y duplicados,
+validaciones del formulario, cierre de ficha y transiciones de estado,
+formatos y firma real de archivos, alertas MAT-17, reportes CSV, anulación,
+niveles de curso y conexión viva. Última corrida registrada: 133/137 casos
+superados y compilación Release con 0 errores y 0 advertencias (17-11-2026).
+
+\subsection{Verificaciones ejecutadas}
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item Rutas locales 200 (panel, login, alertas, año 2027 y 2026).
+\item Denegación a DOCENTE verificada en pantalla y por URL directa.
+\item Concurrencia optimista verificada en base real (versión antigua
+  actualiza 0 filas).
+\item PDF desde \codigo{datos\_snapshot} descargado por HTTP
+  (\codigo{/Ficha/Version/43} y \codigo{/44}, 200 \codigo{application/pdf}).
+\item Renovación al año siguiente probada por HTTP con 2028 activado
+  temporalmente.
+\item Alertas probadas contra la base real: años 2026 (9 matrículas) y 2027
+  (27), con una autorización temporal vencida y contador de vuelta a 0.
+\item Accesibilidad documentada en \codigo{docs/auditorias/} (axe/Lighthouse,
+  teclado, NVDA, reflow 200\,\%, \codigo{prefers-contrast} y
+  \codigo{forced-colors} sin desborde horizontal).
+\end{itemize}
+
+\subsection{Estado por requisito (MAT)}
+
+Cerrar el balance: MAT-01 a MAT-04, MAT-06 a MAT-14 y MAT-16 a MAT-18
+implementados y verificados; MAT-05 (medicación TENS) solo en DDL,
+bloqueado por el protocolo; MAT-15 (integración Asistencia/Notas/Apoyo)
+con esquema creado y sin flujo de datos. Ver el detalle por ítem en
+\codigo{docs/checklist-portal-matricula-modulo-3.md}.

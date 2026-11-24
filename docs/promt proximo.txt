@@ -1,0 +1,22 @@
+Necesito corregir dos cosas en el sistema.
+
+1) Estructura de encabezados y títulos
+- Encabezado fijo, igual en todas las páginas: "Portal Marcela Paz". Sin la palabra "matrícula" ni el año.
+- Navegación principal: Panel · Matrícula · Estudiantes. Debe marcar la sección activa.
+- Título de cada página: describe lo específico, por ejemplo "Matrícula 2027" o "Ficha de matrícula 2027". Se muestra dentro del contenido, no en el encabezado global.
+- El año se muestra como etiqueta o selector ("Año escolar 2027"), no como parte del nombre del sistema.
+- Título de la pestaña del navegador (<title>): "<Sección> · Portal Marcela Paz", por ejemplo "Matrícula · Portal Marcela Paz" o "Estudiantes · Portal Marcela Paz".
+- Regla: el encabezado dice qué sistema es, el título de la página dice qué se está haciendo.
+
+2) Año escolar parametrizado (configuración, no calculado)
+- No usar "año actual + 1" ni un 2027 fijo en el código. El calendario no coincide con el periodo de matrícula (en enero y febrero aún se matricula para el año anterior al calendario).
+- Crear una tabla `años_escolares` (o un setting) con: año, flag `activo_matricula` (solo uno activo a la vez) y, opcionalmente, fecha de apertura y cierre del periodo.
+- El módulo de Matrícula siempre usa el año con `activo_matricula = true`. Al cambiarlo a 2028, todo lo nuevo sale como 2028 sin tocar código.
+- Cada ficha y su folio guardan el año con el que se generaron. Una ficha 2027 sigue diciendo 2027 aunque el sistema ya esté en 2028.
+- El panel de gestión tiene un selector de año, con el año activo como valor por defecto, para poder ver alumnos de años anteriores.
+- El cambio de año activo lo hace secretaría o dirección desde una pantalla de configuración. Si se automatiza, que sea por fecha de apertura del periodo, no por año calendario.
+
+Tareas:
+- Revisa dónde está hardcodeado "Portal de matrícula 2027" y el año 2027 en plantillas, componentes, títulos de pestaña y generación de folio/PDF.
+- Propón los cambios mínimos para implementar lo anterior y aplícalos.
+- Si falta migración de base de datos, indícala antes de aplicarla.

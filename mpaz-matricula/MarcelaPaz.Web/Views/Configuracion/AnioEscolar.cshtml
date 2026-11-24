@@ -12,9 +12,8 @@
         todavía se matricula el año que ya comenzó.
     </p>
     <p class="admin__ayuda">
-        Si un año tiene fecha de apertura, el portal empieza a usarlo solo cuando esa fecha
-        llega, sin esperar a que se active a mano. Para volver a un año anterior hay que
-        corregir primero la apertura del año posterior.
+        El año que active a mano se mantiene aunque otro posterior ya tenga su fecha de
+        apertura cumplida. La apertura por fecha sólo se usa cuando ningún año está activo.
     </p>
 
     @if (TempData["Aviso"] is string aviso)
@@ -29,7 +28,7 @@
     else
     {
         <div class="tabla-envoltura" tabindex="0">
-            <table class="admin__tabla">
+            <table class="admin__tabla configuracion__tabla-anios">
                 <caption class="sr-only">Años escolares registrados y cuál está activo para matrícula.</caption>
                 <thead>
                     <tr>
@@ -42,9 +41,16 @@
                 <tbody>
                     @foreach (var opcion in Model)
                     {
+                        var soloFechas = opcion.Matriculas > 0;
+                        var aperturaValor = opcion.Apertura?.ToString("yyyy-MM-dd");
+                        var cierreValor = opcion.Cierre?.ToString("yyyy-MM-dd");
+                        var bloqueo = opcion.Activo
+                            ? "Es el año activo: active otro año antes de eliminarlo."
+                            : $"Tiene {opcion.Matriculas} matrícula(s) registrada(s): no se puede eliminar.";
+
                         <tr>
-                            <td>@opcion.Anio</td>
-                            <td>
+                            <td data-etiqueta="Año">@opcion.Anio</td>
+                            <td data-etiqueta="Periodo">
                                 @if (opcion.Apertura is DateOnly apertura)
                                 {
                                     <text>desde @apertura.ToString("dd-MM-yyyy")</text>
@@ -58,7 +64,7 @@
                                     <text>sin fechas definidas</text>
                                 }
                             </td>
-                            <td>
+                            <td data-etiqueta="Estado">
                                 @if (opcion.Activo)
                                 {
                                     <span class="admin__chip admin__chip--alerta">Matrícula activa</span>
@@ -68,18 +74,88 @@
                                     <span class="admin__chip">Histórico</span>
                                 }
                             </td>
-                            <td>
-                                @if (opcion.Activo)
-                                {
-                                    <span class="admin__ayuda">En uso</span>
-                                }
-                                else
-                                {
-                                    <form method="post" asp-action="Activar">
-                                        <input type="hidden" name="anio" value="@opcion.Anio" />
-                                        <button type="submit" class="admin__boton">Activar @opcion.Anio</button>
-                                    </form>
-                                }
+                            <td data-etiqueta="Acciones">
+                                <div class="configuracion__acciones-fila">
+                                    @if (!opcion.Activo)
+                                    {
+                                        <form method="post" asp-action="Activar">
+                                            <input type="hidden" name="anio" value="@opcion.Anio" />
+                                            <button type="submit" class="admin__boton admin__boton--mini">Activar @opcion.Anio</button>
+                                        </form>
+                                    }
+
+                                    <button type="button"
+                                            class="admin__boton admin__boton--mini"
+                                            data-ux-anio-editar="edicion-anio-@opcion.Anio"
+                                            aria-controls="edicion-anio-@opcion.Anio"
+                                            aria-expanded="false">
+                                        Editar
+                                    </button>
+
+                                    @if (opcion.Activo || opcion.Matriculas > 0)
+                                    {
+                                        <button type="button"
+                                                class="admin__boton configuracion__borrar configuracion__borrar--bloqueado"
+                                                title="@bloqueo"
+                                                aria-label="Eliminar el año @opcion.Anio (no disponible)"
+                                                data-ux-anio-aviso="No se puede eliminar el año @opcion.Anio. @bloqueo">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-action="Eliminar">
+                                            <input type="hidden" name="anio" value="@opcion.Anio" />
+                                            <button type="submit" class="admin__boton configuracion__borrar"
+                                                    title="Eliminar el año @opcion.Anio"
+                                                    aria-label="Eliminar el año @opcion.Anio"
+                                                    data-ux-confirmar="¿Eliminar el año @opcion.Anio? Esta acción no se puede deshacer.">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="configuracion__edicion" id="edicion-anio-@opcion.Anio" hidden>
+                            <td colspan="4">
+                                <form method="post" asp-action="Editar" class="configuracion__form">
+                                    <input type="hidden" name="anioOriginal" value="@opcion.Anio" />
+                                    <div class="acceso__campo">
+                                        <label class="acceso__etiqueta" for="editar-anio-@opcion.Anio">Año escolar</label>
+                                        @if (soloFechas)
+                                        {
+                                            <input class="acceso__input" id="editar-anio-@opcion.Anio" name="anio"
+                                                   type="number" min="2000" max="2100" step="1"
+                                                   value="@opcion.Anio" readonly />
+                                        }
+                                        else
+                                        {
+                                            <input class="acceso__input" id="editar-anio-@opcion.Anio" name="anio"
+                                                   type="number" min="2000" max="2100" step="1"
+                                                   value="@opcion.Anio" required />
+                                        }
+                                    </div>
+                                    <div class="acceso__campo">
+                                        <label class="acceso__etiqueta" for="editar-apertura-@opcion.Anio">Apertura del periodo</label>
+                                        <input class="acceso__input" id="editar-apertura-@opcion.Anio" name="apertura"
+                                               type="date" value="@aperturaValor" />
+                                    </div>
+                                    <div class="acceso__campo">
+                                        <label class="acceso__etiqueta" for="editar-cierre-@opcion.Anio">Cierre del periodo</label>
+                                        <input class="acceso__input" id="editar-cierre-@opcion.Anio" name="cierre"
+                                               type="date" value="@cierreValor" />
+                                    </div>
+                                    <button type="submit" class="admin__boton admin__boton--primario admin__boton--mini">Guardar cambios</button>
+                                    <button type="button" class="admin__boton admin__boton--mini" data-ux-anio-cancelar>Cancelar</button>
+                                    @if (soloFechas)
+                                    {
+                                        <p class="admin__ayuda configuracion__edicion-aviso">
+                                            El número del año no se cambia porque ya tiene @opcion.Matriculas matrícula(s)
+                                            registrada(s); las fechas sí se pueden corregir.
+                                        </p>
+                                    }
+                                </form>
                             </td>
                         </tr>
                     }
@@ -89,7 +165,8 @@
     }
 </div>
 
-<div class="admin__tarjeta">        <h2 class="admin__titulo-seccion">Agregar un año</h2>
+<div class="admin__tarjeta">
+    <h2 class="admin__titulo-seccion">Agregar un año</h2>
     <p class="admin__ayuda">
         Registre el año siguiente cuando el colegio lo decida. Las fechas del periodo son
         opcionales; si se define la apertura, ese año se usará solo desde esa fecha.

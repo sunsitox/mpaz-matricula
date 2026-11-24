@@ -1,0 +1,54 @@
+\section{Flujos principales}
+
+\subsection{Matrícula nueva y renovación}
+
+Buscar por nombre o RUN/IPE/IPA $\rightarrow$ Nueva o Renovar $\rightarrow$
+wizard de 8 pasos $\rightarrow$ documentos $\rightarrow$ firma $\rightarrow$
+confirmación. La renovación precarga estudiante, familia, apoderados,
+contactos, retiro, salud, PIE y autorizaciones; si el estudiante terminó
+8º básico pide confirmar egreso o repetición.
+
+Bloques del wizard: A estudiante, B familia y apoderados, C emergencia y
+retiro, D salud, E PIE y apoyos, F autorizaciones de imagen, G convivencia,
+paso 8 revisión con PDF embebido y confirmación expresa del funcionario.
+
+Estados: \codigo{BORRADOR} $\rightarrow$ \codigo{FICHA\_GENERADA} $\rightarrow$
+\codigo{FIRMADA} $\rightarrow$ \codigo{CONFIRMADA} (o \codigo{ANULADA} con
+motivo). La base impide saltos; la anulación permite iniciar una matrícula
+nueva. La columna \codigo{version} actúa como token de concurrencia: si otro
+funcionario guardó primero, EF lanza excepción en vez de sobrescribir.
+
+\subsection{Ficha y PDF}
+
+Al cerrar se crea \codigo{ficha\_version} con folio, versión y
+\codigo{datos\_snapshot}: el PDF se genera desde la copia congelada, nunca
+desde el borrador. La corrección crea una versión nueva con motivo y deja la
+anterior \codigo{REEMPLAZADA} sin tocar el documento firmado. La descarga
+queda registrada como \codigo{DESCARGAR}.
+
+\subsection{Expediente documental}
+
+Carga PDF/JPG/PNG hasta 15 MB con validación de extensión y firma real,
+hash SHA-256 y almacenamiento fuera de \codigo{wwwroot}. Cada requisito se
+marca recibido/no aplica/pendiente sin bloquear la matrícula. El escaneo de
+la ficha firmada se guarda como documento \codigo{FICHA\_FIRMADA};
+\codigo{AlumnosController.ValidarDocumentacion} registra ubicación del
+original, validador y observación.
+
+\subsection{Autorizaciones, certificados y alertas}
+
+Las autorizaciones conservan firma y fecha; la revocación exige motivo y
+bloquea el uso posterior, y las vencidas pasan a \codigo{VENCIDA}. El
+certificado de alumno regular se emite desde los datos confirmados, con
+folio, historial y validación pública por folio. \codigo{/Alertas} lista
+vencidas y las que vencen en 30 días, filtradas por año y por área
+(\codigo{AUTORIZACIONES:LEER} / \codigo{MEDICACION:LEER}); la revisión
+programada corre cada 15 minutos. Los reportes (\codigo{ReportesController})
+exportan CSV de matrículas y faltantes con permiso EXPORTAR y descarga
+auditada.
+
+\subsection{Cuentas}
+
+ADMIN\_TI crea, activa, desactiva, cierra rol, restablece contraseña (clave
+temporal de un solo uso con cierre de sesiones) y desbloquea cuentas desde
+\codigo{FuncionariosController}.

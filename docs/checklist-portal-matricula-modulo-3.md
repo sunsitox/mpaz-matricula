@@ -164,7 +164,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 - [ ] [José] Retirar y rotar las credenciales visibles antes de producción — hoy `preview.env` y `LEEME-ACCESO.txt` tienen la clave en claro a propósito, para pruebas.
 - [ ] [José] Paquete Docker para la entrega final — **Parcial:** `mpaz-matricula/docker/` con Dockerfile multi-stage, compose (app + PostgreSQL 16), semilla SQL ordenada, `.env.example` y README; revisado, pero la imagen no se construyó ni se ejecutó.
 - [x] [José] Acceso remoto gráfico temporal al servidor — **Completado y ya retirado:** RDP de sistema (`grdctl --system`) en 3389, abierto solo por `tailscale0`, verificado desde Windows (`TcpTestSucceeded=True`); **retirado el 06-11-2026 04:17** con `scripts/servidor/quitar-rdp.sh`: servicio detenido y deshabilitado, reglas 3389 eliminadas, certificado borrado y sin listener. Registro en `scripts/servidor/README-acceso-remoto.md`.
-- [ ] [José] Publicar en subdominio institucional con Cloudflare Access — **Parcial:** zona `empaz.cl` **activa** (DNS Full, plan Free) y túnel `mpaz-rfid-tunnel` `Healthy` con 1 ruta, verificado el 06-11-2026; el panel se consulta con la cuenta personal del colega (`Tap.tapia@duocuc.cl`) y **requiere su autorización** antes de crear o modificar algo. Zero Trust aún sin configurar, por lo que no hay app de Access. Pendiente: `Seguridad__ExigirInicioSesion=true`, team de Zero Trust, app de Access y hostname `matricula.empaz.cl` → `http://127.0.0.1:5100`. Detalle en `docs/respuesta-ti-cloudflare.md`. **En pausa:** José no modifica la cuenta del colega; espera invitación como miembro (*Members → Invite*).
+- [x] [José] Túnel y hostname `matricula.empaz.cl` vivos y sirviendo el portal — **Verificado 23-11-2026:** DNS a Cloudflare, `https://matricula.empaz.cl/` 200 → `/Cuenta/Login`, login con antiforgery, `Cache-Control: no-cache, no-store`, CSP/HSTS. Falta: app de Access (hoy entra directo al login) y confirmar `Seguridad__ExigirInicioSesion=true` en el servicio. Detalle en `docs/respuesta-ti-cloudflare.md`.
 - [x] [José] Revisar qué se publica por Cloudflare y a quién se expone — documentado en `docs/deployment.md` y `migracion-servidor-runbook.md`.
 - [ ] [Colegio] [BLOQUEADO] Revisión jurídica y del sostenedor antes de operar (consentimientos, tratamiento de datos, protocolos de salud)
 - [ ] [Colegio] [BLOQUEADO] Preparar el cumplimiento de la Ley 21.719 (vigente desde 01-12-2026)
@@ -362,8 +362,10 @@ El portal local compila en Release sin errores ni advertencias y las 137 pruebas
 ### Lo que falta y puede hacerse sin autorización externa
 
 - [x] MAT-17: aviso automático/proceso programado y pruebas reales (17-11-2026). Canal in-app en `/Alertas`; frecuencia cada 15 min + primera revisión al arrancar; responsable: proceso programado, sin funcionario asignado. Vista y contador probados contra la base real de desarrollo: años 2026 (9 matrículas) y 2027 (27); prueba positiva con una autorización temporal vencida (vista = 1, contador del panel 2027 = 1, revisión programada con “1 autorizaciones”, `/Alertas` en HTTP con el resumen), datos de prueba limpiados y contador de vuelta a 0. Permisos: `mpaz_app` recibe solo `SELECT, INSERT` sobre `alerta_revision` en `pasos/13` e `instalacion/02`, verificado con rol simulado (lee e inserta, no actualiza ni borra).
-- [x] Aceptación funcional parcial (17-11-2026): PDF desde `datos_snapshot` descargado por HTTP (`/Ficha/Version/43` y `/44`, 200 `application/pdf`, `%PDF`); concurrencia con bloqueo optimista verificada en base real (guardado con versión actual sí, con versión antigua 0 filas); renovación al año siguiente probada por HTTP con 2028 activado temporalmente (`POST /Ficha/Renovar` → paso 1 con año 2028). Falta: validación final del formulario y pruebas de los pasos 2-5 (bloques B y C).
-- [ ] Construir y probar la imagen Docker y el arranque completo en una máquina local/API. No se hizo: Docker no está instalado en este equipo; el paquete Docker sigue revisado pero sin construir.
+- [x] Aceptación funcional parcial (17-11-2026): PDF desde `datos_snapshot` descargado por HTTP (`/Ficha/Version/43` y `/44`, 200 `application/pdf`, `%PDF`); concurrencia con bloqueo optimista verificada en base real (guardado con versión actual sí, con versión antigua 0 filas); renovación al año siguiente probada por HTTP con 2028 activado temporalmente (`POST /Ficha/Renovar` → paso 1 con año 2028). Validación local bloques B/C 23-11-2026: unit 38/38 + HTTP en local (`dotnet run` Desarrollo + docker db, usuario `prueba.wizard@mpaz.cl` SECRETARIA): GET pasos 2-5 200, POST válido 302 al siguiente (2→3→4→5→6), POST inválido 200 con mensaje (madre/padre, teléfono repetido, falta autorizado). Nota: la terminal local deforma tildes por encoding — en HTTP se usó `Postgrado`; los acentos están cubiertos por los unit tests. Falta: validación final contra el papel del colegio.
+- [x] Docker verificado en este equipo (23-11-2026): Engine 29.9.3 + compose v5.7.0; base `docker-db-1` levantada con seed mock (7 funcionarios) para las pruebas del wizard. `.env` local con claves generadas (gitignored).
+- [ ] Construir y probar la imagen Docker y el arranque completo en una máquina local/API. No se hizo: el compose `app` no se construyó en esta pasada (se probó con `dotnet run` + db en docker).
+- [x] Ficha de salud del funcionario — backend sólo local (23-11-2026): entidad `FichaSaludFuncionario`, `DbSet` + mapeo, `database/.../pasos/25-ficha-salud-funcionario.sql` aplicado al docker local (tabla + índice + permisos SALUD UTP/Dirección), `ValidadorFichaSalud` y 10 tests. Suite completa 198/198. Falta: UI (vista/acciones en `personal/fichas-medicas`, sólo UTP/Dirección) y aplicar el paso 25 en el servidor cuando el colegio apruebe el formulario.
 - [x] Prueba de respaldo y restauración en una copia local (17-11-2026). Respaldo `artifacts/respaldo/mpaz-20261117T023610Z.dump` (354 KB, 629 objetos, incluye `alerta_revision`). Restauración completa en PostgreSQL 18 local (`mpaz_restore_local`): 41 tablas en `mpaz_matricula`, 4 en `mpaz_auth`, 36 matrículas, 44 fichas y 1 revisión; para llegar, `pg_restore` directo no bastó por sentencias `pg_attver` que el PostgreSQL local no reconoce, y se restauró vía SQL plano sin esas líneas.
 - [x] Paquete de despliegue limpio (17-11-2026): `scripts/publicar-paquete.sh` pública en Release y genera `artifacts/deploy/mpaz-matriculas-20261117T025827Z-linux-x64.tar.gz` (46 MB) con SHA-256; verificado sin `appsettings.Development.json`, sin PDB y sin `App_Data`.
 
@@ -379,3 +381,27 @@ El portal local compila en Release sin errores ni advertencias y las 137 pruebas
 1. Instalación de Docker para construir y probar la imagen.
 2. Aceptación funcional final: pasos 2-5 del wizard (bloques B y C) y validación final del formulario.
 3. Con autorización: despliegue al servidor, credenciales y Cloudflare Access.
+
+---
+
+## 17. Importación de datos de alumnos (ordenamiento del subrogante) — 23-11-2026
+
+- Contexto: el subrogante actual del colegio intenta ordenar parte de los datos de los alumnos (no todos). Hay dos fuentes: una base Access desestructurada y una planilla Excel mejor estructurada (posible fuente de verdad, por confirmar).
+- Todo el trabajo con datos reales se hace únicamente en `datos-alumnos/` (raíz del proyecto; carpeta completa ignorada por git, nada de lo que haya en ella se sube al repositorio). Los archivos fuente aún no están en el proyecto. Procedimiento y reglas de limpieza en `mpaz-matricula/database/importacion/README.md`.
+- Defectos conocidos (sin revisar fila por fila todavía):
+  - RUTs incompletos: falta el dígito verificador.
+  - Extranjeros: traen número de matrícula en vez de RUN.
+  - Nacionalidades mal escritas.
+  - Apoderados: datos no revisados.
+
+- [ ] [José] Recibir el Excel y el Access, dejarlos en `datos-alumnos/fuentes/` y anotar fecha y versión recibida en el README de importación.
+- [ ] [Colegio] [BLOQUEADO] Confirmar cuál es la fuente de verdad (¿el Excel manda y el Access solo se consulta?).
+- [ ] [José] Perfilado de la fuente elegida: columnas, nulos, duplicados de identificador y formatos de fecha/teléfono; informe en `datos-alumnos/informes/`.
+- [ ] [José] Normalización de RUT: a los sin DV se les calcula el dígito (módulo 11, igual que `rut_valido()`); los que sigan inválidos van a lista de cuarentena para que el colegio los corrija (el DDL rechaza el `RUN` inválido: `ck_estudiante_run` / `ck_persona_run`).
+- [ ] [José] Extranjeros: mapear el número de matrícula a `tipo_identificador` IPE/IPA/OTRO según corresponda (DDL: `('RUN', 'IPE', 'IPA', 'OTRO')`, único por tipo + identificador).
+- [ ] [José] Normalizar nacionalidad contra lista controlada; registrar el mapeo de variantes mal escritas en el README de importación; lo no mapeable va a cuarentena.
+- [ ] [José] Validar apoderados sin revisar (RUN, teléfono, formato de correo que exige el DDL) y vínculos madre/padre/principal/secundario para `estudiante_persona` (unicidades de vigente); duplicados y vínculos ambiguos a cuarentena.
+- [ ] [Colegio] [BLOQUEADO] Quién corrige la lista de cuarentena y en qué plazo; si se importan solo los registros limpios o se espera la corrección.
+- [ ] [Colegio] [BLOQUEADO] Alcance de la carga inicial: ¿solo estudiante + familia/apoderados, o también curso y matrícula anual? (si la fuente no trae curso/año, la matrícula queda para el wizard).
+- [ ] [José] Carga primero en base de desarrollo, idempotente (re-ejecutable sin duplicar, apoyada en `uk_estudiante_identificador` / `uk_persona_identificador`), con respaldo previo; los 10 estudiantes mock conviven o se retiran según decida el colegio.
+- [ ] [José] Protección de datos: todo el trabajo solo en `datos-alumnos/` (ignorado por git completo), borrar o archivar fuera del equipo tras la carga; revisión de la Ley 21.719 antes de operar con datos reales (sec. 0).

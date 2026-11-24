@@ -214,13 +214,6 @@ html {
     }
 }
 
-@media (max-width: 520px) {
-    /* Queda el avatar con las iniciales; el nombre completo vive en el title. */
-    .admin__usuario {
-        display: none;
-    }
-}
-
 .admin__contenedor {
     max-width: 1080px;
     margin: 0 auto;
@@ -671,4 +664,45 @@ html {
 a.admin__anio:hover,
 a.admin__anio:focus-visible {
     filter: brightness(1.12);
+}
+
+/* En pantallas angostas el año no cabe junto a la marca y la sesión: el mismo
+   dato está en la página, así que se oculta y la cabecera pasa a dos columnas.
+   La regla va después del display del enlace para que no la pise el estilo base. */
+@media (max-width: 700px) {
+    .admin__header {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .admin__header .admin__anio {
+        display: none;
+    }
+
+    /* El nombre del colegio se recorta antes que pisar la sesión. */
+    .admin__titulo,
+    .admin__subtitulo {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* En un teléfono el nombre del portal debe leerse completo: se cede el espacio
+   de las iniciales y del nombre del colegio, y se ajusta el aire del encabezado
+   para que no quede en "PORTAL MAR...". */
+@media (max-width: 520px) {
+    .admin__header {
+        gap: 0.6rem;
+        padding: 0 0.75rem;
+    }
+
+    .admin__persona,
+    .admin__subtitulo {
+        display: none;
+    }
+
+    .admin__titulo {
+        font-size: 0.9rem;
+        letter-spacing: 0.06em;
+    }
 }

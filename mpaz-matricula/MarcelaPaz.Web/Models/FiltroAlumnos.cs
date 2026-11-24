@@ -28,7 +28,29 @@ public class FiltroAlumnos
     /// <summary>«asc» o «desc».</summary>
     public string Direccion { get; set; } = "asc";
 
+    /// <summary>Sólo la página actual del listado, no el padrón completo.</summary>
     public List<AlumnoListado> Alumnos { get; set; } = new();
+
+    /// <summary>Total de alumnos filtrados, sin paginar.</summary>
+    public int TotalAlumnos { get; set; }
+
+    /// <summary>Página actual, desde 1.</summary>
+    public int Pagina { get; set; } = 1;
+
+    /// <summary>Alumnos por página.</summary>
+    public int TamanoPagina { get; set; } = 50;
+
+    public int TotalPaginas => TamanoPagina <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalAlumnos / (double)TamanoPagina));
+
+    public bool HayAnterior => Pagina > 1;
+
+    public bool HaySiguiente => Pagina < TotalPaginas;
+
+    /// <summary>Primer alumno visible de la página (0 si no hay resultados).</summary>
+    public int Desde => TotalAlumnos == 0 ? 0 : (Pagina - 1) * TamanoPagina + 1;
+
+    /// <summary>Último alumno visible de la página (0 si no hay resultados).</summary>
+    public int Hasta => Math.Min(Pagina * TamanoPagina, TotalAlumnos);
 
     public List<string> Cursos { get; set; } = new();
 

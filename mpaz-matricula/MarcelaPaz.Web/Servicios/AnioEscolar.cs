@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 namespace MarcelaPaz.Web.Servicios;
 
 /// <summary>Un año escolar registrado en el portal.</summary>
-public sealed record AnioEscolarOpcion(int Anio, bool Activo, DateOnly? Apertura, DateOnly? Cierre);
+public sealed record AnioEscolarOpcion(int Anio, bool Activo, DateOnly? Apertura, DateOnly? Cierre, int Matriculas);
 
 /// <summary>
 /// Año escolar con el que trabaja el módulo de Matrícula. Se lee de la tabla
@@ -24,6 +24,19 @@ public sealed class AnioEscolar
     private const string ClaveLista = "anio-escolar:lista";
 
     private static readonly TimeSpan VigenciaCache = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// Año vigente en una sola consulta: el activado a mano y, sólo si no hay
+    /// ninguno, el más reciente cuya apertura ya llegó. Lo usan la lectura del
+    /// año y la validación del borrado para que ambas reglas no se separen.
+    /// </summary>
+    private const string SqlVigente =
+        "select coalesce("
+        + "(select a.anio from anio_escolar a where a.activo_matricula "
+        + "order by a.anio desc limit 1), "
+        + "(select max(a.anio) from anio_escolar a "
+        + "where a.apertura is not null and a.apertura <= current_date), "
+        + "0) as \"Value\"";
 
     private readonly MatriculaDbContext _db;
     private readonly IMemoryCache _cache;
@@ -54,13 +67,12 @@ public sealed class AnioEscolar
                 _cache.Set(ClaveApertura, true, VigenciaCache);
             }
 
-            // Año vigente: el marcado a mano o el más reciente cuya fecha de
-            // apertura ya llegó. La automatización es sólo por apertura del
-            // periodo, nunca por año calendario.
+            // Año vigente: manda el que se activó a mano y la apertura por
+            // fecha sólo decide cuando no hay ninguno marcado. Antes se tomaba
+            // el mayor entre ambos y un año posterior con apertura ya cumplida
+            // impedía volver a uno anterior desde Configuración.
             var anio = await _db.Database
-                .SqlQueryRaw<int>(
-                    "select coalesce(max(anio), 0) as \"Value\" from anio_escolar "
-                    + "where activo_matricula or (apertura is not null and apertura <= current_date)")
+                .SqlQueryRaw<int>(SqlVigente)
                 .SingleAsync();
 
             if (anio == 0)
@@ -105,7 +117,9 @@ public sealed class AnioEscolar
             {
                 await using var comando = conexion.CreateCommand();
                 comando.CommandText =
-                    "select anio, activo_matricula, apertura, cierre from anio_escolar order by anio desc";
+                    "select a.anio, a.activo_matricula, a.apertura, a.cierre, "
+                    + "(select count(*)::int from matricula_anual m where m.anio = a.anio) "
+                    + "from anio_escolar a order by a.anio desc";
 
                 await using var lector = await comando.ExecuteReaderAsync();
 
@@ -115,7 +129,8 @@ public sealed class AnioEscolar
                         lector.GetInt16(0),
                         lector.GetBoolean(1),
                         lector.IsDBNull(2) ? null : DateOnly.FromDateTime(lector.GetDateTime(2)),
-                        lector.IsDBNull(3) ? null : DateOnly.FromDateTime(lector.GetDateTime(3))));
+                        lector.IsDBNull(3) ? null : DateOnly.FromDateTime(lector.GetDateTime(3)),
+                        lector.GetInt32(4)));
                 }
             }
             finally
@@ -131,15 +146,21 @@ public sealed class AnioEscolar
             _log.LogWarning(ex, "No se pudo leer la lista de años escolares.");
         }
 
-        // La pantalla debe mostrar como activo el mismo año que usa Matrícula,
-        // incluido el que se abrió solo por fecha de apertura.
+        // La pantalla debe mostrar como activo el mismo año que usa Matrícula:
+        // primero el marcado a mano y, sólo si no hay ninguno, el más reciente
+        // cuya apertura ya llegó.
         var hoy = DateOnly.FromDateTime(DateTime.Today);
-        var vigente = anios
-            .Where(opcion => opcion.Activo
-                             || (opcion.Apertura is DateOnly apertura && apertura <= hoy))
+        var marcados = anios
+            .Where(opcion => opcion.Activo)
             .Select(opcion => opcion.Anio)
-            .DefaultIfEmpty(0)
-            .Max();
+            .ToList();
+        var vigente = marcados.Count > 0
+            ? marcados.Max()
+            : anios
+                .Where(opcion => opcion.Apertura is DateOnly apertura && apertura <= hoy)
+                .Select(opcion => opcion.Anio)
+                .DefaultIfEmpty(0)
+                .Max();
 
         var lista = anios
             .Select(opcion => opcion with { Activo = opcion.Anio == vigente })
@@ -170,9 +191,9 @@ public sealed class AnioEscolar
     }
 
     /// <summary>
-    /// Deja un año marcado como único activo. Devuelve false si no existe. Un año
-    /// posterior con apertura ya cumplida se sigue usando: para volver a uno
-    /// anterior hay que corregir esa fecha en Configuración.
+    /// Deja un año marcado como único activo. Devuelve false si no existe. La
+    /// activación manual manda sobre la apertura automática: el año elegido se
+    /// usa aunque otro posterior ya tenga su apertura cumplida.
     /// </summary>
     public async Task<bool> ActivarAsync(int anio)
     {
@@ -284,10 +305,235 @@ public sealed class AnioEscolar
     }
 
     /// <summary>
+    /// Elimina un año registrado por error. Devuelve el error, o null si se borró.
+    /// No se puede eliminar el año activo ni uno que ya tenga matrículas o
+    /// certificados registrados: en esos casos devuelve el motivo sin tocar nada.
+    /// </summary>
+    public async Task<string?> EliminarAsync(int anio)
+    {
+        try
+        {
+            // Mismo año vigente que muestra la pantalla y usa Matrícula: el
+            // activado a mano manda sobre la apertura por fecha.
+            var activo = await _db.Database
+                .SqlQueryRaw<int>(SqlVigente)
+                .SingleAsync();
+
+            if (activo == anio)
+            {
+                return $"No se puede eliminar el año {anio}: es el año activo. Active otro año primero.";
+            }
+
+            var matriculas = await _db.Database
+                .SqlQueryRaw<int>(
+                    "select count(*)::int as \"Value\" from matricula_anual where anio = {0}",
+                    anio)
+                .SingleAsync();
+
+            if (matriculas > 0)
+            {
+                return $"No se puede eliminar el año {anio}: ya tiene {matriculas} matrícula(s) registrada(s).";
+            }
+
+            // La tabla de certificados es de un paso posterior de la instalación:
+            // en una base antigua puede no existir y el borrado no debe romperse.
+            var hayCertificados = await _db.Database
+                .SqlQueryRaw<bool>("select to_regclass('certificado_emitido') is not null as \"Value\"")
+                .SingleAsync();
+
+            var certificados = hayCertificados
+                ? await _db.Database
+                    .SqlQueryRaw<int>(
+                        "select count(*)::int as \"Value\" from certificado_emitido where anio = {0}",
+                        anio)
+                    .SingleAsync()
+                : 0;
+
+            if (certificados > 0)
+            {
+                return $"No se puede eliminar el año {anio}: ya tiene {certificados} certificado(s) registrado(s).";
+            }
+
+            var estrategia = _db.Database.CreateExecutionStrategy();
+            var borrado = false;
+
+            await estrategia.ExecuteAsync(async () =>
+            {
+                await using var transaccion = await _db.Database.BeginTransactionAsync();
+
+                await _db.Database.ExecuteSqlRawAsync(
+                    "delete from folio_secuencia where anio = {0}",
+                    anio);
+
+                var filas = await _db.Database.ExecuteSqlRawAsync(
+                    "delete from anio_escolar where anio = {0}",
+                    anio);
+
+                if (filas == 0)
+                {
+                    await transaccion.RollbackAsync();
+
+                    return;
+                }
+
+                await transaccion.CommitAsync();
+                borrado = true;
+            });
+
+            if (!borrado)
+            {
+                return $"El año {anio} no está registrado.";
+            }
+        }
+        catch (DbException ex)
+        {
+            _log.LogError(ex, "No se pudo eliminar el año escolar {Anio}.", anio);
+
+            return "No se pudo eliminar el año: revise la conexión con la base de datos.";
+        }
+
+        Invalidar();
+
+        return null;
+    }
+
+    /// <summary>
+    /// Corrige un año registrado: el número y las fechas del periodo. Devuelve el
+    /// error, o null si quedó actualizado. El número no se cambia cuando ya hay
+    /// matrículas o certificados: esos registros quedarían con el año anterior.
+    /// </summary>
+    public async Task<string?> EditarAsync(int anioOriginal, int anio, DateOnly? apertura, DateOnly? cierre)
+    {
+        if (anio is < 2000 or > 2100)
+        {
+            return "El año escolar debe estar entre 2000 y 2100.";
+        }
+
+        if (apertura is not null && cierre is not null && cierre < apertura)
+        {
+            return "El cierre del periodo no puede ser anterior a la apertura.";
+        }
+
+        try
+        {
+            var registrado = await _db.Database
+                .SqlQueryRaw<int>(
+                    "select count(*)::int as \"Value\" from anio_escolar where anio = {0}",
+                    anioOriginal)
+                .SingleAsync();
+
+            if (registrado == 0)
+            {
+                return $"El año {anioOriginal} no está registrado.";
+            }
+
+            if (anio != anioOriginal)
+            {
+                var matriculas = await _db.Database
+                    .SqlQueryRaw<int>(
+                        "select count(*)::int as \"Value\" from matricula_anual where anio = {0}",
+                        anioOriginal)
+                    .SingleAsync();
+
+                if (matriculas > 0)
+                {
+                    return $"No se puede cambiar el año {anioOriginal} a {anio}: "
+                        + $"ya tiene {matriculas} matrícula(s) registrada(s). Corrija sólo las fechas.";
+                }
+
+                var hayCertificados = await _db.Database
+                    .SqlQueryRaw<bool>("select to_regclass('certificado_emitido') is not null as \"Value\"")
+                    .SingleAsync();
+
+                var certificados = hayCertificados
+                    ? await _db.Database
+                        .SqlQueryRaw<int>(
+                            "select count(*)::int as \"Value\" from certificado_emitido where anio = {0}",
+                            anioOriginal)
+                        .SingleAsync()
+                    : 0;
+
+                if (certificados > 0)
+                {
+                    return $"No se puede cambiar el año {anioOriginal} a {anio}: "
+                        + $"ya tiene {certificados} certificado(s) registrado(s). Corrija sólo las fechas.";
+                }
+            }
+
+            // Las fechas son opcionales: se arma el UPDATE con las columnas que
+            // existen para no enviar parámetros nulos sin tipo a PostgreSQL.
+            var sql = "update anio_escolar set anio = {0}";
+            var parametros = new List<object> { anio };
+
+            sql += apertura is null ? ", apertura = null" : $", apertura = {{{parametros.Count}}}";
+            if (apertura is not null)
+            {
+                parametros.Add(apertura.Value);
+            }
+
+            sql += cierre is null ? ", cierre = null" : $", cierre = {{{parametros.Count}}}";
+            if (cierre is not null)
+            {
+                parametros.Add(cierre.Value);
+            }
+
+            sql += $", actualizado_en = now() where anio = {{{parametros.Count}}}";
+            parametros.Add(anioOriginal);
+
+            var estrategia = _db.Database.CreateExecutionStrategy();
+            var editado = false;
+
+            await estrategia.ExecuteAsync(async () =>
+            {
+                await using var transaccion = await _db.Database.BeginTransactionAsync();
+
+                if (anio != anioOriginal)
+                {
+                    // El folio se emite por año: su secuencia acompaña al cambio.
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "update folio_secuencia set anio = {0} where anio = {1}",
+                        anio,
+                        anioOriginal);
+                }
+
+                var filas = await _db.Database.ExecuteSqlRawAsync(sql, parametros.ToArray());
+
+                if (filas == 0)
+                {
+                    await transaccion.RollbackAsync();
+
+                    return;
+                }
+
+                await transaccion.CommitAsync();
+                editado = true;
+            });
+
+            if (!editado)
+            {
+                return $"El año {anioOriginal} no está registrado.";
+            }
+        }
+        catch (DbException ex) when (ex.SqlState == "23505")
+        {
+            return $"No se puede usar el año {anio}: ya está registrado.";
+        }
+        catch (DbException ex)
+        {
+            _log.LogError(ex, "No se pudo actualizar el año escolar {Anio}.", anioOriginal);
+
+            return "No se pudo actualizar el año: revise la conexión con la base de datos.";
+        }
+
+        Invalidar();
+
+        return null;
+    }
+
+    /// <summary>
     /// Apertura automática por fecha, nunca por año calendario: si el periodo de
-    /// un año ya abrió, lo activa cuando no hay año activo o cuando el periodo
-    /// del activo ya cerró. No pisa una activación manual cuyo periodo sigue
-    /// abierto o que no declara fechas.
+    /// un año ya abrió, lo activa cuando todavía no hay ningún año activo. No
+    /// pisa una activación manual: Configuración manda siempre.
     /// </summary>
     public async Task AplicarAperturaPorFechaAsync()
     {
@@ -295,9 +541,13 @@ public sealed class AnioEscolar
             do $$
             declare
                 candidato smallint;
-                activo smallint;
-                cerrado boolean;
             begin
+                -- Activación manual manda: la apertura sólo elige el año
+                -- cuando todavía no hay ninguno activo.
+                if exists (select 1 from anio_escolar where activo_matricula) then
+                    return;
+                end if;
+
                 select a.anio into candidato
                 from anio_escolar a
                 where a.apertura is not null
@@ -309,24 +559,6 @@ public sealed class AnioEscolar
                 if candidato is null then
                     return;
                 end if;
-
-                select a.anio,
-                       (a.cierre is not null and a.cierre < current_date)
-                  into activo, cerrado
-                from anio_escolar a
-                where a.activo_matricula
-                limit 1;
-
-                if activo is not null and activo <> candidato
-                   and not coalesce(cerrado, false) then
-                    return;
-                end if;
-
-                update anio_escolar
-                   set activo_matricula = false,
-                       actualizado_en = now()
-                 where activo_matricula
-                   and anio <> candidato;
 
                 update anio_escolar
                    set activo_matricula = true,

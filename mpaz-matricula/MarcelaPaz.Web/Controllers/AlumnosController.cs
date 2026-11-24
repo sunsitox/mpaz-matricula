@@ -52,7 +52,7 @@ public class AlumnosController : Controller
     private bool Puede(string area) => User.HasClaim("permiso", $"{area}:LEER");
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir, int? anio, bool pendientes = false)
+    public async Task<IActionResult> Index(string? q, string? curso, string? estado, string? orden, string? dir, int? anio, bool pendientes = false, int pagina = 1, int tamano = 50)
     {
         var anios = await _anios.ListarAsync();
         var anioConsulta = await _anios.ResolverAsync(anio);
@@ -211,7 +211,21 @@ public class AlumnosController : Controller
             filas = filas.Where(a => a.TienePendientes);
         }
 
-        filtro.Alumnos = Ordenar(filas, filtro.Orden, filtro.Direccion == "desc").ToList();
+        var ordenadas = Ordenar(filas, filtro.Orden, filtro.Direccion == "desc").ToList();
+
+        // Paginación: sólo se renderiza una página del padrón (25/50/100).
+        var tamanoPagina = tamano switch { 25 => 25, 100 => 100, _ => 50 };
+        var totalAlumnos = ordenadas.Count;
+        var totalPaginas = Math.Max(1, (int)Math.Ceiling(totalAlumnos / (double)tamanoPagina));
+        var paginaActual = Math.Min(Math.Max(pagina, 1), totalPaginas);
+
+        filtro.TamanoPagina = tamanoPagina;
+        filtro.TotalAlumnos = totalAlumnos;
+        filtro.Pagina = paginaActual;
+        filtro.Alumnos = ordenadas
+            .Skip((paginaActual - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToList();
 
         // MAT-13: una búsqueda permite barrer el padrón. Se registra el término
         // en hash (no el RUN consultado) junto con el número de resultados.
@@ -224,7 +238,7 @@ public class AlumnosController : Controller
                 "BUSCAR",
                 "GENERAL",
                 "alumnos_busqueda",
-                detalle: $"{{\"termino\":\"{huella}\",\"resultados\":{filtro.Alumnos.Count}}}");
+                detalle: $"{{\"termino\":\"{huella}\",\"resultados\":{filtro.TotalAlumnos}}}");
         }
 
         return View(filtro);

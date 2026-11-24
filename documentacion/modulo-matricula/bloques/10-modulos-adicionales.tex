@@ -1,0 +1,111 @@
+\section{Módulos adicionales y componentes}
+
+Este bloque documenta todo lo demás que existe al \textbf{18-11-2026}. El
+software no está terminado: la próxima revisión de documentación actualizará
+este y los demás bloques con lo que se implemente después.
+
+\subsection{Módulo Auth: identidad neutral (\codigo{mpaz\_auth})}
+
+Esquema neutral de identidad del colegio: no pertenece a ningún sistema, es
+el contrato que todos leen y ninguno edita directamente. Definido en
+\codigo{database/modulos/auth/pasos/10-ddl-auth.sql} (paso 10, convención de
+pasos numerados desde 10).
+
+\begin{longtable}{@{}p{0.26\textwidth}p{0.66\textwidth}@{}}
+\toprule
+\textbf{Tabla} & \textbf{Contenido}\\
+\midrule
+\codigo{persona} & Una fila por persona: \codigo{id} UUID (= el
+  \codigo{sub} de los tokens SSO, se conserva aunque cambie el correo),
+  \codigo{correo} único (índice case-insensitive), \codigo{nombre},
+  \codigo{activo}. Sembrada desde \codigo{funcionario} con
+  \codigo{datos-prueba/10-siembra-persona.sql} (solo desarrollo).\\
+\codigo{credencial} & Reservada para fase 2 (mudar aquí los hashes de
+  Identity). Hoy vacía a propósito: las claves siguen en
+  \codigo{mpaz\_matricula.AspNetUsers}.\\
+\codigo{OpenIddict*} & Aplicaciones, autorizaciones, scopes y tokens del
+  emisor. Las crea la migración EF del \codigo{SsoDbContext}, no los
+  scripts SQL.\\
+\bottomrule
+\end{longtable}
+
+Reglas del módulo: las altas, bajas y cambios de correo los hace
+Administración TI; las aplicaciones solo leen \codigo{persona} (por
+\codigo{id} o \codigo{correo}); ningún sistema guarda claves fuera de aquí
+(fase 2) ni duplica nombre/correo como verdad propia;
+\codigo{funcionario.sso\_sujeto = persona.id}.
+
+En código: \codigo{SsoDbContext} (\codigo{Infrastructure/Persistence}, esquema
+por defecto \codigo{mpaz\_auth}, \codigo{UseOpenIddict()}) y
+\codigo{EmisorSso} (\codigo{Web/Seguridad}): endpoints
+\codigo{/connect/authorize} y \codigo{/connect/token}, scopes
+\codigo{openid}, \codigo{profile}, \codigo{email} y \codigo{mpaz\_api},
+flujos authorization-code y refresh-token. Solo desarrollo: usa certificado
+de desarrollo y \codigo{DisableTransportSecurityRequirement} en http local;
+en producción el arranque se detiene hasta configurar el certificado real
+de firma. \codigo{SembrarAsync} registra/actualiza el cliente de prueba
+desde user-secrets (\codigo{Sso:ClientePruebaId/Secreto/Retorno}) en cada
+arranque de desarrollo, sin recrear la base. Prototipo de prueba:
+\codigo{scripts/probar-sso.py} (requiere \codigo{MPAZ\_DB\_CONEXION}).
+
+\subsection{Módulo Asistencia: semilla DDL (\codigo{mpaz\_asistencia})}
+
+Esquema traído de la base \codigo{mpaz\_asistencia} de Neon del equipo de
+asistencia, consolidado como semilla en
+\codigo{database/modulos/asistencia/pasos/10-ddl-asistencia.sql}: 11 tablas
+y 9 enums. \textbf{No tiene flujo en el portal de matrícula} (MAT-15
+pendiente, sin datos de prueba aún): se documenta solo su esquema.
+
+Tablas: \codigo{alumnos} (RUN único, curso, estado activo/inactivo/retirado),
+\codigo{cursos}, \codigo{asignaturas}, \codigo{asignaciones\_docentes}
+(profesor, curso, asignatura), \codigo{sesiones\_clase} (borrador/confirmada/
+anulada, modalidad por clase/diaria), \codigo{asistencias\_clase} (presente,
+atrasado, justificado, no presente; origen manual/RFID),
+\codigo{asistencias} (jornada RFID: una fila por alumno y día, \codigo{fecha}
+generada en America/Santiago, entrada/salida por totem),
+\codigo{tarjetas} (UID RFID, estados disponible/asignada/bloqueada/
+extraviada), \codigo{tarjeta\_historial} (bitácora, \codigo{alumno\_id}
+nunca se nulifica), \codigo{totems} y \codigo{usuarios} (administrador/
+profesor).
+
+Reglas relevantes: unicidad alumno/día en \codigo{asistencias} y
+sesión/alumno en \codigo{asistencias\_clase}; trigger
+\codigo{ck\_alumno\_en\_curso} valida que el alumno pertenezca al curso de
+la sesión; restricción de exclusión impide sesiones solapadas por curso
+(no anuladas); \codigo{asistencias} y \codigo{asistencias\_clase} son
+independientes a propósito y el único puente es \codigo{alumnos}.
+
+\subsection{Web service externo de registro}
+
+\codigo{RegistroWebService} (\codigo{Web/Servicios}) sincroniza funcionarios
+con el web service externo: \codigo{POST \{WebService:BaseUrl\}/api/registro/}
+con cabecera \codigo{Authorization: Token ...} y cuerpo JSON
+\codigo{\{nombre, correo, contrasena\}}. La base por defecto es
+\codigo{https://api.empaz.cl/api/registro/}; el token vive en
+\codigo{WebService:Token} (user-secrets o entorno, nunca en el repo).
+\codigo{Configurado} indica si hay base y token. Si el web service está caído,
+no configurado o rechaza, el método devuelve \codigo{false} y el funcionario
+ya quedó cargado en Neon: la base del portal es el respaldo.
+
+\subsection{Estructura por módulos y componentes de despliegue}
+
+La base de datos se organiza en \codigo{database/}: \codigo{comun/pasos/}
+(00 rol de aplicación, 02 Identity, compartidos), \codigo{modulos/matricula/}
+(implementado), \codigo{modulos/asistencia/} y \codigo{modulos/auth/}
+(semillas, paso 10), \codigo{modulos/\_plantilla-modulo/} (esqueleto para
+futuros módulos como notas o apoyo, no es un módulo real) y el ejecutor
+\codigo{aplicar.sh} (\codigo{--modulo} repetible, \codigo{--todos},
+\codigo{--neon}). Cada módulo usa \codigo{instalacion/} (bases nuevas),
+\codigo{pasos/} (mantenimiento) y \codigo{datos-prueba/} (solo desarrollo,
+excluidos del release).
+
+Componentes de despliegue: \codigo{mpaz-matricula/deploy/}
+(\codigo{build-release.sh}, \codigo{mpaz-matriculas.service},
+\codigo{mpaz-matriculas.env.example}) y \codigo{scripts/publicar-paquete.sh}
+(release \codigo{linux-x64} con SHA-256). Las carpetas
+\codigo{BackgroundServices/} y \codigo{Endpoints/} de Web existen pero están
+vacías: no hay código que documentar en ellas al 18-11-2026.
+
+\nota{Corte de esta documentación: 18-11-2026. Todo lo descrito aquí es lo
+que existe en el repositorio a esa fecha; lo que se implemente después se
+incorporará en la próxima revisión.}

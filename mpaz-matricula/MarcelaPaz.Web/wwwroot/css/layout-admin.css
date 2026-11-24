@@ -411,6 +411,107 @@
     gap: 0.4rem;
 }
 
+/* Paginación del listado: info, selector de tamaño y enlaces numerados. */
+.alumnos__tamano {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.alumnos__tamano-etiqueta {
+    white-space: nowrap;
+}
+
+.alumnos__tamano .acceso__input {
+    width: auto;
+    height: 2.25rem;
+    min-height: 0;
+    padding: 0 0.6rem;
+    font-size: 0.85rem;
+}
+
+.alumnos__paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.alumnos__paginacion-info {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.alumnos__paginacion-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alumnos__paginacion-enlace {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-action);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.alumnos__paginacion-enlace:hover {
+    border-color: var(--color-action);
+    background: var(--color-bg);
+}
+
+.alumnos__paginacion-enlace--actual {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: #FFFFFF;
+    cursor: default;
+}
+
+.alumnos__paginacion-enlace--apagado {
+    border-color: var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .alumnos__paginacion {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .alumnos__paginacion-lista {
+        justify-content: center;
+    }
+
+    .alumnos__paginacion-info {
+        text-align: center;
+    }
+}
+
 .admin__boton--mini {
     padding: 0.35rem 0.7rem;
     font-size: 0.82rem;
@@ -892,4 +993,175 @@ input[type="file"].acceso__input::-webkit-file-upload-button:hover {
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 0.75rem;
+}
+
+/* Los campos de año y fechas comparten ancho: el número no queda más angosto
+   que las fechas y los tres formularios se leen como una sola fila. */
+.configuracion__form .acceso__campo {
+    flex: 0 1 11.25rem;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+/* Los botones de los formularios quedan del alto de los campos, no más bajos. */
+.configuracion__form .admin__boton {
+    min-height: 2.75rem;
+}
+
+/* Tabla de años: columnas estables y acciones alineadas a la derecha, como el
+   resto de los listados del portal. En pantallas angostas se desplaza. */
+.configuracion__tabla-anios {
+    table-layout: fixed;
+    min-width: 40rem;
+}
+
+.configuracion__tabla-anios th:nth-child(1) { width: 12%; }
+.configuracion__tabla-anios th:nth-child(2) { width: 36%; }
+.configuracion__tabla-anios th:nth-child(3) { width: 20%; }
+.configuracion__tabla-anios th:nth-child(4) { width: 32%; }
+
+.configuracion__tabla-anios th:nth-child(4) {
+    text-align: right;
+}
+
+.configuracion__tabla-anios td {
+    vertical-align: middle;
+}
+
+/* Acciones de cada fila del listado de años: activar, editar y eliminar en línea. */
+.configuracion__acciones-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.configuracion__acciones-fila form {
+    margin: 0;
+}
+
+/* Cruz para eliminar un año: cuadrada, del alto de los demás botones de la
+   fila, discreta y en rojo al pasar el mouse. */
+.configuracion__borrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--color-placeholder);
+}
+
+.configuracion__borrar:hover:not(.configuracion__borrar--bloqueado) {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+/* Año con datos: la cruz se ve apagada y al pulsarla explica por qué no se puede. */
+.configuracion__borrar--bloqueado {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+/* Fila de edición del año: se despliega justo bajo el año elegido. */
+.configuracion__edicion[hidden] {
+    display: none;
+}
+
+.configuracion__edicion td {
+    padding-block: 0.9rem;
+    background: var(--color-bg);
+}
+
+/* Año con matrículas: el número se ve apagado, porque sólo se corrigen fechas. */
+.configuracion__edicion .acceso__input[readonly] {
+    background: var(--color-bg);
+    border-style: dashed;
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+}
+
+.configuracion__edicion-aviso {
+    flex: 1 0 100%;
+    margin: 0;
+}
+
+/* En pantallas angostas la tabla de años pasa a fichas: una fila por año, con
+   su etiqueta al costado, para no obligar a desplazarse en horizontal. */
+@media (max-width: 640px) {
+    .configuracion__tabla-anios {
+        min-width: 0;
+    }
+
+    /* Encabezados ocultos a la vista, conservados para lectores de pantalla. */
+    .configuracion__tabla-anios thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .configuracion__tabla-anios,
+    .configuracion__tabla-anios tbody,
+    .configuracion__tabla-anios tr,
+    .configuracion__tabla-anios td {
+        display: block;
+        width: 100%;
+    }
+
+    .configuracion__tabla-anios tbody tr {
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .configuracion__tabla-anios td {
+        display: grid;
+        grid-template-columns: 5.5rem minmax(0, 1fr);
+        gap: 0.4rem 0.6rem;
+        padding: 0.2rem 0;
+        border: 0;
+    }
+
+    .configuracion__tabla-anios td::before {
+        content: attr(data-etiqueta);
+        align-self: center;
+        color: var(--color-text-secondary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    /* Las acciones ocupan su propio renglón, con espacio para los botones. */
+    .configuracion__tabla-anios td:last-child {
+        grid-template-columns: minmax(0, 1fr);
+        margin-top: 0.35rem;
+    }
+
+    .configuracion__tabla-anios .configuracion__acciones-fila {
+        justify-content: flex-start;
+    }
+
+    /* La fila de edición conserva su fondo y sus campos uno por línea. */
+    .configuracion__tabla-anios tr.configuracion__edicion {
+        padding: 0;
+        border-bottom: 0;
+    }
+
+    .configuracion__tabla-anios .configuracion__edicion td {
+        display: block;
+        padding-block: 0.9rem;
+    }
+
+    .configuracion__tabla-anios .configuracion__edicion td::before {
+        content: none;
+    }
+
+    .configuracion__form .acceso__campo {
+        flex: 1 1 100%;
+    }
 }

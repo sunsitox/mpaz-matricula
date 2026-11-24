@@ -66,4 +66,57 @@ public class ConfiguracionController : Controller
 
         return RedirectToAction(nameof(AnioEscolar));
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Editar(int anioOriginal, int anio, string? apertura, string? cierre)
+    {
+        DateOnly? inicio = DateOnly.TryParse(apertura, out var desde) ? desde : null;
+        DateOnly? termino = DateOnly.TryParse(cierre, out var hasta) ? hasta : null;
+
+        var error = await _anios.EditarAsync(anioOriginal, anio, inicio, termino);
+
+        if (error is null)
+        {
+            await _auditoria.RegistrarAsync(
+                "REEMPLAZAR",
+                "GENERAL",
+                "anio_escolar",
+                detalle: $"{{\"evento\":\"editar_anio\",\"anio\":{anioOriginal},\"anio_nuevo\":{anio}}}");
+
+            TempData["Notificacion"] = anio == anioOriginal
+                ? $"Se actualizaron los datos del año escolar {anio}."
+                : $"El año escolar {anioOriginal} quedó registrado como {anio}.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(AnioEscolar));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Eliminar(int anio)
+    {
+        var error = await _anios.EliminarAsync(anio);
+
+        if (error is null)
+        {
+            await _auditoria.RegistrarAsync(
+                "REEMPLAZAR",
+                "GENERAL",
+                "anio_escolar",
+                detalle: $"{{\"evento\":\"eliminar_anio\",\"anio\":{anio}}}");
+
+            TempData["Notificacion"] = $"El año escolar {anio} se eliminó.";
+        }
+        else
+        {
+            TempData["Aviso"] = error;
+        }
+
+        return RedirectToAction(nameof(AnioEscolar));
+    }
 }

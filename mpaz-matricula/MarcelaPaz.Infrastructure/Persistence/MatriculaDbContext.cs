@@ -92,6 +92,8 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<FichaMedicaFuncionario> FichasMedicasFuncionario => Set<FichaMedicaFuncionario>();
 
+    public DbSet<FichaSaludFuncionario> FichasSaludFuncionario => Set<FichaSaludFuncionario>();
+
     /// <summary>Auditoría de cambios (solo lectura: la escribe el trigger).</summary>
     public DbSet<HistorialCambio> HistorialCambios => Set<HistorialCambio>();
 
@@ -542,6 +544,39 @@ public class MatriculaDbContext : IdentityDbContext<IdentityUser>
             e.Property(x => x.VigenteHasta).HasColumnName("vigente_hasta");
             e.Property(x => x.ArchivoRuta).HasColumnName("archivo_ruta");
             e.Property(x => x.ArchivoNombre).HasColumnName("archivo_nombre").HasMaxLength(255);
+            e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
+            e.Property(x => x.RegistradoEn).HasColumnName("registrado_en").HasDefaultValueSql("now()");
+        });
+
+        // Ficha de salud del funcionario (pasos/25): sólo UTP y Dirección.
+        builder.Entity<FichaSaludFuncionario>(e =>
+        {
+            e.ToTable("ficha_salud_funcionario", Esquema, t => t.ExcludeFromMigrations());
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.FuncionarioId).HasColumnName("funcionario_id");
+            e.Property(x => x.NombreCompleto).HasColumnName("nombre_completo").HasMaxLength(150).IsRequired();
+            e.Property(x => x.Rut).HasColumnName("rut").HasMaxLength(20);
+            e.Property(x => x.Pasaporte).HasColumnName("pasaporte").HasMaxLength(30);
+            e.Property(x => x.TelefonoPersonal).HasColumnName("telefono_personal").HasMaxLength(20);
+            e.Property(x => x.DireccionPersonal).HasColumnName("direccion_personal").HasMaxLength(255);
+            e.Property(x => x.Contacto1Nombre).HasColumnName("contacto1_nombre").HasMaxLength(150);
+            e.Property(x => x.Contacto1Telefono).HasColumnName("contacto1_telefono").HasMaxLength(20);
+            e.Property(x => x.Contacto2Nombre).HasColumnName("contacto2_nombre").HasMaxLength(150);
+            e.Property(x => x.Contacto2Telefono).HasColumnName("contacto2_telefono").HasMaxLength(20);
+            e.Property(x => x.SistemaSalud).HasColumnName("sistema_salud").HasMaxLength(30);
+            e.Property(x => x.CentroMedicoPreferente).HasColumnName("centro_medico_preferente").HasMaxLength(150);
+            e.Property(x => x.CentroUbicacion).HasColumnName("centro_ubicacion").HasMaxLength(255);
+            e.Property(x => x.CentroTelefono).HasColumnName("centro_telefono").HasMaxLength(20);
+            e.Property(x => x.AmbulanciaConvenio).HasColumnName("ambulancia_convenio").HasMaxLength(150);
+            e.Property(x => x.AmbulanciaTelefono).HasColumnName("ambulancia_telefono").HasMaxLength(20);
+            e.Property(x => x.SeguroComplementario).HasColumnName("seguro_complementario").HasMaxLength(150);
+            e.Property(x => x.Otros).HasColumnName("otros");
+            e.Property(x => x.AlergiasMedicamentos).HasColumnName("alergias_medicamentos");
+            e.Property(x => x.EnfermedadesCronicas).HasColumnName("enfermedades_cronicas");
+            e.Property(x => x.MedicamentosFrecuentes).HasColumnName("medicamentos_frecuentes");
+            e.Property(x => x.AceptaTransfusion).HasColumnName("acepta_transfusion").HasMaxLength(2);
+            e.Property(x => x.MotivoTransfusion).HasColumnName("motivo_transfusion");
             e.Property(x => x.RegistradoPor).HasColumnName("registrado_por");
             e.Property(x => x.RegistradoEn).HasColumnName("registrado_en").HasDefaultValueSql("now()");
         });

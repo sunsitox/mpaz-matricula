@@ -1,0 +1,35 @@
+\section{Pendientes}
+
+\subsection{Sin autorización externa}
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item Construir y probar la imagen Docker y el arranque completo.
+\item Aceptación final de los pasos 2--5 del wizard y validación final del
+  formulario (bloques B y C, parciales).
+\item Retirar \codigo{autoriza\_paracetamol} de formulario y PDF cuando el
+  colegio lo confirme.
+\item Cargar alumnos reales (script \codigo{limpiar-para-carga-manual.sql}
+  listo, sin ejecutar).
+\item Manual de uso con capturas y documento técnico único (este archivo es
+  el avance de lo segundo).
+\end{itemize}
+
+\subsection{Despliegue en el servidor}
+
+Aplicar pasos \codigo{12}, \codigo{13}, migración \codigo{AgregarSso}, guarda
+de privilegios, fuentes PDF y release actual. Respaldos programados y copia
+externa, rotación de credenciales visibles, mover la base a
+\codigo{/srv/mpaz-data} y publicación con dominio propio y Cloudflare Access.
+
+\subsection{Decisiones del colegio y del equipo}
+
+Textos legales de autorizaciones, matriz final de permisos, protocolo de
+medicación TENS (MAT-05), paracetamol, formato del certificado de alumno
+regular, conservación de datos, revisión jurídica y Ley 21.719; formato
+ministerial y quién lo sube, identificador común con Asistencia (MAT-15),
+enlace desde la página del colegio, consumo del SSO por otros módulos y
+alcance del registro público.
+
+\nota{Este documento se rellenó por bloques solo con lo implementado y
+verificado al 17-11-2026. Los ítems pendientes no se documentan como
+funcionalidad existente.}

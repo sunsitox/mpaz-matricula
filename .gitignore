@@ -32,3 +32,22 @@ scripts/credensiales.txt
 scripts/conectar-mpaz-server.bat
 scripts/conectar-servidor-mpaz.bat
 scripts/fill_informe_plan_trabajo.py
+
+# Carpeta de trabajo con datos reales de alumnos (Ley 21.719):
+# nunca subir al repositorio, ni siquiera con git add -f
+datos-alumnos/
+
+# Datos reales en la carpeta de importación (Ley 21.719):
+# se versionan README y scripts del procedimiento, nunca los Excel/Access
+# ni las salidas con datos (cuarentena) o agregados locales.
+importacion/*.accdb
+importacion/*.mdb
+importacion/*.xlsx
+importacion/*.xls
+importacion/*.csv
+importacion/cuarentena/
+importacion/perfilado/
+importacion/informes/
+importacion/limpios/
+importacion/fuentes/
+importacion/scripts/__pycache__/

@@ -1,0 +1,34 @@
+\section{Roles y permisos}
+
+Nueve roles definidos en el DDL y en \codigo{Domain/Entidades/Seguridad.cs}.
+Los permisos se guardan en \codigo{rol\_permiso} como pares
+\codigo{AREA:ACCION} (leer, crear, editar, validar, administrar, exportar) y
+se entregan como claims \codigo{permiso} vía
+\codigo{PermisoPolicyProvider}; el menú solo muestra lo autorizado y el
+servidor deniega y registra (\codigo{DENEGADO}) lo no autorizado.
+
+\begin{longtable}{@{}p{0.22\textwidth}p{0.70\textwidth}@{}}
+\toprule
+\textbf{Rol} & \textbf{Permisos vigentes (pasos 03, 14 y 15)}\\
+\midrule
+SECRETARIA & Crea, edita y formaliza en GENERAL/FAMILIA/RETIRO/
+  AUTORIZACIONES/DOCUMENTOS/SALUD/JUDICIAL; exporta. No valida.\\
+DIRECCION & Lee todas las áreas; valida y exporta. No crea ni edita.\\
+INSPECTORIA & Lee todas las áreas; edita datos del estudiante
+  (GENERAL/FAMILIA/RETIRO). No crea ni valida.\\
+EQUIPO\_PIE & Solo lee GENERAL/FAMILIA/PIE/DOCUMENTOS.\\
+TENS & Lee GENERAL/FAMILIA/SALUD/MEDICACION/DOCUMENTOS; crea dosis
+  (\codigo{MEDICACION:CREAR}).\\
+UTP & Lee todas las áreas; exporta. Sin escritura.\\
+CONVIVENCIA & Solo lee GENERAL/FAMILIA/RETIRO/AUTORIZACIONES/DOCUMENTOS
+  (sin salud, PIE, judicial ni medicación).\\
+DOCENTE & Solo \codigo{GENERAL:LEER}: datos mínimos (identificación, curso,
+  estado).\\
+ADMIN\_TI & \codigo{ADMIN:ADMINISTRAR/LEER} y \codigo{AUDITORIA:LEER};
+  sin acceso al expediente.\\
+\bottomrule
+\end{longtable}
+
+\pendiente{La matriz es la propuesta de Johan (17--18/11/2026) cargada en los
+pasos 03, 14 y 15; la checklist la marca pendiente de confirmación final del
+colegio. No modificar \codigo{rol\_permiso} hasta esa confirmación.}

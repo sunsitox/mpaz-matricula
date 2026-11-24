@@ -1,0 +1,37 @@
+\section{Seguridad}
+
+\subsection{Autenticación}
+
+Identity con hash de contraseña, bloqueo tras 5 intentos fallidos, cookie
+\codigo{HttpOnly}/\codigo{Secure}, cambio forzado de contraseña en el primer
+ingreso y tras restablecimiento, antiforgery global y rate limiter de login
+(20 intentos/5 min por IP, con mensaje único para cuenta, clave y bloqueo).
+El interruptor \codigo{ModoRevision} solo existe en Development; fuera de
+Development siempre se exige sesión y permisos. Las páginas autenticadas
+envían \codigo{Cache-Control: no-store, no-cache, must-revalidate}.
+
+\subsection{Autorización y auditoría}
+
+Las políticas \codigo{AREA:ACCION} se evalúan en el servidor para lectura,
+escritura y descarga; los denegados se registran como \codigo{DENEGADO} en
+\codigo{registros\_acceso} junto con lecturas, búsquedas (solo hash del
+término), descargas y exportaciones. Cada transacción de escritura ejecuta
+\codigo{SET LOCAL app.funcionario\_id} vía \codigo{EscrituraAuditada}, de
+modo que \codigo{historial\_cambios} identifica al funcionario responsable.
+La fecha de firma no puede ser posterior a hoy ni anterior a la generación
+de la ficha.
+
+\subsection{Inicio de sesión único (SSO)}
+
+Emisor OpenIddict propio (\codigo{Seguridad/EmisorSso.cs},
+\codigo{AutorizacionController}, \codigo{/connect/authorize} y
+\codigo{/connect/token}, scope \codigo{mpaz\_api}), migración
+\codigo{AgregarSso} en \codigo{mpaz\_auth} y prototipo de prueba
+\codigo{scripts/probar-sso.py}. El secreto SSO vive en user-secrets, fuera
+del repositorio.
+
+\subsection{Medidas parciales}
+
+Cookies/HSTS configurados en producción, pero TLS en tránsito, archivos y
+respaldos protegidos y publicación con Cloudflare Access aún no desplegados
+ni comprobados (ver bloque de despliegue).

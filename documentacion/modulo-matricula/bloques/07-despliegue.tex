@@ -1,0 +1,54 @@
+\section{Despliegue y operación}
+
+\subsection{Desarrollo local}
+
+\codigo{dotnet build MarcelaPaz.Matriculas.slnx -c Release} y
+\codigo{dotnet run} con la app en \codigo{http://localhost:5301}; conexión a
+Neon vía \codigo{appsettings.Development.json} completada con user-secrets
+(\codigo{ConnectionStrings:Default}, \codigo{WebService:Token}). Rutas
+verificadas: \codigo{/}, \codigo{/Cuenta/Login}, \codigo{/Alertas} y
+\codigo{/?anio=2027} responden 200.
+
+\subsection{Servidor del colegio}
+
+Ubuntu 24.04 con runtime ASP.NET Core 10 (10.0.14) y PostgreSQL 16 (16.15)
+instalados desde los repositorios de Ubuntu, sin SDK ni Docker. Release
+inmutable en \codigo{/opt/mpaz-matriculas/releases/<fecha>} con enlace
+\codigo{current}; usuario de sistema \codigo{mpaz-matriculas} sin login ni
+\codigo{sudo}; configuración en \codigo{/etc/mpaz-matriculas/}; claves en
+\codigo{/var/lib/mpaz-matriculas/keys/}. La app escucha solo en
+\codigo{127.0.0.1:5100} (servicio de vista temporal) y no toca nginx,
+\codigo{mpaz-rfid} ni \codigo{cloudflared}. La base de datos vive en
+\codigo{/var/lib/postgresql/16/main} (pendiente moverla a
+\codigo{/srv/mpaz-data}).
+
+Publicación con \codigo{scripts/publicar-paquete.sh}: genera un \codigo{.tar.gz}
+framework-dependent para \codigo{linux-x64} con SHA-256, sin
+\codigo{appsettings.Development.json}, PDB ni \codigo{App\_Data}.
+
+\subsection{Publicación web}
+
+Vista temporal por Quick Tunnel propio hacia \codigo{127.0.0.1:5100} (URL
+\codigo{trycloudflare.com} aleatoria, sin Access). La publicación definitiva
+requiere subdominio institucional con Cloudflare Access
+(\codigo{matricula.empaz.cl} $\rightarrow$ \codigo{http://127.0.0.1:5100}):
+la zona \codigo{empaz.cl} está activa y el túnel \codigo{mpaz-rfid-tunnel}
+está healthy, pero el panel se administra con la cuenta del colega y se
+espera su invitación como miembro.
+
+\subsection{Docker (entrega final)}
+
+\codigo{mpaz-matricula/docker/}: Dockerfile multi-stage (SDK 10 $\rightarrow$
+runtime ASP.NET 10), compose con app + PostgreSQL 16, scripts
+\codigo{db-init/} en orden \codigo{00} $\rightarrow$ \codigo{06} y
+\codigo{.env.example}. La app queda en \codigo{http://127.0.0.1:5101} y
+\codigo{ALLOWED\_HOSTS} es obligatorio (no se acepta \codigo{*}). La imagen
+aún no se construyó: Docker estaba en instalación al redactar este bloque.
+
+\subsection{Respaldos}
+
+Respaldo y restauración probados el 17-11-2026 en copia local
+(\codigo{artifacts/respaldo/}): volcado \codigo{pg\_dump} restaurado en
+PostgreSQL local vía SQL plano (las sentencias \codigo{pg\_attver} no las
+reconoce la versión local). Queda pendiente respaldo programado, copia
+externa cifrada y prueba de restauración en el servidor.

@@ -1,0 +1,102 @@
+% Documentación técnica — Portal de Matrícula MPAZ 2027
+% Estructura por bloques: cada bloque es un archivo en bloques/ e se incluye
+% con \input. Compilar: pdflatex modulo-matricula.tex (2 pasadas).
+% Bloques: 01 descripcion, 02 arquitectura, 03 base de datos,
+% 04 roles y permisos, 05 flujos, 06 seguridad, 07 despliegue y operacion,
+% 08 pruebas y estado, 09 pendientes, 10 modulos adicionales.
+\documentclass[11pt,a4paper]{article}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\geometry{margin=2.5cm}
+
+% Paleta institucional
+\definecolor{mpazAzul}{HTML}{0F2537}
+\definecolor{mpazDorado}{HTML}{D97706}
+\definecolor{mpazFondo}{HTML}{F8FAFC}
+\definecolor{mpazBorde}{HTML}{E2E0F0}
+\definecolor{mpazGris}{HTML}{64748B}
+
+\hypersetup{colorlinks=true,linkcolor=mpazAzul,urlcolor=mpazAzul,citecolor=mpazAzul,
+  pdftitle={Portal de Matrícula MPAZ 2027 — Documentación técnica},
+  pdfauthor={Escuela Escritora Marcela Paz}}
+
+% Encabezado y pie (mismo estilo que el manual de usuarios)
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{mpazGris}MPAZ 2027 · Portal de Matrícula}
+\fancyhead[R]{\small\color{mpazGris}Documentación técnica}
+\fancyfoot[C]{\small\color{mpazGris}\thepage}
+\renewcommand{\headrulewidth}{0.7pt}
+\renewcommand{\headrule}{{\color{mpazDorado}\hrule width\headwidth height\headrulewidth}}
+
+% Títulos
+\titleformat{\section}
+  {\Large\bfseries\color{mpazAzul}}{\thesection.}{0.6em}{}
+  [{\color{mpazDorado}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\large\bfseries\color{mpazAzul}}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.2}
+
+% Código en línea: tipografía monoespaciada con color sobrio.
+\newcommand{\codigo}[1]{\texttt{\color{mpazAzul}#1}}
+
+% Cajas de nota y de pendiente (robustas, sin paquetes extra).
+\newcommand{\caja}[3]{%
+  \par\noindent\fcolorbox{#1}{mpazFondo}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \small\textbf{\color{#1}#2}\ #3}}\par}
+\newcommand{\nota}[1]{\caja{mpazAzul}{Nota:}{#1}}
+\newcommand{\pendiente}[1]{\caja{mpazDorado}{Pendiente colegio:}{#1}}
+
+\begin{document}
+\thispagestyle{empty}
+\begin{center}
+\vspace*{2cm}
+\IfFileExists{../../mpaz-matricula/MarcelaPaz.Web/wwwroot/images/logo-mpaz-con-lema.png}{%
+  \includegraphics[width=0.18\textwidth]{../../mpaz-matricula/MarcelaPaz.Web/wwwroot/images/logo-mpaz-con-lema.png}\par}{}
+\vspace{1em}
+{\Huge\bfseries\color{mpazAzul} Portal de Matrícula\par}
+\vspace{0.4em}
+{\large\color{mpazGris} Escuela Escritora Marcela Paz 2027\par}
+{\large\color{mpazGris} Documentación técnica\par}
+\vspace{0.6em}
+{\color{mpazDorado}\rule{0.3\textwidth}{1.2pt}}\par
+\vspace{0.8em}
+Escuela MPAZ\par
+2026
+\end{center}
+\newpage
+\tableofcontents
+\newpage
+
+\input{bloques/01-descripcion}
+\input{bloques/02-arquitectura}
+\input{bloques/03-base-de-datos}
+\input{bloques/04-roles-y-permisos}
+\input{bloques/05-flujos}
+\input{bloques/06-seguridad}
+\input{bloques/07-despliegue}
+\input{bloques/08-pruebas-y-estado}
+\input{bloques/09-pendientes}
+\input{bloques/10-modulos-adicionales}
+
+\end{document}

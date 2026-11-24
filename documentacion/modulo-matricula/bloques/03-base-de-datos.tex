@@ -1,0 +1,68 @@
+\section{Base de datos}
+
+Motor PostgreSQL. La base de trabajo es \codigo{mpaz} en Neon; el servidor
+del colegio usa PostgreSQL 16 local con base \codigo{mpaz\_matricula}. El
+portal usa doble camino de conexión (endpoint del servicio web y conexión
+directa) con comprobación \codigo{SELECT 1} al arrancar
+(\codigo{ConexionBaseDatos.cs}).
+
+Todos los objetos del portal viven en el esquema \codigo{mpaz\_matricula}
+con \codigo{Search Path=mpaz\_matricula,public}; la extensión
+\codigo{pg\_trgm} es compartida en \codigo{public}. El esquema
+\codigo{mpaz\_auth} concentra Identity y OpenIddict; \codigo{mpaz\_asistencia}
+reserva el módulo de asistencia (MAT-15, sin flujo de datos aún).
+
+\subsection{Instalación}
+
+Instalación nueva en tres partes, en orden, desde
+\codigo{database/modulos/matricula/instalacion/}:
+\codigo{01-estructura-bd.sql} $\rightarrow$ \codigo{02-programacion-pl.sql}
+$\rightarrow$ \codigo{03-datos-iniciales.sql}. Para bases existentes se usa
+el aplicador \codigo{database/aplicar.sh} con los pasos numerados de
+\codigo{comun/pasos/} y \codigo{modulos/matricula/pasos/}.
+
+\subsection{Pasos del esquema de matrícula}
+
+\begin{longtable}{@{}p{0.14\textwidth}p{0.78\textwidth}@{}}
+\toprule
+\textbf{Paso} & \textbf{Contenido}\\
+\midrule
+\codigo{01} & DDL institucional: tablas, restricciones, triggers y vistas\\
+\codigo{03} & Matriz inicial de permisos por rol\\
+\codigo{04} & Privilegios mínimos del rol \codigo{mpaz\_app}\\
+\codigo{05} & Año escolar configurable (\codigo{activo\_matricula})\\
+\codigo{06} & Validación de matrícula\\
+\codigo{07} & \codigo{search\_path} en funciones\\
+\codigo{08} & Certificados emitidos\\
+\codigo{09} & Auditoría de \codigo{funcionario}\\
+\codigo{10--11} & Cursos de parvularia y letras A/B (pre-kínder a 8º básico)\\
+\codigo{12--13} & Vista de alertas de vencimiento y tabla \codigo{alerta\_revision}\\
+\codigo{14} & Roles SECRETARIA/DIRECCION/INSPECTORIA/PIE (Johan 18-11-2026)\\
+\codigo{15} & Roles UTP/CONVIVENCIA y TENS completo\\
+\bottomrule
+\end{longtable}
+
+\subsection{Grupos de tablas}
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item \textbf{Identificación}: \codigo{estudiante}, persona y familia
+  (\codigo{estudiante\_persona}), apoderados y vínculos.
+\item \textbf{Matrícula}: \codigo{matricula\_anual} (curso y año por fila),
+  \codigo{ficha\_version} con \codigo{datos\_snapshot} JSONB y folio.
+\item \textbf{Expediente}: \codigo{documento}, requisitos documentales,
+  ubicación del original y estado de validación.
+\item \textbf{Autorizaciones}: imagen, convivencia y medicación, con
+  estados OTORGADA/RECHAZADA/REVOCADA/VENCIDA/REEMPLAZADA.
+\item \textbf{Salud y medicación}: prescripciones y dosis (MAT-05, bloqueado
+  por protocolo TENS).
+\item \textbf{Seguridad y auditoría}: \codigo{funcionario}, \codigo{rol},
+  \codigo{rol\_permiso}, \codigo{historial\_cambios} y
+  \codigo{registros\_acceso}.
+\item \textbf{Operación}: \codigo{anios\_escolares}, certificados,
+  \codigo{alerta\_revision} y tablas de Identity en \codigo{mpaz\_auth}.
+\end{itemize}
+
+\nota{El rol \codigo{mpaz\_app} no puede UPDATE/DELETE en las tablas de solo
+inserción (\codigo{historial\_cambios}, \codigo{registros\_acceso},
+\codigo{administracion\_medicamento}); el script 04 aborta si conserva esos
+privilegios. El DDL ya no incluye \codigo{autoriza\_paracetamol}.}

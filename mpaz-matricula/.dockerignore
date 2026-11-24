@@ -9,3 +9,8 @@ appsettings.Development.json
 database/datos-prueba/
 docker/db-init/
 docker/.env
+_cloudflare/
+_soporte-temporal-rdp/
+_transferencia/
+_herramientas/
+_servidor/

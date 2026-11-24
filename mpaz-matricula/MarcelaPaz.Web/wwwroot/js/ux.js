@@ -454,6 +454,47 @@
         activar(botones[0].dataset.uxPestana, false);
     });
 
+    // Año escolar: abrir y cerrar la fila de edición de fechas y número.
+    document.querySelectorAll('[data-ux-anio-editar]').forEach(boton => {
+        const fila = document.getElementById(boton.getAttribute('data-ux-anio-editar') || '');
+
+        if (!fila) {
+            return;
+        }
+
+        boton.addEventListener('click', () => {
+            const abrir = fila.hidden;
+
+            fila.hidden = !abrir;
+            boton.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+
+            if (abrir) {
+                const campo = fila.querySelector('input[name="anio"]');
+                (campo || fila.querySelector('input, button')).focus();
+            } else {
+                boton.focus();
+            }
+        });
+
+        const cancelar = fila.querySelector('[data-ux-anio-cancelar]');
+
+        if (cancelar) {
+            cancelar.addEventListener('click', () => {
+                fila.hidden = true;
+                boton.setAttribute('aria-expanded', 'false');
+                boton.focus();
+            });
+        }
+    });
+
+    // Cruz de un año que no se puede eliminar: explica el motivo. La CSP de
+    // producción bloquea los manejadores onclick en línea.
+    document.querySelectorAll('[data-ux-anio-aviso]').forEach(boton => {
+        boton.addEventListener('click', () => {
+            window.alert(boton.getAttribute('data-ux-anio-aviso') || '');
+        });
+    });
+
     // Campos condicionales: el bloque solo aparece cuando el campo indicado
     // tiene uno de los valores (ej. «Restriccion_Madre:Si» o
     // «ParticipaPie:Si,Pendiente»). Al ocultarse por un cambio, se limpian

@@ -12,7 +12,46 @@
         pendientes = Model.SoloPendientes ? "true" : null,
         orden = columna,
         dir = Model.Orden == columna && Model.Direccion == "asc" ? "desc" : "asc",
+        tamano = Model.TamanoPagina,
+        pagina = 1,
     })!;
+
+    Func<int, string> enlacePagina = numero => Url.Action("Index", new
+    {
+        q = Model.Texto,
+        anio = Model.Anio > 0 ? Model.Anio : (int?)null,
+        curso = Model.Curso,
+        estado = Model.Estado,
+        pendientes = Model.SoloPendientes ? "true" : null,
+        orden = Model.Orden,
+        dir = Model.Direccion,
+        tamano = Model.TamanoPagina,
+        pagina = numero,
+    })!;
+
+    // Ventana compacta de páginas: 1 … actual-1, actual, actual+1 … última.
+    var paginas = new List<int?>();
+    if (Model.TotalPaginas > 1)
+    {
+        var numeros = new SortedSet<int> { 1, Model.TotalPaginas }; 
+        for (var n = Model.Pagina - 1; n <= Model.Pagina + 1; n++)
+        {
+            if (n >= 1 && n <= Model.TotalPaginas)
+            {
+                numeros.Add(n);
+            }
+        }
+        var anterior = 0;
+        foreach (var n in numeros)
+        {
+            if (anterior > 0 && n - anterior > 1)
+            {
+                paginas.Add(null);
+            }
+            paginas.Add(n);
+            anterior = n;
+        }
+    }
 
     Func<string, string> flecha = columna =>
         Model.Orden != columna ? string.Empty : Model.Direccion == "desc" ? "▼" : "▲";
@@ -107,12 +146,39 @@
 <section class="admin__tarjeta">
     <div class="alumnos__resumen">
         <p class="alumnos__conteo">
-            <strong>@Model.Alumnos.Count</strong> @(Model.Alumnos.Count == 1 ? "alumno" : "alumnos")
+            @if (Model.TotalAlumnos == 0)
+            {
+                <strong>0 alumnos</strong>
+            }
+            else
+            {
+                <text>Mostrando <strong>@(Model.Desde)–@(Model.Hasta)</strong> de <strong>@Model.TotalAlumnos</strong> alumnos</text>
+            }
             @if (Model.TieneFiltros)
             {
                 <text>con los filtros aplicados</text>
             }
         </p>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__tamano">
+                <input type="hidden" name="q" value="@Model.Texto" />
+                <input type="hidden" name="anio" value="@Model.Anio" />
+                <input type="hidden" name="curso" value="@Model.Curso" />
+                <input type="hidden" name="estado" value="@Model.Estado" />
+                <input type="hidden" name="pendientes" value="@(Model.SoloPendientes ? "true" : null)" />
+                <input type="hidden" name="orden" value="@Model.Orden" />
+                <input type="hidden" name="dir" value="@Model.Direccion" />
+                <label class="alumnos__tamano-etiqueta" for="tamano">Por página</label>
+                <select class="acceso__input" id="tamano" name="tamano" data-ux-enviar-al-cambiar>
+                    @foreach (var opcion in new[] { 25, 50, 100 })
+                    {
+                        <option value="@opcion" selected="@(opcion == Model.TamanoPagina ? "selected" : null)">@opcion</option>
+                    }
+                </select>
+            </form>
+        }
 
         @if (Model.TieneFiltros)
         {
@@ -125,7 +191,7 @@
     {
         <div class="alumnos__vacio">
             <p class="alumnos__vacio-texto">No hay alumnos que coincidan con la búsqueda.</p>
-            <a class="admin__boton" asp-controller="Alumnos" asp-action="Index">Ver todos los alumnos</a>
+            <a class="admin__boton" asp-controller="Alumnos" asp-action="Index" asp-route-anio="@Model.Anio">Ver todos los alumnos</a>
         </div>
     }
     else
@@ -214,5 +280,49 @@
                 </tbody>
             </table>
         </div>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="alumnos__paginacion" aria-label="Paginación de estudiantes">
+                <span class="alumnos__paginacion-info">Página @Model.Pagina de @Model.TotalPaginas</span>
+                <ul class="alumnos__paginacion-lista">
+                    <li>
+                        @if (Model.HayAnterior)
+                        {
+                            <a class="alumnos__paginacion-enlace" href="@enlacePagina(Model.Pagina - 1)" rel="prev">‹ Anterior</a>
+                        }
+                        else
+                        {
+                            <span class="alumnos__paginacion-enlace alumnos__paginacion-enlace--apagado" aria-disabled="true">‹ Anterior</span>
+                        }
+                    </li>
+                    @foreach (var numero in paginas)
+                    {
+                        if (numero is null)
+                        {
+                            <li><span class="alumnos__paginacion-enlace alumnos__paginacion-enlace--apagado" aria-hidden="true">…</span></li>
+                        }
+                        else if (numero.Value == Model.Pagina)
+                        {
+                            <li><span class="alumnos__paginacion-enlace alumnos__paginacion-enlace--actual" aria-current="page">@numero.Value</span></li>
+                        }
+                        else
+                        {
+                            <li><a class="alumnos__paginacion-enlace" href="@enlacePagina(numero.Value)">@numero.Value</a></li>
+                        }
+                    }
+                    <li>
+                        @if (Model.HaySiguiente)
+                        {
+                            <a class="alumnos__paginacion-enlace" href="@enlacePagina(Model.Pagina + 1)" rel="next">Siguiente ›</a>
+                        }
+                        else
+                        {
+                            <span class="alumnos__paginacion-enlace alumnos__paginacion-enlace--apagado" aria-disabled="true">Siguiente ›</span>
+                        }
+                    </li>
+                </ul>
+            </nav>
+        }
     }
 </section>

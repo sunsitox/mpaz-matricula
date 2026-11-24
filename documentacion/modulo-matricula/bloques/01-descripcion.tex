@@ -1,0 +1,34 @@
+\section{Descripción general}
+
+El portal gestiona el ciclo completo de matrícula de la Escuela Básica
+Escritora Marcela Paz: búsqueda de estudiante, ficha en 8 pasos, documentos
+del expediente, firma, validación, certificados y reportes. Incluye salud,
+PIE, alertas de vencimiento y administración de cuentas de funcionarios.
+
+Es un sistema \textbf{interno, solo para funcionarios}: no existe login de
+apoderados ni portal público (trabajo conservado en la rama
+\codigo{feature/login-apoderado}). El año escolar es configurable en la
+base de datos (\codigo{activo\_matricula}), no calculado desde el calendario.
+
+\subsection{Alcance}
+
+Dentro del alcance: matrícula nueva y renovación anual, ficha con PDF desde
+copia congelada, expediente documental, autorizaciones con estado,
+certificado de alumno regular, reportes CSV y alertas de vencimiento.
+
+Fuera de alcance: sustituir el SAE o el SIGE, firma electrónica avanzada,
+emisión de certificados por el Mineduc, prescripción médica y administración
+de medicamentos por la plataforma.
+
+\begin{longtable}{@{}p{0.32\textwidth}p{0.60\textwidth}@{}}
+\toprule
+\textbf{Elemento} & \textbf{Valor}\\
+\midrule
+Solución & \codigo{MarcelaPaz.Matriculas.slnx} (.NET 10)\\
+Código & \codigo{mpaz-matricula/}\\
+Base de datos & PostgreSQL, base \codigo{mpaz} (Neon)\\
+Esquema principal & \codigo{mpaz\_matricula}\\
+Esquemas adicionales & \codigo{mpaz\_auth} (Identity/SSO), \codigo{mpaz\_asistencia}\\
+Desarrollo local & \codigo{http://localhost:5301}\\
+\bottomrule
+\end{longtable}
