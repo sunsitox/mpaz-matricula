@@ -1,0 +1,181 @@
+@using MarcelaPaz.Domain.Identificacion
+@model MarcelaPaz.Domain.Entidades.FichaSaludFuncionario
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ficha de salud del personal";
+
+    string Texto(string? valor) => string.IsNullOrWhiteSpace(valor) ? "—" : valor.Trim();
+
+    var documento = !string.IsNullOrWhiteSpace(Model.Rut)
+        ? $"RUN {RutChileno.Formatear(Model.Rut)}"
+        : !string.IsNullOrWhiteSpace(Model.Pasaporte)
+            ? $"Pasaporte {Model.Pasaporte.Trim()}"
+            : "—";
+    var registradoPor = ViewData["RegistradoPor"] as string ?? "sin registro";
+    var acepta = Model.AceptaTransfusion?.Trim().ToLowerInvariant() switch
+    {
+        "si" => "SÍ",
+        "no" => "NO",
+        _ => "SIN RESPUESTA",
+    };
+}
+
+<style>
+    .ficha-ver__tabla {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.25rem;
+    }
+
+    .ficha-ver__tabla th,
+    .ficha-ver__tabla td {
+        border: 1px solid var(--color-border);
+        padding: 0.5rem 0.65rem;
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.92rem;
+    }
+
+    .ficha-ver__tabla th {
+        width: 15rem;
+        background: var(--color-bg);
+        font-weight: 600;
+    }
+
+    .ficha-ver__titulo {
+        margin: 1.5rem 0 0.5rem;
+        font-size: 1rem;
+        color: var(--color-primary);
+    }
+
+    .ficha-ver__legal {
+        color: var(--color-text-secondary);
+        font-size: 0.86rem;
+        line-height: 1.5;
+        max-width: 52rem;
+    }
+
+    .ficha-ver__firma {
+        margin: 2.5rem auto 0.5rem;
+        width: 16rem;
+        border-top: 1px solid var(--color-text-secondary);
+        padding-top: 0.35rem;
+        text-align: center;
+    }
+
+    @@media print {
+        .admin__header,
+        .admin__menu,
+        .saltar-contenido,
+        .admin__acciones,
+        .admin__anio {
+            display: none !important;
+        }
+
+        body.admin,
+        .admin__cuerpo,
+        .admin__contenedor {
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            max-width: none !important;
+        }
+
+        .admin__tarjeta {
+            border: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        .ficha-ver__tabla th {
+            background: #f2f2f2 !important;
+        }
+    }
+</style>
+
+<div class="admin__tarjeta">
+    <div class="admin__acciones" style="margin-bottom:1rem;">
+        <a asp-action="Pdf" asp-route-id="@Model.Id" class="admin__boton admin__boton--primario">Descargar PDF</a>
+        <button type="button" class="admin__boton" onclick="window.print()">Imprimir</button>
+        <a asp-action="Editar" asp-route-id="@Model.Id" class="admin__boton">Editar ficha</a>
+        <a asp-action="Index" class="admin__boton">Volver al listado</a>
+    </div>
+
+    <h1 class="admin__titulo-seccion">Historial médico y contactos de emergencia</h1>
+    <p class="admin__ayuda">
+        Ficha de salud de @Model.NombreCompleto, registrada el
+        @Model.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm") por @registradoPor.
+        Documento confidencial: sólo UTP y Dirección.
+    </p>
+
+    <h2 class="ficha-ver__titulo">Identificación</h2>
+    <table class="ficha-ver__tabla">
+        <tbody>
+            <tr><th scope="row">Nombre</th><td>@Texto(Model.NombreCompleto)</td></tr>
+            <tr><th scope="row">RUN / pasaporte</th><td>@documento</td></tr>
+            <tr><th scope="row">Teléfono personal</th><td>@Texto(Model.TelefonoPersonal)</td></tr>
+            <tr><th scope="row">Dirección personal</th><td>@Texto(Model.DireccionPersonal)</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="ficha-ver__titulo">En caso de emergencia médica, la persona de contacto será</h2>
+    <table class="ficha-ver__tabla">
+        <tbody>
+            <tr><th scope="row">1° persona de contacto</th><td>@Texto(Model.Contacto1Nombre)</td></tr>
+            <tr><th scope="row">Teléfono</th><td>@Texto(Model.Contacto1Telefono)</td></tr>
+            <tr><th scope="row">2° persona de contacto</th><td>@Texto(Model.Contacto2Nombre)</td></tr>
+            <tr><th scope="row">Teléfono</th><td>@Texto(Model.Contacto2Telefono)</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="ficha-ver__titulo">Sistema de salud y centro médico</h2>
+    <table class="ficha-ver__tabla">
+        <tbody>
+            <tr><th scope="row">Sistema de salud</th><td>@Texto(Model.SistemaSalud)</td></tr>
+            <tr><th scope="row">Centro médico preferente</th><td>@Texto(Model.CentroMedicoPreferente)</td></tr>
+            <tr><th scope="row">Ubicación</th><td>@Texto(Model.CentroUbicacion)</td></tr>
+            <tr><th scope="row">Teléfono del centro</th><td>@Texto(Model.CentroTelefono)</td></tr>
+            <tr><th scope="row">Ambulancia en convenio</th><td>@Texto(Model.AmbulanciaConvenio)</td></tr>
+            <tr><th scope="row">Teléfono de la ambulancia</th><td>@Texto(Model.AmbulanciaTelefono)</td></tr>
+            <tr><th scope="row">Seguro complementario</th><td>@Texto(Model.SeguroComplementario)</td></tr>
+            <tr><th scope="row">Otros</th><td>@Texto(Model.Otros)</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="ficha-ver__titulo">Antecedentes de salud</h2>
+    <table class="ficha-ver__tabla">
+        <tbody>
+            <tr><th scope="row">Alergias / alergia a medicamento</th><td>@Texto(Model.AlergiasMedicamentos)</td></tr>
+            <tr><th scope="row">Enfermedades crónicas</th><td>@Texto(Model.EnfermedadesCronicas)</td></tr>
+            <tr><th scope="row">Medicamentos de uso frecuente</th><td>@Texto(Model.MedicamentosFrecuentes)</td></tr>
+        </tbody>
+    </table>
+
+    <h2 class="ficha-ver__titulo">Transfusión de sangre</h2>
+    <p>
+        Debido a consideraciones religiosas o de otra índole, ¿acepta usted transfusiones de sangre?
+        <strong>@acepta</strong>
+    </p>
+    @if (!string.IsNullOrWhiteSpace(Model.MotivoTransfusion))
+    {
+        <p><strong>Motivo:</strong> @Model.MotivoTransfusion.Trim()</p>
+    }
+
+    <p class="ficha-ver__legal">
+        En la eventualidad de una emergencia médica, se intentará trasladar al funcionario al centro médico de
+        su elección; si ello no es posible o pusiera en riesgo su vida, será trasladado al hospital más cercano,
+        aplicando las leyes N° 19.560, 19.966 y 19.937 (leyes de Atención de Urgencia).
+    </p>
+    <p class="ficha-ver__legal">
+        Esta información eventualmente podría ser compartida con profesionales de la salud para atender una
+        situación de emergencia. Esta autorización podrá ser revocada o modificada en cualquier momento, sin
+        expresión de causa. La información proporcionada no altera ni reemplaza las obligaciones y
+        procedimientos de la ley N° 16.744 sobre accidentes laborales y enfermedades profesionales.
+    </p>
+
+    <div class="ficha-ver__firma">
+        <div>FIRMA</div>
+        <strong>@Model.NombreCompleto</strong>
+    </div>
+</div>

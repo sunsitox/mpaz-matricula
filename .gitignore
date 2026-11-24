@@ -11,6 +11,7 @@ appsettings.*.local.json
 .env
 .env.*
 mpaz-matricula/database/datos-prueba/credenciales.txt
+credenciales.txt
 
 # Artefactos locales de publicación y archivos subidos al expediente
 artifacts/

@@ -143,6 +143,7 @@ public static class DependencyInjection
     {
         servicios.AddSingleton<FichaMatriculaPdf>();
         servicios.AddSingleton<CertificadoAlumnoRegularPdf>();
+        servicios.AddSingleton<FichaSaludFuncionarioPdf>();
 
         return servicios;
     }

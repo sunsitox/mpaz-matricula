@@ -1,0 +1,212 @@
+@model MarcelaPaz.Domain.Entidades.FichaSaludFuncionario
+@{
+    var funcionarios = ViewData["Funcionarios"] as List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>
+        ?? new List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>();
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <p class="acceso__error" role="alert">Revise los campos marcados antes de guardar la ficha.</p>
+}
+
+<fieldset class="ficha-form__grupo">
+    <legend class="ficha-form__grupo-titulo">Identificación</legend>
+    <div class="ficha-form__grilla">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="FuncionarioId">Funcionario</label>
+            <select asp-for="FuncionarioId" id="FuncionarioId" class="acceso__input" required>
+                <option value="">Seleccione un funcionario…</option>
+                @foreach (var funcionario in funcionarios)
+                {
+                    <option value="@funcionario.Id" data-nombre="@funcionario.Nombre">@funcionario.Nombre</option>
+                }
+            </select>
+            <span asp-validation-for="FuncionarioId" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="NombreCompleto">Nombre completo</label>
+            <input asp-for="NombreCompleto" id="NombreCompleto" class="acceso__input"
+                   maxlength="150" autocomplete="off" required />
+            <span asp-validation-for="NombreCompleto" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Rut">RUN</label>
+            <input asp-for="Rut" id="Rut" class="acceso__input" maxlength="20"
+                   placeholder="12.345.678-5" />
+            <span asp-validation-for="Rut" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Pasaporte">Pasaporte</label>
+            <input asp-for="Pasaporte" id="Pasaporte" class="acceso__input" maxlength="30"
+                   placeholder="Para funcionarios extranjeros" />
+            <span asp-validation-for="Pasaporte" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="TelefonoPersonal">Teléfono personal</label>
+            <input asp-for="TelefonoPersonal" id="TelefonoPersonal" class="acceso__input"
+                   type="tel" maxlength="20" inputmode="tel" placeholder="+56 9 6123 4567" />
+            <span asp-validation-for="TelefonoPersonal" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="DireccionPersonal">Dirección personal</label>
+            <input asp-for="DireccionPersonal" id="DireccionPersonal" class="acceso__input"
+                   maxlength="255" autocomplete="off" />
+            <span asp-validation-for="DireccionPersonal" class="acceso__error"></span>
+        </div>
+    </div>
+    <p class="ficha-form__nota">Indique el RUN o el pasaporte: uno de los dos es obligatorio.</p>
+</fieldset>
+
+<fieldset class="ficha-form__grupo">
+    <legend class="ficha-form__grupo-titulo">En caso de emergencia médica, la persona de contacto será</legend>
+    <div class="ficha-form__grilla">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Contacto1Nombre">1° persona de contacto</label>
+            <input asp-for="Contacto1Nombre" id="Contacto1Nombre" class="acceso__input"
+                   maxlength="150" autocomplete="off" required />
+            <span asp-validation-for="Contacto1Nombre" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Contacto1Telefono">Teléfono</label>
+            <input asp-for="Contacto1Telefono" id="Contacto1Telefono" class="acceso__input"
+                   type="tel" maxlength="20" inputmode="tel" required />
+            <span asp-validation-for="Contacto1Telefono" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Contacto2Nombre">2° persona de contacto (opcional)</label>
+            <input asp-for="Contacto2Nombre" id="Contacto2Nombre" class="acceso__input"
+                   maxlength="150" autocomplete="off" />
+            <span asp-validation-for="Contacto2Nombre" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Contacto2Telefono">Teléfono</label>
+            <input asp-for="Contacto2Telefono" id="Contacto2Telefono" class="acceso__input"
+                   type="tel" maxlength="20" inputmode="tel" />
+            <span asp-validation-for="Contacto2Telefono" class="acceso__error"></span>
+        </div>
+    </div>
+    <p class="ficha-form__nota">El segundo contacto se pide completo o se deja vacío; no puede tener el mismo teléfono que el primero.</p>
+</fieldset>
+
+<fieldset class="ficha-form__grupo">
+    <legend class="ficha-form__grupo-titulo">Sistema de salud y centro médico</legend>
+    <div class="ficha-form__grilla">
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="SistemaSalud">Sistema de salud</label>
+            <select asp-for="SistemaSalud" id="SistemaSalud" class="acceso__input">
+                <option value="">Seleccione…</option>
+                <option value="Fonasa">Fonasa</option>
+                <option value="Isapre">Isapre</option>
+                <option value="Otro">Otro</option>
+            </select>
+            <span asp-validation-for="SistemaSalud" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="CentroMedicoPreferente">Centro médico preferente</label>
+            <input asp-for="CentroMedicoPreferente" id="CentroMedicoPreferente" class="acceso__input"
+                   maxlength="150" autocomplete="off" />
+            <span asp-validation-for="CentroMedicoPreferente" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="CentroUbicacion">Ubicación del centro</label>
+            <input asp-for="CentroUbicacion" id="CentroUbicacion" class="acceso__input"
+                   maxlength="255" autocomplete="off" />
+            <span asp-validation-for="CentroUbicacion" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="CentroTelefono">Teléfono del centro</label>
+            <input asp-for="CentroTelefono" id="CentroTelefono" class="acceso__input"
+                   type="tel" maxlength="20" inputmode="tel" />
+            <span asp-validation-for="CentroTelefono" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="AmbulanciaConvenio">Ambulancia en convenio</label>
+            <input asp-for="AmbulanciaConvenio" id="AmbulanciaConvenio" class="acceso__input"
+                   maxlength="150" autocomplete="off" />
+            <span asp-validation-for="AmbulanciaConvenio" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="AmbulanciaTelefono">Teléfono de la ambulancia</label>
+            <input asp-for="AmbulanciaTelefono" id="AmbulanciaTelefono" class="acceso__input"
+                   type="tel" maxlength="20" inputmode="tel" />
+            <span asp-validation-for="AmbulanciaTelefono" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="SeguroComplementario">Seguro complementario</label>
+            <input asp-for="SeguroComplementario" id="SeguroComplementario" class="acceso__input"
+                   maxlength="150" autocomplete="off" />
+            <span asp-validation-for="SeguroComplementario" class="acceso__error"></span>
+        </div>
+        <div class="acceso__campo">
+            <label class="acceso__etiqueta" for="Otros">Otros</label>
+            <input asp-for="Otros" id="Otros" class="acceso__input" maxlength="1000"
+                   autocomplete="off" placeholder="Otra información de contacto o previsión" />
+            <span asp-validation-for="Otros" class="acceso__error"></span>
+        </div>
+    </div>
+</fieldset>
+
+<fieldset class="ficha-form__grupo">
+    <legend class="ficha-form__grupo-titulo">Antecedentes de salud</legend>
+    <div class="acceso__campo">
+        <label class="acceso__etiqueta" for="AlergiasMedicamentos">Alergias / alergia a medicamento</label>
+        <textarea asp-for="AlergiasMedicamentos" id="AlergiasMedicamentos" class="acceso__input"
+                  rows="2" maxlength="1000"></textarea>
+        <span asp-validation-for="AlergiasMedicamentos" class="acceso__error"></span>
+    </div>
+    <div class="acceso__campo">
+        <label class="acceso__etiqueta" for="EnfermedadesCronicas">Enfermedades crónicas</label>
+        <textarea asp-for="EnfermedadesCronicas" id="EnfermedadesCronicas" class="acceso__input"
+                  rows="2" maxlength="1000"></textarea>
+        <span asp-validation-for="EnfermedadesCronicas" class="acceso__error"></span>
+    </div>
+    <div class="acceso__campo">
+        <label class="acceso__etiqueta" for="MedicamentosFrecuentes">Medicamentos de uso frecuente</label>
+        <textarea asp-for="MedicamentosFrecuentes" id="MedicamentosFrecuentes" class="acceso__input"
+                  rows="2" maxlength="1000"></textarea>
+        <span asp-validation-for="MedicamentosFrecuentes" class="acceso__error"></span>
+    </div>
+</fieldset>
+
+<fieldset class="ficha-form__grupo">
+    <legend class="ficha-form__grupo-titulo">Transfusión de sangre</legend>
+    <p class="acceso__ayuda">
+        Debido a consideraciones religiosas o de otra índole, ¿acepta usted transfusiones de sangre?
+    </p>
+    <div class="acceso__campo" style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;gap:0.4rem;align-items:center;">
+            <input type="radio" asp-for="AceptaTransfusion" value="Si" /> Sí
+        </label>
+        <label style="display:flex;gap:0.4rem;align-items:center;">
+            <input type="radio" asp-for="AceptaTransfusion" value="No" /> No
+        </label>
+    </div>
+    <span asp-validation-for="AceptaTransfusion" class="acceso__error"></span>
+    <div class="acceso__campo">
+        <label class="acceso__etiqueta" for="MotivoTransfusion">Motivo (obligatorio si responde «No»)</label>
+        <textarea asp-for="MotivoTransfusion" id="MotivoTransfusion" class="acceso__input"
+                  rows="2" maxlength="1000"></textarea>
+        <span asp-validation-for="MotivoTransfusion" class="acceso__error"></span>
+    </div>
+</fieldset>
+
+<p class="ficha-form__nota">
+    Esta información eventualmente podría ser compartida con profesionales de la salud para atender una
+    situación de emergencia. La autorización podrá ser revocada o modificada en cualquier momento, sin
+    expresión de causa, y los datos se tratan según la normativa de protección de datos personales.
+</p>
+
+<script>
+    (() => {
+        const funcionario = document.getElementById('FuncionarioId');
+        const nombre = document.getElementById('NombreCompleto');
+        if (!funcionario || !nombre) return;
+
+        funcionario.addEventListener('change', () => {
+            const opcion = funcionario.selectedOptions[0];
+            if (opcion && !nombre.value.trim()) {
+                nombre.value = opcion.dataset.nombre || '';
+            }
+        });
+    })();
+</script>

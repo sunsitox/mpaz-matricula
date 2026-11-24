@@ -1,27 +1,30 @@
 namespace MarcelaPaz.Web.Models;
 
 /// <summary>
-/// Vista de las fichas médicas del personal: el formulario de registro y el
-/// listado de documentos cargados. Sólo la abre UTP.
+/// Vista de las fichas de salud del personal: el listado de fichas
+/// registradas y los funcionarios disponibles para completar una nueva.
+/// Sólo la abre UTP y Dirección.
 /// </summary>
 public sealed class FichasMedicasPersonal
 {
     public List<FuncionarioOpcion> Funcionarios { get; set; } = new();
 
-    public List<FichaMedicaItem> Fichas { get; set; } = new();
+    public List<FichaSaludItem> Fichas { get; set; } = new();
 
-    /// <summary>Texto del buscador (funcionario, tipo, descripción o emisor).</summary>
+    /// <summary>Funcionarios activos que aún no tienen ficha.</summary>
+    public List<FuncionarioOpcion> SinFicha { get; set; } = new();
+
+    /// <summary>Texto del buscador (funcionario, documento, contacto o centro médico).</summary>
     public string Busqueda { get; set; } = string.Empty;
 
     /// <summary>Funcionario seleccionado en el filtro (0 = todos).</summary>
     public int FuncionarioFiltro { get; set; }
 
-    /// <summary>Estado de vigencia: todas, vigentes, vencidas o sin fecha.</summary>
-    public string EstadoFiltro { get; set; } = "todas";
-
-    public int TotalFichas { get; set; }
+    public int TotalRegistros { get; set; }
 
     public int TotalFuncionariosConFicha { get; set; }
+
+    public int TotalFuncionariosActivos { get; set; }
 
     public sealed class FuncionarioOpcion
     {
@@ -30,7 +33,7 @@ public sealed class FichasMedicasPersonal
         public string Nombre { get; set; } = string.Empty;
     }
 
-    public sealed class FichaMedicaItem
+    public sealed class FichaSaludItem
     {
         public int Id { get; set; }
 
@@ -38,19 +41,15 @@ public sealed class FichasMedicasPersonal
 
         public string Funcionario { get; set; } = string.Empty;
 
-        public string Tipo { get; set; } = string.Empty;
+        /// <summary>RUN o pasaporte, listo para mostrar.</summary>
+        public string Documento { get; set; } = string.Empty;
 
-        public string? Descripcion { get; set; }
+        public string? Telefono { get; set; }
 
-        public string? Emisor { get; set; }
+        /// <summary>Primer contacto de emergencia, con su teléfono.</summary>
+        public string? ContactoEmergencia { get; set; }
 
-        public DateOnly? EmitidoEn { get; set; }
-
-        public DateOnly? VigenteHasta { get; set; }
-
-        public string? ArchivoNombre { get; set; }
-
-        public bool TieneArchivo { get; set; }
+        public string? SistemaSalud { get; set; }
 
         public DateTimeOffset RegistradoEn { get; set; }
     }

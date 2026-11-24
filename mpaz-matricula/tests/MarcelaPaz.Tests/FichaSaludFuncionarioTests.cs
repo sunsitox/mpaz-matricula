@@ -1,5 +1,7 @@
 using MarcelaPaz.Domain.Entidades;
+using MarcelaPaz.Infrastructure.Documentos;
 using MarcelaPaz.Web.Models;
+using QuestPDF.Infrastructure;
 
 namespace MarcelaPaz.Tests;
 
@@ -121,4 +123,34 @@ public class FichaSaludFuncionarioTests
 
         Assert.Empty(ValidadorFichaSalud.Validar(ficha));
     }
+
+    [Fact]
+    public void Pdf_SeGeneraDesdeLaFichaRegistrada()
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var archivo = new FichaSaludFuncionarioPdf().Generar(Muestra());
+
+        Assert.True(archivo.Length > 1000);
+        Assert.Equal("%PDF"u8.ToArray(), archivo[..4]);
+    }
+
+    private static DocumentoFichaSalud Muestra() => new()
+    {
+        Sostenedor = "Servicio Local de Educación Pública Del Pino",
+        Establecimiento = "Escuela Básica Escritora Marcela Paz",
+        DireccionEstablecimiento = "Ramón Liborio Carvallo 736, San Bernardo",
+        FuncionarioNombre = "María Teresa Lagos Sandoval",
+        Rut = "12.345.678-5",
+        TelefonoPersonal = "+56 9 6123 4567",
+        DireccionPersonal = "Ramón Liborio Carvallo 736",
+        Contacto1Nombre = "Pedro Lagos",
+        Contacto1Telefono = "+56 9 2233 4455",
+        SistemaSalud = "Fonasa",
+        CentroMedicoPreferente = "CESFAM San Bernardo",
+        AlergiasMedicamentos = "Penicilina",
+        AceptaTransfusion = "Si",
+        RegistradoPor = "UTP de prueba",
+        RegistradoEn = new DateTimeOffset(2026, 11, 24, 12, 0, 0, TimeSpan.Zero),
+    };
 }

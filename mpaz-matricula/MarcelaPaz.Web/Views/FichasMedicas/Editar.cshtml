@@ -1,85 +1,24 @@
-@model MarcelaPaz.Domain.Entidades.FichaMedicaFuncionario
+@model MarcelaPaz.Domain.Entidades.FichaSaludFuncionario
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Editar ficha médica del personal";
-    var funcionarios = ViewData["Funcionarios"] as List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>
-        ?? new List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>();
+    ViewData["Title"] = "Editar ficha de salud del personal";
 }
 
 <div class="admin__tarjeta">
-    <h1 class="admin__titulo-seccion">Editar ficha médica</h1>
+    <h1 class="admin__titulo-seccion">Editar ficha de salud</h1>
     <p class="admin__ayuda">
-        Actualice los datos del documento. Al adjuntar un archivo nuevo, el anterior se reemplaza.
+        Actualice los datos de la ficha. Al guardar, el documento generado desde el sistema usa esta versión;
+        la fecha de registro se actualiza y el cambio queda auditado.
     </p>
 
-    <form method="post" asp-action="Editar" asp-route-id="@Model.Id" enctype="multipart/form-data"
-          data-ux-envio="Guardando cambios…">
+    <form method="post" asp-action="Editar" asp-route-id="@Model.Id" data-ux-envio="Guardando cambios…">
         @Html.AntiForgeryToken()
 
-        <fieldset class="ficha-form__grupo">
-            <legend class="ficha-form__grupo-titulo">Datos del documento</legend>
-            <div class="ficha-form__grilla">
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="funcionarioId">Funcionario</label>
-                    <select class="acceso__input" id="funcionarioId" name="funcionarioId" required>
-                        @foreach (var funcionario in funcionarios)
-                        {
-                            <option value="@funcionario.Id" selected="@(Model.FuncionarioId == funcionario.Id)">
-                                @funcionario.Nombre
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="tipo">Tipo de documento</label>
-                    <input class="acceso__input" id="tipo" name="tipo" type="text" maxlength="80"
-                           required value="@Model.Tipo" />
-                </div>
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="emisor">Emitido por</label>
-                    <input class="acceso__input" id="emisor" name="emisor" type="text" maxlength="150"
-                           value="@Model.Emisor" placeholder="Profesional o institución" />
-                </div>
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="emitidoEn">Fecha de emisión</label>
-                    <input class="acceso__input" id="emitidoEn" name="emitidoEn" type="date"
-                           value="@(Model.EmitidoEn?.ToString("yyyy-MM-dd"))" />
-                </div>
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="vigenteHasta">Vigente hasta (opcional)</label>
-                    <input class="acceso__input" id="vigenteHasta" name="vigenteHasta" type="date"
-                           value="@(Model.VigenteHasta?.ToString("yyyy-MM-dd"))" />
-                </div>
-            </div>
-        </fieldset>
-
-        <fieldset class="ficha-form__grupo">
-            <legend class="ficha-form__grupo-titulo">Archivo adjunto</legend>
-            <div class="ficha-form__archivo">
-                <label class="acceso__etiqueta" for="archivo">Documento nuevo (opcional)</label>
-                <input class="acceso__input" id="archivo" name="archivo" type="file"
-                       accept=".pdf,.jpg,.jpeg,.png" />
-                <p class="ficha-form__nota">
-                    PDF, JPG o PNG, hasta 15 MB.
-                    @if (!string.IsNullOrWhiteSpace(Model.ArchivoNombre))
-                    {
-                        <text>Actual: @Model.ArchivoNombre.</text>
-                    }
-                </p>
-            </div>
-        </fieldset>
-
-        <fieldset class="ficha-form__grupo">
-            <legend class="ficha-form__grupo-titulo">Observación</legend>
-            <div class="acceso__campo">
-                <label class="acceso__etiqueta" for="descripcion">Descripción u observación</label>
-                <textarea class="acceso__input" id="descripcion" name="descripcion" rows="3"
-                          maxlength="2000">@Model.Descripcion</textarea>
-            </div>
-        </fieldset>
+        <partial name="_Campos" model="Model" />
 
         <div class="admin__acciones">
             <button type="submit" class="admin__boton admin__boton--primario">Guardar cambios</button>
+            <a asp-action="Ver" asp-route-id="@Model.Id" class="admin__boton">Ver ficha</a>
             <a asp-action="Index" class="admin__boton">Volver al listado</a>
         </div>
     </form>

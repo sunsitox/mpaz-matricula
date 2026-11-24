@@ -1,82 +1,33 @@
-@model MarcelaPaz.Web.Models.FichasMedicasPersonal
+@model MarcelaPaz.Domain.Entidades.FichaSaludFuncionario
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Nueva ficha médica del personal";
+    ViewData["Title"] = "Nueva ficha de salud del personal";
+    var funcionarios = ViewData["Funcionarios"] as List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>
+        ?? new List<MarcelaPaz.Web.Models.FichasMedicasPersonal.FuncionarioOpcion>();
 }
 
 <div class="admin__tarjeta">
-    <h1 class="admin__titulo-seccion">Nueva ficha médica</h1>
+    <h1 class="admin__titulo-seccion">Nueva ficha de salud</h1>
     <p class="admin__ayuda">
-        Registre la ficha médica general del funcionario (o su certificado o licencia) para agilizar la
-        recolección de datos en caso de emergencia. El archivo queda fuera del sitio público y sólo se abre
-        desde el listado.
+        Complete la ficha con los datos del funcionario. El documento se genera desde el sistema, listo para
+        imprimir o descargar; no hay que subir archivos. La ficha queda en la sección Personal, visible sólo
+        para UTP y Dirección.
     </p>
 
-    @if (Model.Funcionarios.Count == 0)
+    @if (funcionarios.Count == 0)
     {
         <p class="admin__ayuda">No hay funcionarios activos registrados.</p>
         <a asp-action="Index" class="admin__boton">Volver al listado</a>
     }
     else
     {
-        <form method="post" asp-action="Crear" enctype="multipart/form-data"
-              data-ux-envio="Guardando la ficha médica…">
+        <form method="post" asp-action="Crear" data-ux-envio="Guardando la ficha de salud…">
             @Html.AntiForgeryToken()
 
-            <fieldset class="ficha-form__grupo">
-                <legend class="ficha-form__grupo-titulo">Datos del documento</legend>
-                <div class="ficha-form__grilla">
-                    <div class="acceso__campo">
-                        <label class="acceso__etiqueta" for="funcionarioId">Funcionario</label>
-                        <select class="acceso__input" id="funcionarioId" name="funcionarioId" required>
-                            @foreach (var funcionario in Model.Funcionarios)
-                            {
-                                <option value="@funcionario.Id">@funcionario.Nombre</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="acceso__campo">
-                        <label class="acceso__etiqueta" for="tipo">Tipo de documento</label>
-                        <input class="acceso__input" id="tipo" name="tipo" type="text" maxlength="80"
-                               required placeholder="Ej: ficha médica general, certificado médico, licencia" />
-                    </div>
-                    <div class="acceso__campo">
-                        <label class="acceso__etiqueta" for="emisor">Emitido por</label>
-                        <input class="acceso__input" id="emisor" name="emisor" type="text" maxlength="150"
-                               placeholder="Profesional o institución" />
-                    </div>
-                    <div class="acceso__campo">
-                        <label class="acceso__etiqueta" for="emitidoEn">Fecha de emisión</label>
-                        <input class="acceso__input" id="emitidoEn" name="emitidoEn" type="date" />
-                    </div>
-                    <div class="acceso__campo">
-                        <label class="acceso__etiqueta" for="vigenteHasta">Vigente hasta (opcional)</label>
-                        <input class="acceso__input" id="vigenteHasta" name="vigenteHasta" type="date" />
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="ficha-form__grupo">
-                <legend class="ficha-form__grupo-titulo">Archivo adjunto</legend>
-                <div class="ficha-form__archivo">
-                    <label class="acceso__etiqueta" for="archivo">Documento escaneado o fotografiado</label>
-                    <input class="acceso__input" id="archivo" name="archivo" type="file"
-                           accept=".pdf,.jpg,.jpeg,.png" />
-                    <p class="ficha-form__nota">PDF, JPG o PNG, hasta 15 MB. Queda fuera del sitio público: sólo se abre desde el listado.</p>
-                </div>
-            </fieldset>
-
-            <fieldset class="ficha-form__grupo">
-                <legend class="ficha-form__grupo-titulo">Observación</legend>
-                <div class="acceso__campo">
-                    <label class="acceso__etiqueta" for="descripcion">Descripción u observación</label>
-                    <textarea class="acceso__input" id="descripcion" name="descripcion" rows="3"
-                              maxlength="2000" placeholder="Detalle, diagnóstico o restricciones informadas"></textarea>
-                </div>
-            </fieldset>
+            <partial name="_Campos" model="Model" />
 
             <div class="admin__acciones">
-                <button type="submit" class="admin__boton admin__boton--primario">Guardar ficha médica</button>
+                <button type="submit" class="admin__boton admin__boton--primario">Guardar ficha</button>
                 <a asp-action="Index" class="admin__boton">Cancelar</a>
             </div>
         </form>

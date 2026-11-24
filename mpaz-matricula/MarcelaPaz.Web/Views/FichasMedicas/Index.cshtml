@@ -2,44 +2,57 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Fichas médicas del personal";
-    var hoy = DateOnly.FromDateTime(DateTime.Today);
 }
 
 <div class="admin__tarjeta">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
-        <div style="max-width:44rem;">
-            <h1 class="admin__titulo-seccion">Fichas médicas del personal</h1>
+        <div style="max-width:46rem;">
+            <h1 class="admin__titulo-seccion">Fichas de salud del personal</h1>
             <p class="admin__ayuda">
-                Sección Personal, reservada a UTP y Dirección. Las fichas médicas generales de los funcionarios
-                (y sus certificados o licencias) quedan registradas aquí para agilizar la recolección de datos
-                en caso de emergencia. Los archivos quedan fuera del sitio público y sólo se abren desde esta
-                pantalla.
+                Sección Personal, reservada a UTP y Dirección. La ficha se completa aquí, con los datos que
+                pide el formulario del colegio, y el documento se genera desde el sistema: no se suben archivos.
+                La información es confidencial y sólo se abre desde esta pantalla.
             </p>
         </div>
         <div style="display:flex;gap:1.5rem;align-items:center;">
             <div>
-                <div style="font-size:1.6rem;font-weight:700;line-height:1;">@Model.TotalFichas</div>
-                <div class="admin__ayuda">Documentos</div>
+                <div style="font-size:1.6rem;font-weight:700;line-height:1;">@Model.TotalRegistros</div>
+                <div class="admin__ayuda">Fichas registradas</div>
             </div>
             <div>
                 <div style="font-size:1.6rem;font-weight:700;line-height:1;">@Model.TotalFuncionariosConFicha</div>
-                <div class="admin__ayuda">Funcionarios con ficha</div>
+                <div class="admin__ayuda">de @Model.TotalFuncionariosActivos funcionarios activos</div>
             </div>
             <a asp-action="Nuevo" class="admin__boton admin__boton--primario">Nueva ficha</a>
         </div>
     </div>
 
-    <p class="admin__ayuda" style="margin-top:1rem;">@Model.Fichas.Count de @Model.TotalFichas documento(s) mostrado(s).</p>
+    @if (Model.SinFicha.Count > 0)
+    {
+        <p class="admin__ayuda" style="margin-top:1rem;">
+            Faltan @Model.SinFicha.Count ficha(s):
+            @string.Join(", ", Model.SinFicha.Select(f => f.Nombre)).
+            <a asp-action="Nuevo">Completar la primera</a>.
+        </p>
+    }
+    else if (Model.TotalFuncionariosActivos > 0)
+    {
+        <p class="admin__ayuda" style="margin-top:1rem;">
+            Todos los funcionarios activos tienen su ficha registrada.
+        </p>
+    }
+
+    <p class="admin__ayuda" style="margin-top:1rem;">@Model.Fichas.Count de @Model.TotalRegistros ficha(s) mostrada(s).</p>
 
     <form method="get" asp-action="Index" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:1rem;">
         <div class="acceso__campo" style="flex:1 1 260px;">
             <label class="acceso__etiqueta" for="busqueda">Buscar</label>
             <input class="acceso__input" id="busqueda" name="busqueda" type="search" value="@Model.Busqueda"
-                   placeholder="Funcionario, tipo, descripción o emisor…" />
+                   placeholder="Funcionario, documento, contacto o centro médico…" />
         </div>
         <div class="acceso__campo" style="flex:0 1 220px;">
-            <label class="acceso__etiqueta" for="funcionarioFiltro">Funcionario</label>
-            <select class="acceso__input" id="funcionarioFiltro" name="funcionarioId">
+            <label class="acceso__etiqueta" for="funcionarioId">Funcionario</label>
+            <select class="acceso__input" id="funcionarioId" name="funcionarioId">
                 <option value="0">Todos</option>
                 @foreach (var funcionario in Model.Funcionarios)
                 {
@@ -49,15 +62,6 @@
                 }
             </select>
         </div>
-        <div class="acceso__campo" style="flex:0 1 180px;">
-            <label class="acceso__etiqueta" for="estado">Vigencia</label>
-            <select class="acceso__input" id="estado" name="estado">
-                <option value="todas" selected="@(Model.EstadoFiltro == "todas")">Todas</option>
-                <option value="vigentes" selected="@(Model.EstadoFiltro == "vigentes")">Vigentes</option>
-                <option value="vencidas" selected="@(Model.EstadoFiltro == "vencidas")">Vencidas</option>
-                <option value="sin-fecha" selected="@(Model.EstadoFiltro == "sin-fecha")">Sin fecha</option>
-            </select>
-        </div>
         <button type="submit" class="admin__boton admin__boton--primario">Filtrar</button>
         <a asp-action="Index" class="admin__boton">Limpiar</a>
     </form>
@@ -65,65 +69,42 @@
     @if (Model.Fichas.Count == 0)
     {
         <p class="admin__ayuda">
-            @(Model.TotalFichas == 0
-                ? "Aún no hay fichas médicas de funcionarios registradas."
-                : "Ningún documento coincide con los filtros aplicados.")
+            @(Model.TotalRegistros == 0
+                ? "Aún no hay fichas de salud registradas."
+                : "Ninguna ficha coincide con los filtros aplicados.")
         </p>
     }
     else
     {
         <div class="tabla-envoltura" tabindex="0">
             <table class="admin__tabla">
-                <caption class="sr-only">Fichas médicas del personal, con funcionario, tipo, fechas y archivo.</caption>
+                <caption class="sr-only">Fichas de salud del personal, con documento, contacto de emergencia, previsión y fecha de registro.</caption>
                 <thead>
                     <tr>
                         <th scope="col">Funcionario</th>
-                        <th scope="col">Tipo</th>
-                        <th scope="col">Emisión</th>
-                        <th scope="col">Vigencia</th>
-                        <th scope="col">Detalle</th>
-                        <th scope="col">Archivo</th>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Contacto de emergencia</th>
+                        <th scope="col">Sistema de salud</th>
+                        <th scope="col">Registrada</th>
                         <th scope="col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var ficha in Model.Fichas)
                     {
-                        var vencida = ficha.VigenteHasta != null && ficha.VigenteHasta < hoy;
                         <tr>
                             <td data-etiqueta="Funcionario"><strong>@ficha.Funcionario</strong></td>
-                            <td data-etiqueta="Tipo">@ficha.Tipo</td>
-                            <td data-etiqueta="Emisión">@(ficha.EmitidoEn?.ToString("dd-MM-yyyy") ?? "—")</td>
-                            <td data-etiqueta="Vigencia">
-                                @if (ficha.VigenteHasta == null)
-                                {
-                                    <span class="admin__ayuda">Sin fecha</span>
-                                }
-                                else
-                                {
-                                    <span>@ficha.VigenteHasta.Value.ToString("dd-MM-yyyy")</span>
-                                    <span class="admin__ayuda">@(vencida ? " · vencida" : " · vigente")</span>
-                                }
-                            </td>
-                            <td data-etiqueta="Detalle">
-                                @(string.IsNullOrWhiteSpace(ficha.Descripcion) ? "—" : ficha.Descripcion)
-                                @if (!string.IsNullOrWhiteSpace(ficha.Emisor))
-                                {
-                                    <span class="admin__ayuda"> · @ficha.Emisor</span>
-                                }
-                                <span class="admin__ayuda"> · registrada @ficha.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</span>
-                            </td>
-                            <td data-etiqueta="Archivo">
-                                @if (ficha.TieneArchivo)
-                                {
-                                    <a asp-action="Descargar" asp-route-id="@ficha.Id">@(ficha.ArchivoNombre ?? "Descargar")</a>
-                                }
-                                else
-                                {
-                                    <span class="admin__ayuda">Sin archivo</span>
-                                }
-                            </td>
+                            <td data-etiqueta="Documento">@ficha.Documento</td>
+                            <td data-etiqueta="Teléfono">@(string.IsNullOrWhiteSpace(ficha.Telefono) ? "—" : ficha.Telefono)</td>
+                            <td data-etiqueta="Contacto de emergencia">@(string.IsNullOrWhiteSpace(ficha.ContactoEmergencia) ? "—" : ficha.ContactoEmergencia)</td>
+                            <td data-etiqueta="Sistema de salud">@(string.IsNullOrWhiteSpace(ficha.SistemaSalud) ? "—" : ficha.SistemaSalud)</td>
+                            <td data-etiqueta="Registrada">@ficha.RegistradoEn.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                             <td data-etiqueta="Acciones">
+                                <a asp-action="Ver" asp-route-id="@ficha.Id">Ver ficha</a>
+                                <span aria-hidden="true"> · </span>
+                                <a asp-action="Pdf" asp-route-id="@ficha.Id">PDF</a>
+                                <span aria-hidden="true"> · </span>
                                 <a asp-action="Editar" asp-route-id="@ficha.Id">Editar</a>
                             </td>
                         </tr>
