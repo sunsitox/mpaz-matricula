@@ -3,6 +3,7 @@
     Layout = "_AdminLayout";
     ViewData["Title"] = $"Reporte de matrículas {Model.Anio}";
 }
+<div id="reporte-matriculas" data-ux-region="Reporte de matrículas">
 <section class="admin__tarjeta">
     <div class="alumnos__encabezado">
         <div>
@@ -15,7 +16,7 @@
         <span class="alumnos__insignia">Año escolar @Model.Anio</span>
     </div>
 
-    <form method="get" asp-controller="Reportes" asp-action="Matriculas" class="alumnos__filtros">
+    <form method="get" asp-controller="Reportes" asp-action="Matriculas" class="alumnos__filtros" data-ux-tabla="reporte-matriculas">
         <div class="acceso__campo">
             <label class="acceso__etiqueta" for="anio">Año escolar</label>
             <select class="acceso__input" id="anio" name="anio" data-ux-enviar-al-cambiar>
@@ -83,3 +84,4 @@
         </table>
     </div>
 </section>
+</div>

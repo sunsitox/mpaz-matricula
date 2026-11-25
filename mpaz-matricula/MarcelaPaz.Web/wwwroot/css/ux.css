@@ -281,6 +281,12 @@ textarea {
     display: none !important;
 }
 
+/* Tablas con filtro sin recarga: la región se atenúa mientras se actualiza. */
+[data-ux-region][aria-busy="true"] {
+    opacity: .55;
+    transition: opacity var(--ux-suave);
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;

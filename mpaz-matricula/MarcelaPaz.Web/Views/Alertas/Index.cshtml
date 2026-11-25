@@ -11,7 +11,7 @@
         <div class="acceso__alerta" role="alert">@Model.Error</div>
     }
 
-    <div class="admin__tarjeta">
+    <div class="admin__tarjeta" id="alertas-resultado" data-ux-region="Alertas">
         <div class="panel__encabezado">
             <div class="panel__titulo">
                 <h1 class="admin__titulo-seccion">Alertas de vencimiento</h1>
@@ -23,7 +23,7 @@
 
             @if (Model.Anios.Count > 0)
             {
-                <form method="get" asp-controller="Alertas" asp-action="Index" class="panel__anio">
+                <form method="get" asp-controller="Alertas" asp-action="Index" class="panel__anio" data-ux-tabla="alertas-resultado">
                     <label class="acceso__etiqueta" for="anio-alertas">Año escolar</label>
                     <select class="acceso__input" id="anio-alertas" name="anio">
                         @foreach (var opcion in Model.Anios)

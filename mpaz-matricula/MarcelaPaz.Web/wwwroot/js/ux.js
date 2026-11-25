@@ -8,18 +8,20 @@
 
     // Envío automático al cambiar un filtro. Antes iba en un atributo inline
     // (onchange), que la CSP de producción bloquea por no permitir inline.
-    document.querySelectorAll('[data-ux-enviar-al-cambiar]').forEach(campo => {
-        campo.addEventListener('change', () => {
-            if (!campo.form) {
-                return;
-            }
+    document.addEventListener('change', evento => {
+        const campo = evento.target instanceof Element
+            ? evento.target.closest('[data-ux-enviar-al-cambiar]')
+            : null;
 
-            if (typeof campo.form.requestSubmit === 'function') {
-                campo.form.requestSubmit();
-            } else {
-                campo.form.submit();
-            }
-        });
+        if (!campo || !campo.form) {
+            return;
+        }
+
+        if (typeof campo.form.requestSubmit === 'function') {
+            campo.form.requestSubmit();
+        } else {
+            campo.form.submit();
+        }
     });
 
     // Pre-kínder y Kínder son cursos neutros, sin letra. La letra sólo se

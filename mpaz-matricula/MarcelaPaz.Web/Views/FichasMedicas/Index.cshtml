@@ -4,7 +4,7 @@
     ViewData["Title"] = "Fichas médicas del personal";
 }
 
-<div class="admin__tarjeta">
+<div class="admin__tarjeta" id="fichas-resultado" data-ux-region="Fichas del personal">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
         <div style="max-width:46rem;">
             <h1 class="admin__titulo-seccion">Fichas de salud del personal</h1>
@@ -44,7 +44,7 @@
 
     <p class="admin__ayuda" style="margin-top:1rem;">@Model.Fichas.Count de @Model.TotalRegistros ficha(s) mostrada(s).</p>
 
-    <form method="get" asp-action="Index" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:1rem;">
+    <form method="get" asp-action="Index" data-ux-tabla="fichas-resultado" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:1rem;">
         <div class="acceso__campo" style="flex:1 1 260px;">
             <label class="acceso__etiqueta" for="busqueda">Buscar</label>
             <input class="acceso__input" id="busqueda" name="busqueda" type="search" value="@Model.Busqueda"

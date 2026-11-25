@@ -82,7 +82,8 @@
         </div>
     </div>
 
-    <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros">
+    <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__filtros"
+          id="alumnos-filtros" data-ux-tabla="alumnos-resultado" data-ux-tabla-form="alumnos-filtros">
         <div class="alumnos__filtros-campos">
         @if (Model.Anios.Count > 0)
         {
@@ -143,7 +144,7 @@
     </p>
 </section>
 
-<section class="admin__tarjeta">
+<section class="admin__tarjeta" id="alumnos-resultado" data-ux-region="Estudiantes">
     <div class="alumnos__resumen">
         <p class="alumnos__conteo">
             @if (Model.TotalAlumnos == 0)
@@ -162,7 +163,7 @@
 
         @if (Model.TotalPaginas > 1)
         {
-            <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__tamano">
+            <form method="get" asp-controller="Alumnos" asp-action="Index" class="alumnos__tamano" data-ux-tabla="alumnos-resultado">
                 <input type="hidden" name="q" value="@Model.Texto" />
                 <input type="hidden" name="anio" value="@Model.Anio" />
                 <input type="hidden" name="curso" value="@Model.Curso" />
@@ -183,7 +184,7 @@
         @if (Model.TieneFiltros)
         {
             <a class="alumnos__limpiar" asp-controller="Alumnos" asp-action="Index"
-               asp-route-anio="@Model.Anio">Limpiar filtros</a>
+               asp-route-anio="@Model.Anio" data-ux-tabla-form="alumnos-filtros">Limpiar filtros</a>
         }
     </div>
 
@@ -191,7 +192,7 @@
     {
         <div class="alumnos__vacio">
             <p class="alumnos__vacio-texto">No hay alumnos que coincidan con la búsqueda.</p>
-            <a class="admin__boton" asp-controller="Alumnos" asp-action="Index" asp-route-anio="@Model.Anio">Ver todos los alumnos</a>
+            <a class="admin__boton" asp-controller="Alumnos" asp-action="Index" asp-route-anio="@Model.Anio" data-ux-tabla-form="alumnos-filtros">Ver todos los alumnos</a>
         </div>
     }
     else
