@@ -163,7 +163,7 @@ public class FichaController : Controller
         (1, "domicilio", nameof(FichaForm.Domicilio), "el domicilio"),
         (1, "comuna", nameof(FichaForm.Comuna), "la comuna"),
         (3, "apoderado principal: nombre apellido", nameof(FichaForm.Principal_Nombre_Apellido), "el nombre del apoderado principal"),
-        (3, "apoderado principal: cédula identidad", nameof(FichaForm.Principal_Cedula_Identidad), "el RUN del apoderado principal"),
+        (3, "apoderado principal: cédula identidad", nameof(FichaForm.Principal_Cedula_Identidad), "el RUN o IPA del apoderado principal"),
         (3, "apoderado principal: teléfono", nameof(FichaForm.Principal_Telefono), "el teléfono del apoderado principal"),
         (3, "apoderado principal: vínculo", nameof(FichaForm.Principal_Vinculo), "el vínculo del apoderado principal"),
         (7, "autorización de uso de imagen (SI/NO)", nameof(FichaForm.AutorizaImagen), "la autorización de uso de imagen"),
@@ -646,14 +646,23 @@ public class FichaController : Controller
 
         var anio = anioActivo.Value;
 
-        var tipoDocumento = (tipo ?? "RUN").Trim().ToUpperInvariant();
-        tipoDocumento = tipoDocumento == "IPE" ? tipoDocumento : "RUN";
+        var tipoDocumento = string.IsNullOrWhiteSpace(tipo) ? "RUN" : tipo.Trim().ToUpperInvariant();
+
+        if (tipoDocumento is not ("RUN" or "IPE"))
+        {
+            return View(new BusquedaFicha
+            {
+                Anio = anio,
+                Tipo = "RUN",
+                Error = "El tipo de documento del estudiante debe ser RUN o IPE: el IPA identifica al apoderado.",
+            });
+        }
 
         var modelo = new BusquedaFicha
         {
             Anio = anio,
             Tipo = tipoDocumento,
-            Rut = tipoDocumento == "RUN" ? RutChileno.Formatear(rut) : rut?.Trim().ToUpperInvariant(),
+            Rut = DocumentoIdentidad.ParaMostrar(rut),
         };
 
         if (string.IsNullOrWhiteSpace(rut))
@@ -665,12 +674,12 @@ public class FichaController : Controller
         {
             modelo.Error = tipoDocumento == "RUN"
                 ? "El RUN no es válido: revise el número y el dígito verificador."
-                : "El número IPE no es válido: use entre 3 y 20 caracteres, sin espacios.";
+                : "El número IPE no es válido: use entre 3 y 20 caracteres, sin espacios. El IPA es del apoderado.";
             return View(modelo);
         }
 
         modelo.Buscado = true;
-        var identificador = tipoDocumento == "RUN" ? NormalizarRut(rut) : rut.Trim().ToUpperInvariant();
+        var identificador = DocumentoIdentidad.NormalizarParaGuardar(rut);
 
         var estudiante = await _db.Estudiantes
             .Include(e => e.Comuna)
@@ -1320,16 +1329,21 @@ public class FichaController : Controller
             return;
         }
 
-        // La base guarda el RUN sin puntos; la ficha impresa lo muestra con puntos.
-        datos[clave] = ClavesRut.EsClave(clave) ? RutChileno.Limpiar(valor) : valor.Trim();
+        // La base guarda el RUN sin puntos; los provisorios en mayúsculas.
+        datos[clave] = ClavesRut.EsClave(clave)
+            ? DocumentoIdentidad.NormalizarParaGuardar(valor)
+            : valor.Trim();
     }
 
     /// <summary>Estados en que la matrícula del año ya no admite un expediente nuevo.</summary>
     private static bool MatriculaCerrada(string estado) =>
         estado is "FICHA_GENERADA" or "FIRMADA" or "CONFIRMADA" or "FORMALIZADA";
 
-    /// <summary>Deja el RUN como lo guarda la base: sin puntos, sin espacios y con guion.</summary>
-    private static string NormalizarRut(string rut) => RutChileno.Limpiar(rut);
+    /// <summary>Deja el documento como lo guarda la base.</summary>
+    private static string NormalizarRut(string rut) => DocumentoIdentidad.NormalizarParaGuardar(rut);
+
+    /// <summary>Muestra RUN con puntos e IPA/IPE tal como están guardados.</summary>
+    private static string FormatearDocumento(string? documento) => DocumentoIdentidad.ParaMostrar(documento);
 
     /// <summary>«1° A» → («1º básico», «A»). El curso anterior se propone, no se fija.</summary>
     private static (string? nivel, string? letra) SepararCurso(string? curso)
@@ -1718,14 +1732,14 @@ public class FichaController : Controller
         Comuna = datos.GetValueOrDefault("comuna"),
 
         Madre_Nombre_Apellido = datos.GetValueOrDefault("madre: nombre apellido"),
-        Madre_Cedula_Identidad = RutChileno.Formatear(datos.GetValueOrDefault("madre: cédula identidad")),
+        Madre_Cedula_Identidad = FormatearDocumento(datos.GetValueOrDefault("madre: cédula identidad")),
         Madre_Telefono = datos.GetValueOrDefault("madre: teléfono"),
         Madre_Escolaridad = datos.GetValueOrDefault("madre: escolaridad"),
         Madre_Domicilio = datos.GetValueOrDefault("madre: domicilio"),
         Madre_Correo = datos.GetValueOrDefault("madre: correo"),
 
         Padre_Nombre_Apellido = datos.GetValueOrDefault("padre: nombre apellido"),
-        Padre_Cedula_Identidad = RutChileno.Formatear(datos.GetValueOrDefault("padre: cédula identidad")),
+        Padre_Cedula_Identidad = FormatearDocumento(datos.GetValueOrDefault("padre: cédula identidad")),
         Padre_Telefono = datos.GetValueOrDefault("padre: teléfono"),
         Padre_Escolaridad = datos.GetValueOrDefault("padre: escolaridad"),
         Padre_Domicilio = datos.GetValueOrDefault("padre: domicilio"),
@@ -1739,13 +1753,13 @@ public class FichaController : Controller
         Restriccion_Padre_Detalle = datos.GetValueOrDefault("restricción padre: detalle"),
 
         Principal_Nombre_Apellido = datos.GetValueOrDefault("apoderado principal: nombre apellido"),
-        Principal_Cedula_Identidad = RutChileno.Formatear(datos.GetValueOrDefault("apoderado principal: cédula identidad")),
+        Principal_Cedula_Identidad = FormatearDocumento(datos.GetValueOrDefault("apoderado principal: cédula identidad")),
         Principal_Telefono = datos.GetValueOrDefault("apoderado principal: teléfono"),
         Principal_Vinculo = datos.GetValueOrDefault("apoderado principal: vínculo"),
         Principal_Correo = datos.GetValueOrDefault("apoderado principal: correo"),
 
         Secundario_Nombre_Apellido = datos.GetValueOrDefault("apoderado secundario: nombre apellido"),
-        Secundario_Cedula_Identidad = RutChileno.Formatear(datos.GetValueOrDefault("apoderado secundario: cédula identidad")),
+        Secundario_Cedula_Identidad = FormatearDocumento(datos.GetValueOrDefault("apoderado secundario: cédula identidad")),
         Secundario_Telefono = datos.GetValueOrDefault("apoderado secundario: teléfono"),
         Secundario_Vinculo = datos.GetValueOrDefault("apoderado secundario: vínculo"),
         Secundario_Correo = datos.GetValueOrDefault("apoderado secundario: correo"),
@@ -1760,13 +1774,13 @@ public class FichaController : Controller
 
         SalidaSolo = datos.GetValueOrDefault("salida solo al finalizar jornada (SI/NO)"),
 
-        Retiro1_Rut = RutChileno.Formatear(datos.GetValueOrDefault("retiro autorizado 01: rut")),
+        Retiro1_Rut = FormatearDocumento(datos.GetValueOrDefault("retiro autorizado 01: rut")),
         Retiro1_Vinculo = datos.GetValueOrDefault("retiro autorizado 01: vínculo"),
 
-        Retiro2_Rut = RutChileno.Formatear(datos.GetValueOrDefault("retiro autorizado 02: rut")),
+        Retiro2_Rut = FormatearDocumento(datos.GetValueOrDefault("retiro autorizado 02: rut")),
         Retiro2_Vinculo = datos.GetValueOrDefault("retiro autorizado 02: vínculo"),
 
-        Retiro3_Rut = RutChileno.Formatear(datos.GetValueOrDefault("retiro autorizado 03: rut")),
+        Retiro3_Rut = FormatearDocumento(datos.GetValueOrDefault("retiro autorizado 03: rut")),
         Retiro3_Vinculo = datos.GetValueOrDefault("retiro autorizado 03: vínculo"),
 
         TieneSituacionMedica = datos.GetValueOrDefault("situación médica (SI/NO)"),

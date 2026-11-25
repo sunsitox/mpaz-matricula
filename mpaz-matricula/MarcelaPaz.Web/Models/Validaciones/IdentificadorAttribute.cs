@@ -37,32 +37,8 @@ public sealed class IdentificadorAttribute : ValidationAttribute
     }
 
     /// <summary>Valida un RUN o un IPE. Se usa también al buscar por documento.</summary>
-    public static bool EsValido(string? documento, string? tipo = "RUN")
-    {
-        if (string.IsNullOrWhiteSpace(documento))
-        {
-            return false;
-        }
-
-        var tipoLimpio = string.IsNullOrWhiteSpace(tipo) ? "RUN" : tipo.Trim().ToUpperInvariant();
-
-        if (tipoLimpio == "RUN")
-        {
-            return RutChileno.EsValido(documento);
-        }
-
-        // Sólo el IPE es documento del estudiante; el IPA es del apoderado.
-        if (tipoLimpio != "IPE")
-        {
-            return false;
-        }
-
-        // IPE: número provisorio alfanumérico, sin espacios.
-        var limpio = documento.Trim();
-
-        return limpio.Length is >= 3 and <= 20
-            && limpio.All(c => char.IsLetterOrDigit(c) || c is '-' or '.');
-    }
+    public static bool EsValido(string? documento, string? tipo = "RUN") =>
+        DocumentoIdentidad.EsDocumentoEstudiante(documento, tipo);
 
     public override string FormatErrorMessage(string name) =>
         "El documento no es válido: revise el RUN (módulo 11) o el número IPE.";

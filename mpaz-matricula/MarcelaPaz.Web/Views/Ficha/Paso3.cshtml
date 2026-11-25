@@ -5,8 +5,8 @@
 }
 <h2 class="wizard__titulo-paso">Paso 3 · Apoderado principal y secundario</h2>
 <p class="wizard__ayuda">
-    El apoderado principal es obligatorio: nombre, RUN, teléfono y vínculo con el estudiante.
-    El apoderado secundario es opcional.
+    El apoderado principal es obligatorio: nombre, RUN o IPA, teléfono y vínculo con el estudiante.
+    El apoderado secundario es opcional. El IPE es del estudiante y no corresponde aquí.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="3" method="post">
@@ -24,8 +24,8 @@
                     <input asp-for="Principal_Nombre_Apellido" class="acceso__input" autocomplete="off" />
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Principal_Cedula_Identidad" class="acceso__etiqueta">Cédula de identidad</label>
-                    <input asp-for="Principal_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                    <label asp-for="Principal_Cedula_Identidad" class="acceso__etiqueta">RUN o IPA</label>
+                    <input asp-for="Principal_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPA-123456" autocomplete="off" />
                     <span asp-validation-for="Principal_Cedula_Identidad" class="acceso__error"></span>
                 </div>
             </div>
@@ -59,8 +59,8 @@
                     <input asp-for="Secundario_Nombre_Apellido" class="acceso__input" autocomplete="off" />
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Secundario_Cedula_Identidad" class="acceso__etiqueta">Cédula de identidad</label>
-                    <input asp-for="Secundario_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                    <label asp-for="Secundario_Cedula_Identidad" class="acceso__etiqueta">RUN o IPA</label>
+                    <input asp-for="Secundario_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPA-123456" autocomplete="off" />
                     <span asp-validation-for="Secundario_Cedula_Identidad" class="acceso__error"></span>
                 </div>
             </div>

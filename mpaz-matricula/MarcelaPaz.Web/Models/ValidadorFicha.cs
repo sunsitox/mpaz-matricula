@@ -1,4 +1,5 @@
 using MarcelaPaz.Domain.Identificacion;
+using MarcelaPaz.Web.Models.Validaciones;
 
 namespace MarcelaPaz.Web.Models;
 
@@ -111,12 +112,12 @@ public static class ValidadorFicha
                         nameof(FichaForm.Padre_Escolaridad));
                 }
 
-                // El mismo RUN en los dos bloques significaría la misma persona
+                // El mismo documento en los dos bloques significaría la misma persona
                 // registrada dos veces: la ficha impresa quedaría contradictoria.
                 if (madre && padre && MismoRut(form.Madre_Cedula_Identidad, form.Padre_Cedula_Identidad))
                 {
                     errores.Add(new ErrorValidacion(nameof(FichaForm.Padre_Cedula_Identidad),
-                        "El RUN del padre no puede ser el mismo que el de la madre: revise los datos."));
+                        "El documento del padre no puede ser el mismo que el de la madre: revise los datos."));
                 }
 
                 ExigirRestriccion(errores, "de la madre", form.Restriccion_Madre,
@@ -175,7 +176,7 @@ public static class ValidadorFicha
                     if (MismoRut(form.Principal_Cedula_Identidad, form.Secundario_Cedula_Identidad))
                     {
                         errores.Add(new ErrorValidacion(nameof(FichaForm.Secundario_Cedula_Identidad),
-                            "El apoderado secundario no puede ser la misma persona que el principal: revise el RUN."));
+                            "El apoderado secundario no puede ser la misma persona que el principal: revise el documento."));
                     }
                 }
 
@@ -244,13 +245,13 @@ public static class ValidadorFicha
                 if (MismoRut(form.Retiro1_Rut, form.Retiro2_Rut))
                 {
                     errores.Add(new ErrorValidacion(nameof(FichaForm.Retiro2_Rut),
-                        "La persona autorizada 2 tiene el mismo RUN que la 1: registre personas distintas."));
+                        "La persona autorizada 2 tiene el mismo documento que la 1: registre personas distintas."));
                 }
 
                 if (MismoRut(form.Retiro1_Rut, form.Retiro3_Rut) || MismoRut(form.Retiro2_Rut, form.Retiro3_Rut))
                 {
                     errores.Add(new ErrorValidacion(nameof(FichaForm.Retiro3_Rut),
-                        "La persona autorizada 3 repite el RUN de otra autorizada: registre personas distintas."));
+                        "La persona autorizada 3 repite el documento de otra autorizada: registre personas distintas."));
                 }
 
                 // El propio estudiante no puede autorizarse para retirarse solo.
@@ -375,11 +376,15 @@ public static class ValidadorFicha
 
         if (string.IsNullOrWhiteSpace(documento))
         {
-            errores.Add(new ErrorValidacion(campoDocumento, $"Indique el RUN {etiqueta}."));
+            errores.Add(new ErrorValidacion(campoDocumento, $"Indique el RUN o IPA {etiqueta}."));
         }
-        else if (!RutChileno.EsValido(documento))
+        else if (EsIpe(documento))
         {
-            errores.Add(new ErrorValidacion(campoDocumento, $"El RUN {etiqueta} no es válido."));
+            errores.Add(new ErrorValidacion(campoDocumento, $"El IPE es del estudiante y no corresponde {etiqueta}: use RUN o IPA."));
+        }
+        else if (!DocumentoAdultoAttribute.EsValido(documento))
+        {
+            errores.Add(new ErrorValidacion(campoDocumento, $"El RUN o IPA {etiqueta} no es válido: revise el dígito verificador o el número IPA."));
         }
 
         ExigirTelefono(errores, etiqueta, telefono, campoTelefono);
@@ -518,11 +523,15 @@ public static class ValidadorFicha
 
         if (string.IsNullOrWhiteSpace(rut))
         {
-            errores.Add(new ErrorValidacion(campoRut, $"Indique el RUN de la persona autorizada {numero}."));
+            errores.Add(new ErrorValidacion(campoRut, $"Indique el RUN o IPA de la persona autorizada {numero}."));
         }
-        else if (!RutChileno.EsValido(rut))
+        else if (EsIpe(rut))
         {
-            errores.Add(new ErrorValidacion(campoRut, $"El RUN de la persona autorizada {numero} no es válido."));
+            errores.Add(new ErrorValidacion(campoRut, $"El IPE es del estudiante y no corresponde como retiro {numero}: use RUN o IPA."));
+        }
+        else if (!DocumentoAdultoAttribute.EsValido(rut))
+        {
+            errores.Add(new ErrorValidacion(campoRut, $"El RUN o IPA de la persona autorizada {numero} no es válido."));
         }
 
         if (string.IsNullOrWhiteSpace(vinculo))
@@ -562,29 +571,28 @@ public static class ValidadorFicha
         }
     }
 
-    /// <summary>RUN del estudiante del paso 1, sólo cuando el documento es un RUN.</summary>
+    /// <summary>Documento del estudiante del paso 1 (RUN normalizado o IPE en mayúsculas).</summary>
     private static string? RutDelEstudiante(FichaForm form)
     {
-        var tipo = (form.Tipo_Identificador ?? "RUN").Trim().ToUpperInvariant();
-
-        if (tipo != "RUN" || string.IsNullOrWhiteSpace(form.Cedula_Identidad))
+        if (string.IsNullOrWhiteSpace(form.Cedula_Identidad))
         {
             return null;
         }
 
-        return RutChileno.Limpiar(form.Cedula_Identidad);
+        var tipo = (form.Tipo_Identificador ?? "RUN").Trim().ToUpperInvariant();
+
+        return tipo == "RUN"
+            ? RutChileno.Limpiar(form.Cedula_Identidad)
+            : form.Cedula_Identidad.Trim().ToUpperInvariant();
     }
 
-    /// <summary>Compara dos RUN por su forma normalizada; vacíos nunca coinciden.</summary>
-    private static bool MismoRut(string? uno, string? otro)
-    {
-        if (string.IsNullOrWhiteSpace(uno) || string.IsNullOrWhiteSpace(otro))
-        {
-            return false;
-        }
+    private static bool EsIpe(string? documento) =>
+        !string.IsNullOrWhiteSpace(documento)
+        && documento.Trim().StartsWith("IPE", StringComparison.OrdinalIgnoreCase);
 
-        return string.Equals(RutChileno.Limpiar(uno), RutChileno.Limpiar(otro), StringComparison.Ordinal);
-    }
+    /// <summary>Compara dos documentos (RUN o provisorios) por su forma guardada; vacíos nunca coinciden.</summary>
+    private static bool MismoRut(string? uno, string? otro) =>
+        DocumentoIdentidad.MismoDocumento(uno, otro);
 
     /// <summary>Compara dos teléfonos por sus dígitos; vacíos nunca coinciden.</summary>
     private static bool MismoTelefono(string? uno, string? otro)

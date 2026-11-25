@@ -6,7 +6,7 @@
 <h2 class="wizard__titulo-paso">Paso 2 · Datos de contacto: madre y padre</h2>
 <p class="wizard__ayuda">
     Madre y padre son dos bloques aparte, desplegables.
-    Complete al menos uno de los dos con nombre, RUN, teléfono y la respuesta sobre restricciones.
+    Complete al menos uno de los dos con nombre, RUN o IPA, teléfono y la respuesta sobre restricciones.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="2" method="post">
@@ -26,8 +26,8 @@
                     <input asp-for="Madre_Nombre_Apellido" class="acceso__input" placeholder="Ej: María Pérez Soto" autocomplete="off" />
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Madre_Cedula_Identidad" class="acceso__etiqueta">Cédula de identidad</label>
-                    <input asp-for="Madre_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                    <label asp-for="Madre_Cedula_Identidad" class="acceso__etiqueta">RUN o IPA</label>
+                    <input asp-for="Madre_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPA-123456" autocomplete="off" />
                     <span asp-validation-for="Madre_Cedula_Identidad" class="acceso__error"></span>
                 </div>
             </div>
@@ -77,8 +77,8 @@
                     <input asp-for="Padre_Nombre_Apellido" class="acceso__input" placeholder="Ej: Juan Pérez Soto" autocomplete="off" />
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Padre_Cedula_Identidad" class="acceso__etiqueta">Cédula de identidad</label>
-                    <input asp-for="Padre_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9" autocomplete="off" />
+                    <label asp-for="Padre_Cedula_Identidad" class="acceso__etiqueta">RUN o IPA</label>
+                    <input asp-for="Padre_Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPA-123456" autocomplete="off" />
                     <span asp-validation-for="Padre_Cedula_Identidad" class="acceso__error"></span>
                 </div>
             </div>

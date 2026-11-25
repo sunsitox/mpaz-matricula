@@ -444,7 +444,7 @@ public class RegistroFicha
 
         foreach (var numero in new[] { "01", "02", "03" })
         {
-            var rut = NormalizarRut(Texto(datos, $"retiro autorizado {numero}: rut"));
+            var rut = NormalizarDocumentoAdulto(Texto(datos, $"retiro autorizado {numero}: rut"));
             var vinculo = Texto(datos, $"retiro autorizado {numero}: vínculo");
 
             if (rut is null)
@@ -452,9 +452,9 @@ public class RegistroFicha
                 continue;
             }
 
-            if (!RutValido(rut))
+            if (!DocumentoAdultoValido(rut))
             {
-                avisos.Add($"El RUN «{rut}» de la persona autorizada a retirar no es válido y no se guardó.");
+                avisos.Add($"El documento «{rut}» de la persona autorizada a retirar no es válido (RUN o IPA) y no se guardó.");
                 continue;
             }
 
@@ -468,7 +468,7 @@ public class RegistroFicha
                 autorizado = new RetiroAutorizado
                 {
                     EstudianteId = estudiante.Id,
-                    TipoIdentificador = "RUN",
+                    TipoIdentificador = TipoDocumentoAdulto(rut),
                     Identificador = rut,
                     Nombre = persona?.Nombres ?? rut,
                     VigenteDesde = DateOnly.FromDateTime(DateTime.Now),
@@ -806,9 +806,9 @@ public class RegistroFicha
     {
         foreach (var prefijo in new[] { "apoderado principal", "madre", "padre" })
         {
-            var rut = NormalizarRut(Texto(datos, $"{prefijo}: cédula identidad"));
+            var rut = NormalizarDocumentoAdulto(Texto(datos, $"{prefijo}: cédula identidad"));
 
-            if (rut is null || !RutValido(rut))
+            if (rut is null || !DocumentoAdultoValido(rut))
             {
                 continue;
             }
@@ -855,7 +855,7 @@ public class RegistroFicha
         CancellationToken ct)
     {
         var nombre = Texto(datos, $"{prefijo}: nombre apellido");
-        var rut = NormalizarRut(Texto(datos, $"{prefijo}: cédula identidad"));
+        var rut = NormalizarDocumentoAdulto(Texto(datos, $"{prefijo}: cédula identidad"));
         var telefono = Texto(datos, $"{prefijo}: teléfono");
         var escolaridad = Texto(datos, $"{prefijo}: escolaridad");
         var domicilio = Texto(datos, $"{prefijo}: domicilio");
@@ -868,13 +868,13 @@ public class RegistroFicha
 
         if (rut is null)
         {
-            avisos.Add($"Los datos de {etiqueta} quedaron sólo en el borrador: falta su RUN para registrarlos.");
+            avisos.Add($"Los datos de {etiqueta} quedaron sólo en el borrador: falta su RUN o IPA para registrarlos.");
             return null;
         }
 
-        if (!RutValido(rut))
+        if (!DocumentoAdultoValido(rut))
         {
-            avisos.Add($"El RUN «{rut}» de {etiqueta} no es válido y sus datos no se guardaron.");
+            avisos.Add($"El documento «{rut}» de {etiqueta} no es válido (RUN o IPA) y sus datos no se guardaron.");
             return null;
         }
 
@@ -884,7 +884,7 @@ public class RegistroFicha
         {
             persona = new Persona
             {
-                TipoIdentificador = "RUN",
+                TipoIdentificador = TipoDocumentoAdulto(rut),
                 Identificador = rut,
                 Nombres = nombre ?? rut,
                 Apellidos = string.Empty,
@@ -1657,9 +1657,19 @@ public class RegistroFicha
             ? fecha
             : null;
 
-    /// <summary>Deja el RUN sin puntos, sin espacios y con guion, como lo guarda la base.</summary>
+    /// <summary>Normaliza un documento adulto como se guarda en la base.</summary>
+    private static string? NormalizarDocumentoAdulto(string? documento) =>
+        string.IsNullOrWhiteSpace(documento) ? null : DocumentoIdentidad.NormalizarParaGuardar(documento);
+
+    private static bool DocumentoAdultoValido(string documento) =>
+        DocumentoIdentidad.EsDocumentoAdulto(documento);
+
+    private static string TipoDocumentoAdulto(string documento) =>
+        DocumentoIdentidad.TipoAdulto(documento);
+
+    /// <summary>Deja el RUN sin puntos, como lo guarda la base.</summary>
     private static string? NormalizarRut(string? rut) =>
-        string.IsNullOrWhiteSpace(rut) ? null : RutChileno.Limpiar(rut);
+        string.IsNullOrWhiteSpace(rut) ? null : DocumentoIdentidad.NormalizarParaGuardar(rut);
 
     /// <summary>Valida el dígito verificador del RUN (módulo 11).</summary>
     private static bool RutValido(string rut) => RutChileno.EsValido(rut);

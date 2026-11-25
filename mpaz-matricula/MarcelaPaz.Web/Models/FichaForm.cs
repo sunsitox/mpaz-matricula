@@ -65,7 +65,7 @@ public class FichaForm
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     public string? Madre_Nombre_Apellido { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Madre_Cedula_Identidad { get; set; }
 
     [StringLength(20, ErrorMessage = "El teléfono no puede superar los 20 caracteres.")]
@@ -82,7 +82,7 @@ public class FichaForm
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     public string? Padre_Nombre_Apellido { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Padre_Cedula_Identidad { get; set; }
 
     [StringLength(20, ErrorMessage = "El teléfono no puede superar los 20 caracteres.")]
@@ -122,7 +122,7 @@ public class FichaForm
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     public string? Principal_Nombre_Apellido { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Principal_Cedula_Identidad { get; set; }
 
     [StringLength(20, ErrorMessage = "El teléfono no puede superar los 20 caracteres.")]
@@ -136,7 +136,7 @@ public class FichaForm
     [StringLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     public string? Secundario_Nombre_Apellido { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Secundario_Cedula_Identidad { get; set; }
 
     [StringLength(20, ErrorMessage = "El teléfono no puede superar los 20 caracteres.")]
@@ -168,17 +168,17 @@ public class FichaForm
     // ¿Autorizado para salir solo al finalizar la jornada? (Si / No)
     public string? SalidaSolo { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Retiro1_Rut { get; set; }
 
     public string? Retiro1_Vinculo { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Retiro2_Rut { get; set; }
 
     public string? Retiro2_Vinculo { get; set; }
 
-    [Rut]
+    [DocumentoAdulto]
     public string? Retiro3_Rut { get; set; }
 
     public string? Retiro3_Vinculo { get; set; }
