@@ -155,7 +155,7 @@ public class FichaController : Controller
     {
         (1, "curso: nivel", nameof(FichaForm.Curso_Nivel), "el curso"),
         (1, "curso: letra", nameof(FichaForm.Curso_Letra), "la letra del curso"),
-        (1, "cédula de identidad", nameof(FichaForm.Cedula_Identidad), "el RUN o número IPE/IPA"),
+        (1, "cédula de identidad", nameof(FichaForm.Cedula_Identidad), "el RUN o número IPE"),
         (1, "nombres", nameof(FichaForm.Nombres), "los nombres"),
         (1, "apellido paterno", nameof(FichaForm.Apellido_Paterno), "el apellido paterno"),
         (1, "fecha nacimiento", nameof(FichaForm.Fecha_Nacimiento), "la fecha de nacimiento"),
@@ -647,7 +647,7 @@ public class FichaController : Controller
         var anio = anioActivo.Value;
 
         var tipoDocumento = (tipo ?? "RUN").Trim().ToUpperInvariant();
-        tipoDocumento = tipoDocumento is "IPE" or "IPA" ? tipoDocumento : "RUN";
+        tipoDocumento = tipoDocumento == "IPE" ? tipoDocumento : "RUN";
 
         var modelo = new BusquedaFicha
         {
@@ -665,7 +665,7 @@ public class FichaController : Controller
         {
             modelo.Error = tipoDocumento == "RUN"
                 ? "El RUN no es válido: revise el número y el dígito verificador."
-                : "El número IPE/IPA no es válido: use entre 3 y 20 caracteres, sin espacios.";
+                : "El número IPE no es válido: use entre 3 y 20 caracteres, sin espacios.";
             return View(modelo);
         }
 
@@ -1260,7 +1260,7 @@ public class FichaController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    /// <summary>Busca al estudiante por RUN o por IPE/IPA, según el tipo del borrador.</summary>
+    /// <summary>Busca al estudiante por RUN o por IPE, según el tipo del borrador.</summary>
     private async Task<Estudiante?> EstudianteDelBorradorAsync(IReadOnlyDictionary<string, string> datos)
     {
         var documento = datos.GetValueOrDefault("cédula de identidad");
@@ -1280,7 +1280,7 @@ public class FichaController : Controller
             .FirstOrDefaultAsync(e => e.Identificador == normalizado);
     }
 
-    /// <summary>Guarda el documento respetando IPE/IPA: sólo el RUN se normaliza.</summary>
+    /// <summary>Guarda el documento respetando el IPE: sólo el RUN se normaliza.</summary>
     private static void GuardarDocumento(Dictionary<string, string> datos, FichaForm form)
     {
         if (string.IsNullOrWhiteSpace(form.Cedula_Identidad))

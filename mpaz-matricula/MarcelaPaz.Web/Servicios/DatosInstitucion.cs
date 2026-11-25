@@ -33,8 +33,8 @@ public sealed class DatosInstitucion
     /// </summary>
     public string FirmanteNombre { get; set; } = string.Empty;
 
-    /// <summary>Cargo impreso en el certificado: «Director».</summary>
-    public string FirmanteCargo { get; set; } = "Director";
+    /// <summary>Cargo impreso en el certificado: «Director/a».</summary>
+    public string FirmanteCargo { get; set; } = "Director/a";
 
     /// <summary>
     /// Origen público del portal para el QR de verificación (por ejemplo

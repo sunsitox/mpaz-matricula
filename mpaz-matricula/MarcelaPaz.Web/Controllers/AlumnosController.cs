@@ -126,7 +126,7 @@ public class AlumnosController : Controller
                     Nombre = estudiante.NombreCompleto,
                     TipoIdentificador = estudiante.TipoIdentificador,
                     Identificador = estudiante.Identificador,
-                    // Sólo el RUN se formatea: un IPE o IPA no tiene dígito verificador.
+                    // Sólo el RUN se formatea: un IPE no tiene dígito verificador.
                     Rut = string.Equals(estudiante.TipoIdentificador, "RUN", StringComparison.OrdinalIgnoreCase)
                         ? RutChileno.Formatear(estudiante.Identificador)
                         : estudiante.Identificador.ToUpperInvariant(),

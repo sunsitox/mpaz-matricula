@@ -9,7 +9,7 @@ public class BusquedaFicha
     /// <summary>Año escolar con matrícula activa: el que se está matriculando.</summary>
     public int Anio { get; set; }
 
-    /// <summary>RUN, IPE o IPA: documento con que se busca al estudiante.</summary>
+    /// <summary>RUN o IPE: documento con que se busca al estudiante.</summary>
     public string Tipo { get; set; } = "RUN";
 
     public string? Rut { get; set; }

@@ -82,20 +82,20 @@ public sealed class CertificadoAlumnoRegularPdf : IDocument
 
                 if (_certificado.MatriculaFutura)
                 {
-                    declaracion.Span("se encuentra matriculado(a) en este establecimiento para cursar ");
+                    declaracion.Span("se encuentra matriculado/a en este establecimiento para cursar ");
                     declaracion.Span(_certificado.Curso).Bold();
                     declaracion.Span($" durante el año académico {_certificado.Anio}.");
                 }
                 else
                 {
-                    declaracion.Span("es alumno(a) regular de este establecimiento y cursa ");
+                    declaracion.Span("es alumno/a regular de este establecimiento y cursa ");
                     declaracion.Span(_certificado.Curso).Bold();
                     declaracion.Span($" durante el año académico {_certificado.Anio}.");
                 }
             });
 
             columna.Item().PaddingTop(18)
-                .Text("Se extiende el presente certificado a solicitud del apoderado(a), para los fines que estime conveniente.")
+                .Text("Se extiende el presente certificado a solicitud del apoderado/a, para los fines que estime conveniente.")
                 .FontSize(12).LineHeight(1.6f).AlignLeft();
 
             columna.Item().PaddingTop(22)
@@ -155,11 +155,14 @@ public sealed class CertificadoAlumnoRegularPdf : IDocument
             {
                 // La firma ocupa el bloque central de la hoja; el resto de la
                 // línea queda libre para el timbre manual.
+                // Firma institucional: el papel no imprime el nombre de la
+                // persona que firma, sino el cargo. Quién firmó queda en el
+                // registro del certificado, no en el documento.
                 fila.RelativeItem(3).Column(columna =>
                 {
                     columna.Item().AlignCenter().Width(232).LineHorizontal(0.9f).LineColor(Gris);
                     columna.Item().PaddingTop(5).AlignCenter()
-                        .Text(_certificado.FirmanteNombre).FontSize(12.5f).SemiBold();
+                        .Text("Dirección").FontSize(12.5f).SemiBold();
                     columna.Item().AlignCenter()
                         .Text(_certificado.FirmanteCargo).FontSize(10.5f).FontColor(Gris);
                 });

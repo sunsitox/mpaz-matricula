@@ -7,13 +7,13 @@ public class AlumnoListado
 
     public string Nombre { get; set; } = string.Empty;
 
-    /// <summary>Documento tal como está guardado: RUN, IPE o IPA.</summary>
+    /// <summary>Documento tal como está guardado: RUN o IPE.</summary>
     public string Identificador { get; set; } = string.Empty;
 
-    /// <summary>RUN, IPE o IPA.</summary>
+    /// <summary>RUN o IPE.</summary>
     public string TipoIdentificador { get; set; } = "RUN";
 
-    /// <summary>Documento listo para pantalla: RUN con puntos, IPE/IPA en mayúsculas.</summary>
+    /// <summary>Documento listo para pantalla: RUN con puntos, IPE en mayúsculas.</summary>
     public string Rut { get; set; } = string.Empty;
 
     public string? Curso { get; set; }

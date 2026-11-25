@@ -167,7 +167,8 @@ public class CertificadosController : Controller
 
         // La emisión la hace Secretaría, pero el documento lo firma Dirección:
         // se busca al funcionario activo con rol DIRECCION vigente. Queda
-        // registrado quién emite (EmitidoPor) y quién firma (FirmanteNombre).
+        // registrado quién emite (EmitidoPor) y quién firma (FirmanteNombre),
+        // aunque el papel se firma con el cargo y no con el nombre.
         var nombreFirmante = await _db.Funcionarios
             .AsNoTracking()
             .Where(f => f.Activo
@@ -194,7 +195,7 @@ public class CertificadosController : Controller
             EmitidoEn = DateTimeOffset.UtcNow,
             Proposito = propositoFinal,
             FirmanteNombre = nombreFirmante,
-            FirmanteCargo = "Director",
+            FirmanteCargo = "Director/a",
         };
 
         await _escritura.EjecutarAsync(funcionarioId.Value, async ct =>
@@ -238,7 +239,7 @@ public class CertificadosController : Controller
             Vigencia = $"Válido por {EmisionCertificado.DiasVigencia} días, hasta el " +
                 $"{EmisionCertificado.VenceEn(emitido.EmitidoEn).ToLocalTime().ToString("d 'de' MMMM 'de' yyyy", EspanolChile)}.",
             FirmanteNombre = firmante,
-            FirmanteCargo = emitido.FirmanteCargo ?? "Director",
+            FirmanteCargo = emitido.FirmanteCargo ?? "Director/a",
             Folio = emitido.Folio,
             Codigo = codigo,
             UrlValidacion = urlValidacion,

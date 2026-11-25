@@ -5,8 +5,9 @@ namespace MarcelaPaz.Web.Models.Validaciones;
 
 /// <summary>
 /// Valida el documento con que se identifica el estudiante según Bloque A:
-/// RUN con módulo 11 para estudiantes chilenos, o IPE/IPA (número de
-/// identificación provisorio del establecimiento) para quienes no tienen RUN.
+/// RUN con módulo 11 para estudiantes chilenos, o IPE (identificador
+/// provisorio escolar) para quienes no tienen RUN. El IPA identifica al
+/// apoderado y no se acepta como documento del estudiante.
 /// El campo vacío se acepta aquí: la obligatoriedad se declara con [Required].
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
@@ -35,7 +36,7 @@ public sealed class IdentificadorAttribute : ValidationAttribute
                 new[] { validationContext.MemberName ?? validationContext.DisplayName });
     }
 
-    /// <summary>Valida un RUN o un IPE/IPA. Se usa también al buscar por documento.</summary>
+    /// <summary>Valida un RUN o un IPE. Se usa también al buscar por documento.</summary>
     public static bool EsValido(string? documento, string? tipo = "RUN")
     {
         if (string.IsNullOrWhiteSpace(documento))
@@ -43,15 +44,20 @@ public sealed class IdentificadorAttribute : ValidationAttribute
             return false;
         }
 
-        var esRun = string.IsNullOrWhiteSpace(tipo)
-            || tipo.Equals("RUN", StringComparison.OrdinalIgnoreCase);
+        var tipoLimpio = string.IsNullOrWhiteSpace(tipo) ? "RUN" : tipo.Trim().ToUpperInvariant();
 
-        if (esRun)
+        if (tipoLimpio == "RUN")
         {
             return RutChileno.EsValido(documento);
         }
 
-        // IPE/IPA: número provisorio alfanumérico, sin espacios.
+        // Sólo el IPE es documento del estudiante; el IPA es del apoderado.
+        if (tipoLimpio != "IPE")
+        {
+            return false;
+        }
+
+        // IPE: número provisorio alfanumérico, sin espacios.
         var limpio = documento.Trim();
 
         return limpio.Length is >= 3 and <= 20
@@ -59,5 +65,5 @@ public sealed class IdentificadorAttribute : ValidationAttribute
     }
 
     public override string FormatErrorMessage(string name) =>
-        "El documento no es válido: revise el RUN (módulo 11) o el número IPE/IPA.";
+        "El documento no es válido: revise el RUN (módulo 11) o el número IPE.";
 }

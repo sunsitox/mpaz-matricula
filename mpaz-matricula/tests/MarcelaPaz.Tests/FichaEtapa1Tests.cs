@@ -34,12 +34,28 @@ public class FichaEtapa1Tests
     }
 
     [Fact]
-    public void IpeIpa_SeAceptaComoDocumentoProvisorio()
+    public void Ipe_SeAceptaComoDocumentoProvisorioDelEstudiante()
     {
         Assert.True(IdentificadorAttribute.EsValido("IPE-2027-001", "IPE"));
-        Assert.True(IdentificadorAttribute.EsValido("IPA-15", "IPA"));
         Assert.False(IdentificadorAttribute.EsValido("IP", "IPE"));
         Assert.False(IdentificadorAttribute.EsValido("IPE 2027", "IPE"));
+    }
+
+    [Fact]
+    public void Ipa_NoSeAceptaComoDocumentoDelEstudiante()
+    {
+        // El IPA identifica al apoderado, no al estudiante.
+        Assert.False(IdentificadorAttribute.EsValido("IPA-15", "IPA"));
+
+        var formulario = new FichaForm
+        {
+            Tipo_Identificador = "IPA",
+            Cedula_Identidad = "123456789",
+        };
+
+        Assert.False(EsValido(formulario, nameof(FichaForm.Cedula_Identidad)));
+        Assert.Contains(ValidadorFicha.Validar(1, formulario),
+            error => error.Campo == nameof(FichaForm.Tipo_Identificador));
     }
 
     [Fact]

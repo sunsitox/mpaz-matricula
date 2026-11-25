@@ -8,7 +8,7 @@
 <div class="admin__tarjeta">
     <h1 class="admin__titulo-seccion">Matrícula @Model.Anio</h1>
     <p class="admin__ayuda">
-        Busque al estudiante por RUN o por IPE/IPA. Si ya tuvo matrícula en un año anterior se abre la
+        Busque al estudiante por RUN o por IPE (identificador provisorio para estudiantes extranjeros sin RUN). Si ya tuvo matrícula en un año anterior se abre la
         renovación con sus datos; si no está registrado, se inicia una matrícula nueva.
         El RUN se puede escribir con o sin puntos.
     </p>
@@ -24,13 +24,12 @@
             <select class="acceso__input" id="tipo" name="tipo">
                 <option value="RUN" selected="@(Model.Tipo == "RUN" ? "selected" : null)">RUN (cédula nacional)</option>
                 <option value="IPE" selected="@(Model.Tipo == "IPE" ? "selected" : null)">IPE</option>
-                <option value="IPA" selected="@(Model.Tipo == "IPA" ? "selected" : null)">IPA</option>
             </select>
         </div>
         <div class="acceso__campo">
-            <label class="acceso__etiqueta" for="rut">RUN o número IPE/IPA del estudiante</label>
+            <label class="acceso__etiqueta" for="rut">RUN o número IPE del estudiante</label>
             <input class="acceso__input" id="rut" name="rut" value="@Model.Rut"
-                   placeholder="Ej: 20.114.567-8 o IPE-1234" autocomplete="off" />
+                   placeholder="Ej: 20.114.567-8 o 123456789" autocomplete="off" />
         </div>
         <button type="submit" class="admin__boton admin__boton--primario">Buscar</button>
     </form>

@@ -16,7 +16,7 @@ Base de datos: `mpaz-matricula/database/modulos/matricula/pasos/01-ddl-instituci
 - [x] La solución compila en `Release`: `dotnet build MarcelaPaz.Matriculas.slnx -c Release --no-restore` — 0 errores y 0 advertencias (17-11-2026).
 - [x] Aplicación local accesible: `/`, `/Cuenta/Login`, `/Alertas` y `/?anio=2027` respondieron HTTP 200 en `http://localhost:5301` (17-11-2026); `/Alertas?anio=2026` también responde 200.
 - [x] Se inspeccionaron el DDL, entidades, contexto EF Core, controladores, vistas, seguridad, PDF y scripts de permisos.
-- [x] Existe un proyecto de pruebas automatizadas en `mpaz-matricula/tests` con 133 casos: RUN/IPE-IPA, validaciones del formulario, cierre de ficha, formatos, firma real de archivos del expediente y alertas MAT-17.
+- [x] Existe un proyecto de pruebas automatizadas en `mpaz-matricula/tests` con 133 casos: RUN/IPE, validaciones del formulario, cierre de ficha, formatos, firma real de archivos del expediente y alertas MAT-17.
 - [x] PostgreSQL 16.15 instalado y probado en el servidor (`psql`, `pg_dump` disponibles) — 06-11-2026.
 - [x] Servidor auditado e intervenido en una ventana autorizada: runtime, release, base de datos y servicios temporales; ver secciones 8 y 11.
 
@@ -61,7 +61,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 
 - [ ] [Equipo] [BLOQUEADO] ¿Qué archivo o formato pide el ministerio, y quién lo sube? (hoy el documento solo permite exportar reportes)
 - [x] [Equipo] Inicio de sesión único de funcionarios (sec. 4) — **Comprobado (16-11-2026):** emisor OpenIddict propio (`Seguridad/EmisorSso.cs`, `AutorizacionController`, `/connect/authorize` y `/connect/token`, scope `mpaz_api`), migración `AgregarSso` en el esquema `mpaz_auth`, módulo `database/modulos/auth` y prototipo de prueba `scripts/probar-sso.py`. Falta acordar con el equipo qué módulos lo consumirán.
-- [ ] [Equipo] [BLOQUEADO] Acordar con Samantha el identificador común del estudiante (RUN, o IPE/IPA)
+- [ ] [Equipo] [BLOQUEADO] Acordar con Samantha el identificador común del estudiante (RUN o IPE)
 - [ ] [Equipo] [BLOQUEADO] Acordar qué datos mínimos recibe Asistencia (identificador, curso, condición de matrícula)
 - [ ] [Equipo] [BLOQUEADO] Acordar con Sebastián el enlace desde la página del colegio hacia el portal de matrícula
 
@@ -90,7 +90,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 
 - [x] [José] **MAT-01** Crear matrícula nueva y renovación por año escolar — **Comprobado:** `Buscar`, `Nueva` y `Renovar` distinguen ambos flujos, la matrícula registra `creada_por` y la ficha del alumno ofrece «Iniciar matrícula {año}» cuando falta el expediente. El cierre congela la versión, obtiene folio y deja la matrícula en `FICHA_GENERADA`; probado sobre una matrícula de renovación.
 - [ ] [José] Formulario en pasos, con guardado de borrador y mensajes de error claros — **Parcial:** hay wizard de 7 pasos, TempData y escritura progresiva en PostgreSQL; el propio código declara que no tiene validación definitiva y algunas reglas están desactivadas.
-- [x] [José] Bloque A: estudiante (nombres, apellidos, identificador RUN/IPE/IPA, nacimiento, nacionalidad, domicilio, curso) — **Comprobado:** RUN, IPE e IPA se aceptan y validan según el tipo elegido, con pruebas de regresión.
+- [x] [José] Bloque A: estudiante (nombres, apellidos, identificador RUN/IPE, nacimiento, nacionalidad, domicilio, curso) — **Comprobado:** RUN e IPE se aceptan y validan según el tipo elegido, con pruebas de regresión; el IPA se rechaza porque identifica al apoderado.
 - [x] [José] **MAT-02** Validar RUN (dígito verificador) y evitar estudiantes duplicados — **Comprobado:** normalización y dígito verificador con pruebas automatizadas, búsqueda previa y restricción única del DDL.
 - [ ] [José] Bloque B: madre, padre, apoderado principal y secundario (teléfono, correo, domicilio, escolaridad, restricción judicial sí/no) — **Parcial:** pasos 2 y 3 guardan familia y apoderados; la restricción está modelada solo como restricción de la madre y falta validación final.
 - [ ] [José] Bloque C: contactos de emergencia, personas autorizadas a retirar, salida solo — **Parcial:** pasos 4 y 5 y persistencia implementados; no hay prueba de aceptación.
@@ -113,7 +113,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 - [x] [José] **MAT-09** Subir el escaneo de la ficha firmada y asociarlo a la matrícula — **Comprobado:** el escaneo se guarda como documento `FICHA_FIRMADA`, reemplaza al anterior sin borrarlo y la ficha muestra el enlace de descarga.
 - [x] [José] **MAT-10** Registrar la ubicación del original en papel y el estado de validación documental — **Comprobado:** `AlumnosController.ValidarDocumentacion` (permiso `DOCUMENTOS:VALIDAR`) guarda `validado_por`, `validado_en`, la observación y la ubicación del original; `RegistroFicha.ValidarDocumentacionAsync` valida PENDIENTE/VALIDADA/OBSERVADA y exige firma y escaneo para VALIDADA; la ficha del alumno muestra ubicación, estado y observación.
 - [x] [José] Confirmar la matrícula según el procedimiento oficial (registrar quién y cuándo) — **Comprobado:** sólo desde ficha generada o firmada, con funcionario y fecha en la matrícula y en la auditoría.
-- [x] [José] **MAT-11** Consulta administrativa: búsqueda global y filtros por RUN/identificador, nombre, curso, año, estado y pendientes — **Comprobado:** el listado busca por nombre y por RUN, IPE o IPA, y agrega el filtro y la columna «Pendientes» (sin ficha vigente o con requisitos documentales pendientes) conservando año, curso, estado y orden.
+- [x] [José] **MAT-11** Consulta administrativa: búsqueda global y filtros por RUN/identificador, nombre, curso, año, estado y pendientes — **Comprobado:** el listado busca por nombre y por RUN o IPE, y agrega el filtro y la columna «Pendientes» (sin ficha vigente o con requisitos documentales pendientes) conservando año, curso, estado y orden.
 - [x] [José] Vista previa del PDF firmado; descarga solo si el rol lo permite — **Comprobado:** descarga del escaneo con `DOCUMENTOS:LEER` y denegación verificada para Docente.
 - [x] [José] Pestañas con acceso condicionado: salud, PIE, documentos judiciales — la ficha tiene pestañas General/Autorizaciones/Documentos/Salud/PIE; cada panel muestra solo lo del rol y explica la ausencia (S-02).
 - [x] [José] Mostrar última actualización y funcionario responsable — la ficha del alumno muestra fecha (trigger de auditoría, respaldo `updated_at`) y funcionario (historial, respaldo `creada_por`).
@@ -294,8 +294,8 @@ No son tareas: no se marcan ni se construyen.
 | Expediente documental | Carga, reemplazo, estados, descarga por área y escaneo de la ficha firmada (MAT-06/07/09) |
 | MAT-01, MAT-03 y MAT-04 | Matrícula nueva y renovación con cierre completo, `creada_por` y botón «Iniciar matrícula»; salud, alergias, contacto sanitario y PIE/apoyos visibles; autorizaciones con estado, alcances, revocación con motivo y vencimiento |
 | MAT-14 y MAT-18 | Historial de versiones con descarga desde el snapshot, autorizaciones y apoderados anteriores; corrección con motivo que crea una versión nueva y reemplaza la anterior |
-| MAT-11 y asistente de 8 pasos | Búsqueda por nombre y por RUN/IPE/IPA, filtro y columna de pendientes; salud/PIE y autorizaciones separados en pasos 6 y 7, con revisión en el paso 8 |
-| Pruebas | 39 casos, incluidos formatos y firma real de archivos, RUN/IPE/IPA, cierre de ficha y estados de autorización |
+| MAT-11 y asistente de 8 pasos | Búsqueda por nombre y por RUN/IPE, filtro y columna de pendientes; salud/PIE y autorizaciones separados en pasos 6 y 7, con revisión en el paso 8 |
+| Pruebas | 39 casos, incluidos formatos y firma real de archivos, RUN/IPE, cierre de ficha y estados de autorización |
 | Prueba de humo | Sobre la matrícula 4: corrección generó la versión 2 con motivo y dejó la 1 como `REEMPLAZADA`; la revocación de la autorización 9 guardó funcionario, fecha y motivo. Datos de prueba y permisos temporales revertidos |
 | Commits | `dcb30fe`, `6d1a347` y `99013b8` en `main`; estos avances quedan sin commit |
 
@@ -398,7 +398,7 @@ El portal local compila en Release sin errores ni advertencias y las 137 pruebas
 - [ ] [Colegio] [BLOQUEADO] Confirmar cuál es la fuente de verdad (¿el Excel manda y el Access solo se consulta?).
 - [ ] [José] Perfilado de la fuente elegida: columnas, nulos, duplicados de identificador y formatos de fecha/teléfono; informe en `datos-alumnos/informes/`.
 - [ ] [José] Normalización de RUT: a los sin DV se les calcula el dígito (módulo 11, igual que `rut_valido()`); los que sigan inválidos van a lista de cuarentena para que el colegio los corrija (el DDL rechaza el `RUN` inválido: `ck_estudiante_run` / `ck_persona_run`).
-- [ ] [José] Extranjeros: mapear el número de matrícula a `tipo_identificador` IPE/IPA/OTRO según corresponda (DDL: `('RUN', 'IPE', 'IPA', 'OTRO')`, único por tipo + identificador).
+- [ ] [José] Extranjeros: mapear el número de matrícula del estudiante a `tipo_identificador` IPE (u `OTRO` al importar) según corresponda; el IPA corresponde al apoderado. El DDL conserva `IPA` para personas y retiros, pero el asistente sólo admite RUN o IPE en el estudiante.
 - [ ] [José] Normalizar nacionalidad contra lista controlada; registrar el mapeo de variantes mal escritas en el README de importación; lo no mapeable va a cuarentena.
 - [ ] [José] Validar apoderados sin revisar (RUN, teléfono, formato de correo que exige el DDL) y vínculos madre/padre/principal/secundario para `estudiante_persona` (unicidades de vigente); duplicados y vínculos ambiguos a cuarentena.
 - [ ] [Colegio] [BLOQUEADO] Quién corrige la lista de cuarentena y en qué plazo; si se importan solo los registros limpios o se espera la corrección.

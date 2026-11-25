@@ -36,8 +36,8 @@ public sealed class DocumentoCertificado
 
     /// <summary>
     /// Año de la matrícula posterior al año de emisión: cambia la redacción
-    /// a "se encuentra matriculado(a) ... para cursar" en vez de
-    /// "es alumno(a) regular ... y cursa".
+    /// a "se encuentra matriculado/a ... para cursar" en vez de
+    /// "es alumno/a regular ... y cursa".
     /// </summary>
     public bool MatriculaFutura { get; init; }
 
@@ -50,8 +50,13 @@ public sealed class DocumentoCertificado
     /// </summary>
     public string? Vigencia { get; init; }
 
+    /// <summary>
+    /// Nombre de quien firma según el registro. No se imprime: el certificado
+    /// firma institucionalmente con el cargo (ver <see cref="FirmanteCargo"/>).
+    /// </summary>
     public required string FirmanteNombre { get; init; }
 
+    /// <summary>Cargo impreso bajo la línea de firma: «Director/a».</summary>
     public required string FirmanteCargo { get; init; }
 
     /// <summary>Se muestra una sola vez, bajo el título.</summary>

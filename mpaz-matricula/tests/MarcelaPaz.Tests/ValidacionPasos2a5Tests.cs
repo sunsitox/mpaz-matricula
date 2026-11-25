@@ -329,7 +329,7 @@ public class ValidacionPasos2a5Tests
     [Fact]
     public void Paso5_ConIpeNoSeComparaConRun()
     {
-        // Con IPE/IPA el documento no es un RUN: la comparación con las personas
+        // Con IPE el documento no es un RUN: la comparación con las personas
         // autorizadas no aplica y no debe producir un falso error.
         var form = Paso5Valido();
         form.Tipo_Identificador = "IPE";

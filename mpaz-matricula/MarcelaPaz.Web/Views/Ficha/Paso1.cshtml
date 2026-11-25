@@ -6,7 +6,8 @@
 <h2 class="wizard__titulo-paso">Paso 1 · Datos del estudiante</h2>
 <p class="wizard__ayuda">
     Primero el curso al que postula, luego la identificación y el domicilio.
-    Los campos marcados con * son obligatorios. El estudiante puede identificarse con RUN o con IPE/IPA.
+    Los campos marcados con * son obligatorios. El estudiante puede identificarse con RUN o con IPE
+    (identificador provisorio para estudiantes extranjeros que aún no tienen RUN).
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="1" method="post">
@@ -83,14 +84,13 @@
                     <label asp-for="Tipo_Identificador" class="acceso__etiqueta">Tipo de documento *</label>
                     <select asp-for="Tipo_Identificador" class="acceso__input" aria-required="true">
                         <option value="RUN">RUN (cédula nacional)</option>
-                        <option value="IPE">IPE (identificación provisoria)</option>
-                        <option value="IPA">IPA (identificación provisoria)</option>
+                        <option value="IPE">IPE (estudiante extranjero sin RUN)</option>
                     </select>
                     <span asp-validation-for="Tipo_Identificador" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">
-                    <label asp-for="Cedula_Identidad" class="acceso__etiqueta">RUN o número IPE/IPA *</label>
-                    <input asp-for="Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o IPE-1234" autocomplete="off" aria-required="true" />
+                    <label asp-for="Cedula_Identidad" class="acceso__etiqueta">RUN o número IPE *</label>
+                    <input asp-for="Cedula_Identidad" class="acceso__input" placeholder="Ej: 12.345.678-9 o 123456789" autocomplete="off" aria-required="true" />
                     <span asp-validation-for="Cedula_Identidad" class="acceso__error"></span>
                 </div>
                 <div class="acceso__campo">

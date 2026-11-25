@@ -59,7 +59,7 @@ public class CertificadoAlumnoRegularTests
         LugarFecha = "San Bernardo, 10 de noviembre de 2026",
         Vigencia = vigencia,
         FirmanteNombre = "María Teresa Lagos Sandoval",
-        FirmanteCargo = "Secretaria",
+        FirmanteCargo = "Director/a",
         Folio = "CAR-2027-000001",
         Codigo = "ABCD-1234-EFGH",
         UrlValidacion = "https://ejemplo.cl/c/ABCD1234EFGH",

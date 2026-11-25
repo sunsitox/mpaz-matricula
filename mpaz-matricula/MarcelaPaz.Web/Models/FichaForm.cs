@@ -25,11 +25,12 @@ public class FichaForm
     [Required(ErrorMessage = "Falta el año escolar.")]
     public string? Curso_Anio { get; set; }
 
-    // Paso 1 · Identificación del estudiante (Bloque A: RUN o IPE/IPA)
+    // Paso 1 · Identificación del estudiante (Bloque A: RUN o IPE).
+    // El IPA identifica al apoderado y no se ofrece para el estudiante.
     [Required(ErrorMessage = "Seleccione el tipo de documento del estudiante.")]
     public string? Tipo_Identificador { get; set; } = "RUN";
 
-    [Required(ErrorMessage = "Ingrese el RUN o número IPE/IPA del estudiante.")]
+    [Required(ErrorMessage = "Ingrese el RUN o número IPE del estudiante.")]
     [Identificador]
     [StringLength(20, ErrorMessage = "El documento no puede superar los 20 caracteres.")]
     public string? Cedula_Identidad { get; set; }

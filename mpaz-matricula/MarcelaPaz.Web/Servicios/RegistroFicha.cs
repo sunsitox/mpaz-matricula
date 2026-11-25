@@ -163,7 +163,7 @@ public class RegistroFicha
         {
             if (documento is null || !DocumentoValido(tipoDocumento, documento) || nombres is null || paterno is null || nacimiento is null)
             {
-                avisos.Add("El estudiante aún no se registra en la base: se necesitan documento válido (RUN o IPE/IPA), nombres, apellido paterno y fecha de nacimiento.");
+                avisos.Add("El estudiante aún no se registra en la base: se necesitan documento válido (RUN o IPE), nombres, apellido paterno y fecha de nacimiento.");
                 return;
             }
 
@@ -1604,7 +1604,7 @@ public class RegistroFicha
     {
         var limpio = (tipo ?? "RUN").Trim().ToUpperInvariant();
 
-        return limpio is "IPE" or "IPA" ? limpio : "RUN";
+        return limpio == "IPE" ? limpio : "RUN";
     }
 
     private static string? NormalizarDocumento(string tipo, string? documento)

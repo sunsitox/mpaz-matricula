@@ -50,6 +50,16 @@ public static class ValidadorFicha
         switch (paso)
         {
             case 1:
+                // El estudiante se identifica con RUN o IPE. El IPA es el
+                // identificador provisorio del apoderado y no corresponde aquí.
+                var tipoDocumento = (form.Tipo_Identificador ?? "RUN").Trim().ToUpperInvariant();
+
+                if (tipoDocumento is not ("RUN" or "IPE"))
+                {
+                    errores.Add(new ErrorValidacion(nameof(FichaForm.Tipo_Identificador),
+                        "El tipo de documento del estudiante debe ser RUN o IPE: el IPA identifica al apoderado."));
+                }
+
                 // Pre-kínder y Kínder son cursos neutros: no llevan letra.
                 if (NivelesCurso.EsParvularia(form.Curso_Nivel))
                 {
