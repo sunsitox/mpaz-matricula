@@ -49,8 +49,8 @@ services:
       ConnectionStrings__Default: "Host=db;Port=5432;Database=mpaz_matricula;Username=mpaz_app;Password=${CLAVE_APP:?Defina CLAVE_APP en .env};SSL Mode=Disable;Search Path=mpaz_matricula,public"
       # Expediente documental en un volumen propio: sobrevive a los rebuild.
       Documentos__RutaBase: /datos/documentos
-      # MAT-05 sigue bloqueado hasta aprobar el protocolo TENS.
-      Medicacion__Habilitada: "false"
+      # MAT-05 habilitado por orden expresa (25-11-2026); el protocolo escrito del colegio sigue pendiente.
+      Medicacion__Habilitada: "true"
     volumes:
       - claves:/keys
       - documentos:/datos/documentos

@@ -14,7 +14,7 @@ aquí**. Lo que sigue abajo es lo que falta confirmar o entregar.
 | --- | --- | --- | --- |
 | 1 | **Matriz de permisos en la base del colegio** | La matriz vigente en el repositorio (ver `docs/roles-permisos-actuales.md`) | Aprobarla y cargarla en la base del colegio, con respaldo previo. Sin ella, las pantallas responden 403 tras el login. |
 | 2 | **Quién formaliza la matrícula** (crea, confirma, anula) | Secretaría crea/edita/confirma/anula; Dirección valida; el resto consulta | Confirmar o corregir el perfil que formaliza. |
-| 3 | **Protocolo de medicación por TENS** (MAT-05), custodia y qué hacer si el TENS no está (dec. 3) | Medicación apagada (`Medicacion:Habilitada=false`) | Protocolo escrito aprobado. |
+| 3 | **Protocolo de medicación por TENS** (MAT-05), custodia y qué hacer si el TENS no está (dec. 3) | Medicación habilitada el 25-11-2026 por orden expresa (`Medicacion:Habilitada=true`) | Protocolo escrito aprobado (sigue pendiente). |
 | 4 | **Textos legales de autorizaciones** de imagen y convivencia (dec. 4) | Texto vigente guardado como «Pendiente de aprobación (Dirección)», versión 1 | Aprobación con nombre de quien aprueba. |
 | 5 | **Documentos obligatorios** (dec. 11, en detalle) | Requisitos actuales, «pendiente» que no bloquea la formalización | Lista formal de documentos obligatorios y cuáles bloquean el cierre. |
 | 6 | **Conservación y eliminación** (dec. 13, en detalle) | No borrar expediente ni auditoría; poda de `alerta_revision` a 24 meses | Plazos formales de retención por tipo de documento y procedimiento de eliminación con el sostenedor. |

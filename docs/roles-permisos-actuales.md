@@ -98,8 +98,8 @@ personal* es por nombre de rol (UTP y Dirección), no por permiso de área.
    Salud y Judicial: UTP y Convivencia leen/crean/editan, Dirección lee.
 3. **Fichas médicas del personal** viven en el apartado *Personal*, fuera de
    UTP, con acceso por rol a **UTP y Dirección**.
-4. **La medicación está apagada por configuración** (`Medicacion:Habilitada=false`),
-   así que ni siquiera TENS ve o registra dosis hasta aprobar el protocolo.
+4. **La medicación está habilitada por configuración** (`Medicacion:Habilitada=true`, por orden expresa del 25-11-2026),
+   así que TENS ve el panel y puede registrar dosis (con orden VIGENTE validada + autorización otorgada); el protocolo escrito sigue pendiente.
 5. **Configuración → Año escolar usa nombres de rol**, no permisos.
 6. **Administración TI no puede ver alumnos**, por diseño.
 7. En la base del **colegio** la matriz aún no está cargada: queda pendiente

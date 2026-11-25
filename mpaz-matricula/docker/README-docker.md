@@ -62,8 +62,8 @@ rol: hágalo con `ALTER ROLE mpaz_app PASSWORD '...'` o recree el volumen.
 
 El expediente documental se guarda en el volumen `documentos`
 (`Documentos__RutaBase=/datos/documentos`), fuera de la imagen: sobrevive a los
-`docker compose up --build`. La medicación (MAT-05) queda apagada con
-`Medicacion__Habilitada=false` hasta que el colegio apruebe el protocolo TENS.
+`docker compose up --build`. La medicación (MAT-05) está habilitada con
+`Medicacion__Habilitada=true` por orden expresa (25-11-2026); el protocolo escrito del colegio sigue pendiente.
 
 ## Exposición pública
 

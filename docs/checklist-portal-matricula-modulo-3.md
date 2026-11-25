@@ -37,7 +37,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 ## 0. Decisiones pendientes (sec. 16 y conversaciones)
 
 - [ ] [Colegio] [BLOQUEADO] Textos de las autorizaciones de imagen y convivencia, aprobados por Dirección, Convivencia Escolar y el sostenedor (frase corta junto a cada checkbox)
-- [ ] [Colegio] [BLOQUEADO] Protocolo escrito de medicación por TENS: custodia de medicamentos y qué hacer si el TENS no está
+- [ ] [Colegio] [BLOQUEADO] Protocolo escrito de medicación por TENS: custodia de medicamentos y qué hacer si el TENS no está — documento de 12 preguntas preparado para llevar impreso (`docs/protocolo-medicacion-preguntas-TENS-direccion.docx`); a la espera de las respuestas de TENS y Dirección
 - [ ] [Colegio] [BLOQUEADO] Matriz final de permisos por rol (la sec. 10 es propuesta a validar) — **Confirmado por Johan 17-11-2026 (citado por José, sin aplicar todavía):** "UTP, INSPECTORIA y DIRECCIÓN son los que formalmente pueden ver todo"; "INSPECTORIA tiene la particularidad de poder editar datos del estudiante junto con el de admin"; "UTP, DIRECCIÓN, PIE Y CONVIVENCIA solo pueden ver, no editar nada, y no deberían tener acceso para generar o editar una matrícula". UTP y CONVIVENCIA no existen hoy como roles en `01-ddl-institucional.sql` ni en `03-permisos-iniciales.sql`. Comparación con lo cargado hoy en `03-permisos-iniciales.sql` (sin modificar):
   - DIRECCIÓN hoy: `GENERAL/FAMILIA/RETIRO/SALUD/PIE/JUDICIAL/AUTORIZACIONES/DOCUMENTOS:LEER` + `GENERAL/AUTORIZACIONES/DOCUMENTOS:VALIDAR` + `EXPORTAR`. Casi coincide con "ver todo, sin generar/editar", salvo que le falta `MEDICACION:LEER` para el "todo" y hay que definir si `VALIDAR` se mantiene (¿validar es editar?).
   - INSPECTORIA hoy: `GENERAL/FAMILIA/RETIRO:LEER` + `RETIRO:EDITAR`. Difiere: Johan pide ver todo y editar datos del estudiante; hoy no ve SALUD/PIE/JUDICIAL/AUTORIZACIONES/DOCUMENTOS/MEDICACION ni edita GENERAL/FAMILIA.
@@ -118,7 +118,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 - [x] [José] Pestañas con acceso condicionado: salud, PIE, documentos judiciales — la ficha tiene pestañas General/Autorizaciones/Documentos/Salud/PIE; cada panel muestra solo lo del rol y explica la ausencia (S-02).
 - [x] [José] Mostrar última actualización y funcionario responsable — la ficha del alumno muestra fecha (trigger de auditoría, respaldo `updated_at`) y funcionario (historial, respaldo `creada_por`).
 - [x] [José] Acceso de lectura concurrente; control de versión para evitar sobrescrituras al editar — **Comprobado:** la columna `version` está mapeada como token de concurrencia en `MatriculaDbContext` (`IsConcurrencyToken`), de modo que EF lanza `DbUpdateConcurrencyException` si otro funcionario guardó primero, en vez de sobrescribir en silencio.
-- [ ] [José] [BLOQUEADO] Medicación por TENS: prescripción, autorización y registro de dosis (**MAT-05**) — el DDL contiene las tablas y restricciones, pero no debe conectarse hasta aprobar el protocolo.
+- [ ] [José] [BLOQUEADO] Medicación por TENS: prescripción, autorización y registro de dosis (**MAT-05**) — lectura y registro conectados en código (`Prescripcion`, `RegistrarDosis`, trigger que exige TENS activo + orden VIGENTE validada + autorización otorgada), formulario corregido el 25-11-2026 (`679554d`: se oculta sin prescripciones VIGENTES) y flag habilitado por orden expresa (`Medicacion:Habilitada=true`); desplegado en el servidor (publicación `20261125T061732Z`, HTTP 302, Docker verificado). Falta: protocolo escrito del colegio y pantalla de ingreso/validación de prescripciones (hoy solo se crean directo en base).
 
 ## 6. Etapa III — Continuidad
 
@@ -132,7 +132,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
     - **Existe:** la vista `v_alertas_vencimiento` del DDL (unión de `prescripcion` con estado `VIGENTE`/`PENDIENTE_VALIDACION` y de `autorizacion` `OTORGADA` o `VENCIDA` no revocada, con `vigente_hasta <= hoy + 30` y bandera `vencida`); el panel de inicio cuenta las vencidas en `PanelIndicadores.ContarPanelAsync` y las muestra como «Documentos y autorizaciones vencidas»; `Autorizaciones.EstadoEfectivo` y `RegistroFicha.MarcarVencidasAsync` pasan a `VENCIDA` las autorizaciones cuyo plazo terminó.
     - **Listado — resuelto:** `AlertasController` y `/Alertas` muestran alumno, identificador, curso, tipo, detalle, vencimiento y estado, con enlace a la ficha; el bloque de autorizaciones exige `AUTORIZACIONES:LEER` y el de órdenes médicas `MEDICACION:LEER`, y la lectura queda en `registros_acceso` (MAT-13).
     - **Aviso previo — resuelto en pantalla:** `/Alertas` muestra también las que vencen en los próximos 30 días, separadas como «por vencer». El contador del panel sigue mostrando sólo las vencidas.
-    - **Falta la rama de órdenes médicas:** no existe entidad `Prescripcion` en el código (0 referencias en C# o Razor); la tabla vive sólo en el DDL y depende de MAT-05, bloqueado por el protocolo de medicación. La rama `PRESCRIPCION` de la vista no puede generar filas desde el portal.
+    - **Rama de órdenes médicas — conectada en lectura (25-11-2026):** existe la entidad `Prescripcion` (`Domain/Entidades/Medicacion.cs`, `DbSet` en `MatriculaDbContext`) y `AlertasController` consulta la rama `PRESCRIPCION` de la vista con permiso `MEDICACION:LEER`. Falta la pantalla de ingreso/validación de prescripciones y el proceso programado; el panel se calcula al abrir la página (caché de 15 s).
     - **Falta proceso programado:** el panel se calcula al abrir la página (caché de 15 s). No hay tarea, timer de systemd ni correo o reporte periódico; `deploy/mpaz-matriculas.service` no programa nada.
     - **Alcance por rol — resuelto (17-11-2026):** el panel sólo cuenta vencidas de las áreas que la sesión puede leer, por el año consultado; si no tiene ninguna de las dos áreas, no muestra el indicador. La pantalla de alertas ya filtraba por área y ahora también por año escolar.
     - **Pruebas:** `AlertasPaginaTests` cubre `Vencidas`/`PorVencer` y el estado relativo de `Plazo`; no hay cobertura automatizada de las consultas SQL contra PostgreSQL.
@@ -147,7 +147,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 - [ ] Dos funcionarios consultan al mismo estudiante: ven la misma versión, sin esperar una carpeta física — no probado.
 - [x] El apoderado revoca la imagen: el estado queda actualizado, con la versión histórica y la fecha, y se bloquea la difusión — **Comprobado:** la revocación queda como `REVOCADA` con funcionario, fecha y motivo; la firma original se conserva y la autorización deja de contar como vigente.
 - [x] Un docente sin permiso pide un diagnóstico: acceso denegado en pantalla y servidor, con evento de auditoría — **Comprobado** con un Docente real sobre documentos y áreas sensibles.
-- [ ] Un TENS registra una dosis: exige autorización y orden vigentes, y guarda responsable, fecha, hora y dosis — solo existen reglas en DDL; bloqueado por protocolo.
+- [ ] Un TENS registra una dosis: exige autorización y orden vigentes, y guarda responsable, fecha, hora y dosis — código y trigger verificados y flag habilitado el 25-11-2026; pendiente el protocolo del colegio, la pantalla de prescripciones y la prueba con una orden válida.
 - [x] Se corrige una matrícula firmada: se conserva el original y se genera una versión nueva — **Comprobado:** la corrección crea la versión 2 con motivo y deja la versión 1 como `REEMPLAZADA`, sin modificar su snapshot.
 - [ ] El estudiante continúa el año siguiente: se precargan los datos, se confirman y se genera la ficha del año nuevo — precarga parcial, flujo completo no probado.
 - [ ] Probar la restauración de un respaldo de la base de datos — pendiente.
@@ -469,4 +469,14 @@ Los 302 corresponden a la política de permisos (redirección a Sin permiso); en
 - [ ] [José] Revisar el RUN de las personas del grupo familiar y de retiro: en la selección de alumnos para la demostración, 26 de 121 traían dígito verificador inválido y el paso 5 no deja cerrar la ficha.
 - [ ] [José] Reemplazar o anular las 5 matrículas de demostración cuando estén los datos definitivos del colegio.
 - [ ] [José] Dejar automatizado el recorrido completo del asistente (hoy se validó con un script externo sobre el portal en ejecución) para repetirlo antes de cada entrega.
+
+---
+
+## 19. Medicación TENS: corrección, habilitación y despliegue — 25-11-2026
+
+- Formulario de dosis corregido (`MarcelaPaz.Web/Views/Alumnos/Detalle.cshtml`, commit `679554d`): solo se muestra cuando hay al menos una prescripción `VIGENTE`; antes bastaba con que existiera cualquiera y el selector quedaba vacío.
+- Flag de medicación puesto en `true` por orden expresa (`Medicacion:Habilitada=true` en `appsettings.json`, `docker-compose.yml` y `deploy/mpaz-matriculas.env.example`; en el servidor, `/etc/mpaz-matriculas/mpaz-matriculas.env`). Desde ahora TENS ve el panel de medicación y puede registrar dosis, siempre con orden VIGENTE validada + autorización otorgada (lo exige el trigger, no solo la pantalla).
+- Desplegado en el servidor con `_servidor/actualizar.sh`: publicación `20261125T061732Z`, portal en línea (HTTP 302) con el commit `679554d`, Docker verificado.
+- Revisión funcional TENS: build Release 0 errores, 213/213 pruebas.
+- Pendiente del colegio (sigue bloqueado): protocolo escrito (las 12 preguntas están en `docs/protocolo-medicacion-preguntas-TENS-direccion.docx`), pantalla de ingreso/validación de prescripciones y prueba de aceptación con una orden válida.
 
