@@ -948,7 +948,7 @@
             }
             </ul>
         }
-        @if (Model.PuedeRegistrarDosis && Model.Prescripciones.Count > 0)
+        @if (Model.PuedeRegistrarDosis && Model.Prescripciones.Any(x => x.Estado == "VIGENTE"))
         {
             <form method="post" asp-action="RegistrarDosis" asp-route-id="@Model.Id" data-ux-envio="Registrando dosis…">
                 <div class="acceso__campo">
