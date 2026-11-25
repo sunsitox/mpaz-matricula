@@ -405,3 +405,68 @@ El portal local compila en Release sin errores ni advertencias y las 137 pruebas
 - [ ] [Colegio] [BLOQUEADO] Alcance de la carga inicial: ¿solo estudiante + familia/apoderados, o también curso y matrícula anual? (si la fuente no trae curso/año, la matrícula queda para el wizard).
 - [ ] [José] Carga primero en base de desarrollo, idempotente (re-ejecutable sin duplicar, apoyada en `uk_estudiante_identificador` / `uk_persona_identificador`), con respaldo previo; los 10 estudiantes mock conviven o se retiran según decida el colegio.
 - [ ] [José] Protección de datos: todo el trabajo solo en `datos-alumnos/` (ignorado por git completo), borrar o archivar fuera del equipo tras la carga; revisión de la Ley 21.719 antes de operar con datos reales (sec. 0).
+
+---
+
+## 18. Revisión de módulos y simulación de matrículas — 25-11-2026
+
+### Módulos revisados con sesión real (HTTP, base de desarrollo Neon)
+
+| Módulo | Ruta | Secretaría | UTP | Dirección |
+| --- | --- | --- | --- | --- |
+| Panel | `/` | 200 | 200 | 200 |
+| Estudiantes y ficha | `/Alumnos`, `/Alumnos/Detalle/{id}` | 200 | 200 | 200 |
+| Buscador de matrícula | `/Ficha/Buscar` | 200 | 200 | 200 |
+| Alertas | `/Alertas` | 200 | 200 | 200 |
+| Reportes y CSV | `/Reportes/Matriculas`, `/Reportes/Faltantes` | 200 | 200 | 200 |
+| Certificados | `/Certificados` | 302 | 302 | 200 |
+| Fichas médicas del personal | `/personal/fichas-medicas` | 302 | 200 | 200 |
+| Año escolar | `/Configuracion/AnioEscolar` | 200 | 302 | 200 |
+| Actividad | `/Home/Actividad` | 200 | 302 | 200 |
+| Funcionarios | `/admin/funcionarios` | 302 | 302 | 302 |
+
+Los 302 corresponden a la política de permisos (redirección a Sin permiso); en `admin/funcionarios` es lo esperado porque el único rol con esa área sería un administrador y no existe cuenta con ese rol en la base de desarrollo.
+
+### Simulación del asistente (3 alumnos de cursos distintos)
+
+- Recorrido completo de los 8 pasos con el borrador precargado desde la base: pasos 1 a 5 con datos existentes, paso 6 con «sin situación médica» y PIE «Pendiente», paso 7 con ambas autorizaciones afirmativas.
+- Resultado: matrículas en `FICHA_GENERADA`, folios `MP-2027-00001` a `MP-2027-00003`, versión 1 `VIGENTE`, PDF de la ficha (112 KB, `application/pdf`), reporte de matrículas con las 3 filas y CSV con los mismos datos.
+- Al terminar se restauró el respaldo previo (`artifacts/respaldo/mpaz-antes-simulacion-*.dump`) y se recargó `import_carga_2026` (255 filas: 92 APTO y 163 OBSERVADO). La base quedó en: 251 estudiantes, 251 matrículas 2027 en BORRADOR, 394 vínculos vigentes, 0 fichas, 0 documentos, 0 autorizaciones y folio 2027 en 0.
+
+### Hallazgos de integración
+
+- **Pasos 2 y 3 no se pueden precargar para todos:** de 251 estudiantes, 226 tienen algún vínculo vigente, 196 madre, 128 padre, 191 apoderado principal y 25 no tienen ningún vínculo. Sin vínculo, el asistente abre los pasos 2 y 3 en blanco.
+- **Retiro autorizado:** 186 estudiantes tienen personas autorizadas; los demás abren el paso 5 vacío y no se puede cerrar sin registrar al menos una.
+- **Curso:** 2 matrículas 2027 no tienen curso asignado, así que el paso 1 obliga a elegirlo a mano.
+- **Salud y PIE:** 0 situaciones médicas y 0 antecedentes de apoyo en la base; el paso 6 siempre pide el contacto sanitario y las respuestas de PIE. Los datos clínicos del Excel (`SMED_SITU`, `SMED1_NOM`, etc.) están en `import_carga_2026` pero no se imputaron a las tablas del expediente.
+- **Fichas médicas con datos de mockup:** en la base de desarrollo no hay ninguna: `ficha_salud_funcionario` = 0 y `ficha_medica_funcionario` = 0. Los datos ficticios (asma, ansiedad) viven solo en `docker/db-init/04-datos-gestion-expediente.sql` y en `database/modulos/matricula/datos-prueba/`, que no se cargan en Neon.
+- **Cuentas de prueba:** los 9 funcionarios de la base son cuentas de prueba (`prueba.*` y nombres de ejemplo). Antes de entregar hay que reemplazarlas por las cuentas reales del colegio.
+
+
+
+### Certificado de alumno regular: quién genera y quién firma (25-11-2026)
+
+- Regla del colegio: **Secretaría genera** el certificado; **Dirección solo firma**. El código tenía al revés la restricción: `PuedeEmitir()` exigía el rol `DIRECCION` y dejaba fuera a Secretaría.
+- `CertificadosController` ahora genera con `DOCUMENTOS:CREAR` o `DOCUMENTOS:EDITAR` y el historial se abre con `DOCUMENTOS:LEER`, que es lo que dice la matriz de la hoja de permisos (Inspectoría, PIE, Convivencia y TENS solo leen; Docentes y Administración TI no tienen acceso).
+- La firma impresa ya no es la de quien genera: el controlador busca al funcionario activo con rol `DIRECCION` vigente y guarda su nombre como `FirmanteNombre` (cargo «Director»), mientras `EmitidoPor` queda con quien emitió. Si no hay ninguna cuenta con ese rol, usa `Institucion:FirmanteNombre` y, en último caso, «La Dirección».
+- El botón «Certificado alumno regular» de la ficha del alumno aparece a quien puede generar y la matrícula está apta (firmada, confirmada o validada).
+- Verificado por HTTP: Secretaría ve el botón y obtiene el PDF (`application/pdf`, 103 KB); Dirección y UTP ven el historial pero no el botón y su POST de emisión no genera documento. El certificado de prueba con folio `CAR-2027-000001` se eliminó después de la prueba.
+
+### Matrículas de demostración dejadas en la base (25-11-2026)
+
+- Se registraron **5 matrículas completas** con alumnos que ya tenían familia, apoderado principal, dos contactos de emergencia y personas de retiro: folios `MP-2027-00001` a `MP-2027-00005` (una ficha `VIGENTE` por alumno, PDF de 112 a 114 KB, visibles en la ficha del estudiante). Quedan a propósito para la demostración y **se reemplazarán cuando el colegio entregue los datos definitivos**.
+- El paso 6 se completó con «sin situación médica», PIE «Pendiente» y el contacto sanitario copiado del contacto de emergencia; el paso 7 con ambas autorizaciones afirmativas. Son respuestas de prueba: hay que corregirlas con la información real antes de usar estas fichas.
+- Respaldo previo a estas matrículas: `artifacts/respaldo/mpaz-antes-matriculas-demo-*.dump`, por si hay que volver al estado en blanco.
+
+### Tareas nuevas
+
+- [ ] [José] Completar los vínculos familiares de los 25 estudiantes sin vínculo y el apoderado principal de los 60 que no lo tienen, para que los pasos 2 y 3 del asistente se abran precargados.
+- [ ] [José] Imputar desde `import_carga_2026` las situaciones médicas y los antecedentes PIE de los alumnos que sí los traen (hoy 0 en el expediente), revisando antes las filas OBSERVADO.
+- [ ] [José] Asignar curso a las 2 matrículas 2027 que quedaron sin curso.
+- [ ] [José] Registrar personas autorizadas de retiro para los 65 estudiantes que no tienen ninguna.
+- [ ] [Colegio] Reemplazar las 9 cuentas de prueba por las cuentas reales antes de la entrega y definir quién conserva el rol de administración.
+- [ ] [José] Excluir del release el seed mock de Docker y los `datos-prueba/` (ya fuera del paquete por `scripts/publicar-paquete.sh`, falta verificarlo en la imagen Docker).
+- [ ] [José] Revisar el RUN de las personas del grupo familiar y de retiro: en la selección de alumnos para la demostración, 26 de 121 traían dígito verificador inválido y el paso 5 no deja cerrar la ficha.
+- [ ] [José] Reemplazar o anular las 5 matrículas de demostración cuando estén los datos definitivos del colegio.
+- [ ] [José] Dejar automatizado el recorrido completo del asistente (hoy se validó con un script externo sobre el portal en ejecución) para repetirlo antes de cada entrega.
+

@@ -27,9 +27,9 @@ public sealed class DatosInstitucion
     public string LugarEmision { get; set; } = string.Empty;
 
     /// <summary>
-    /// Nombre de quien firma (decisión 17, paso 20): firma el subrogante, es
-    /// decir el funcionario que emite; este valor ya no se usa para el nombre.
-    /// Se conserva por compatibilidad de configuración.
+    /// Respaldo del nombre del firmante: el certificado lo firma quien tiene el
+    /// rol DIRECCION vigente (lo busca el controlador). Este valor se usa solo
+    /// si no hay ningún funcionario con ese rol registrado.
     /// </summary>
     public string FirmanteNombre { get; set; } = string.Empty;
 

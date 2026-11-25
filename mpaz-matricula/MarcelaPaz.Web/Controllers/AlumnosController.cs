@@ -740,15 +740,21 @@ public class AlumnosController : Controller
                 })
                 .ToList(),
             PuedeCorregirFicha = puedeEditarMatricula && ficha is not null,
-            // El certificado de alumno regular se reserva a Dirección.
-            PuedeEmitirCertificado = User.IsInRole("DIRECCION")
+            // El certificado lo genera Secretaría (DOCUMENTOS:CREAR o EDITAR);
+            // Dirección solo lo firma. Ver CertificadosController.
+            PuedeEmitirCertificado = (User.HasClaim("permiso", "DOCUMENTOS:CREAR")
+                    || User.HasClaim("permiso", "DOCUMENTOS:EDITAR"))
                 && vigente is not null
                 && vigente.Estado != "ANULADA"
                 && (vigente.Estado is "FIRMADA" or "CONFIRMADA" || vigente.ValidadaEn is not null),
             // Tras una anulación se permite iniciar una matrícula nueva: el
             // índice único de la base ignora las anuladas.
             EsEgresado = esEgresado,
-            PuedeRenovarAnio = puedeCrearMatricula && (vigente is null || vigente.Estado == "ANULADA"),
+            // El asistente se abre mientras la matrícula del año no esté cerrada:
+            // un borrador se completa con los datos del estudiante y una anulada
+            // se reemplaza. Con ficha ya generada el camino es «Corregir ficha».
+            PuedeAbrirMatricula = puedeCrearMatricula
+                && (vigente is null || vigente.Estado is "BORRADOR" or "ANULADA"),
             PuedeVerDocumentos = puedeDocumentos,
             PuedeSubirDocumentos = puedeSubirDocumentos,
             PuedeValidarDocumentacion = puedeValidarDocumentacion && ficha is not null,

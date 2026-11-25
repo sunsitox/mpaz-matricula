@@ -4,7 +4,10 @@
     Layout = ViewData["Parcial"] is true ? null : "_WizardLayout";
 }
 <h2 class="wizard__titulo-paso">Paso 3 · Apoderado principal y secundario</h2>
-<p class="wizard__ayuda">Por ahora puede avanzar sin completar los datos de los apoderados.</p>
+<p class="wizard__ayuda">
+    El apoderado principal es obligatorio: nombre, RUN, teléfono y vínculo con el estudiante.
+    El apoderado secundario es opcional.
+</p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="3" method="post">
 

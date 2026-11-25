@@ -746,6 +746,16 @@ public class FichaController : Controller
             .OrderByDescending(m => m.Anio)
             .FirstOrDefaultAsync();
 
+        // La matrícula del año puede estar en borrador (por ejemplo, cargada al
+        // importar el listado): su curso es el que corresponde al expediente que
+        // se abre desde la ficha del estudiante.
+        var vigente = await _db.Matriculas
+            .Include(m => m.Curso)
+            .Where(m => m.EstudianteId == id && m.Anio == anio && m.Estado != "ANULADA")
+            .FirstOrDefaultAsync();
+
+        var cursoReferencia = anterior?.Curso?.Nombre ?? vigente?.Curso?.Nombre;
+
         // Egreso de 8º básico: el colegio no tiene curso superior, así que
         // renovar a quien ya terminó el nivel debe confirmarse antes.
         var (nivelAnteriorPrevio, _) = SepararCurso(anterior?.Curso?.Nombre);
@@ -774,17 +784,24 @@ public class FichaController : Controller
         GuardarCampo(datos, "domicilio", estudiante.Domicilio);
         GuardarCampo(datos, "comuna", estudiante.Comuna?.Nombre);
 
-        var (nivel, letra) = SepararCurso(anterior?.Curso?.Nombre);
+        var (nivel, letra) = SepararCurso(cursoReferencia);
         GuardarCampo(datos, "curso: nivel", nivel);
         GuardarCampo(datos, "curso: letra", letra);
         GuardarCampo(datos, "año escolar", anio.ToString());
 
-        datos["modo"] = "Renovación";
+        // Sin matrícula anterior el expediente es nuevo, aunque se abra desde la
+        // ficha del estudiante: se anuncia como matrícula nueva, no como renovación.
+        datos["modo"] = anterior is null ? "Matrícula nueva" : "Renovación";
         datos["modo: detalle"] = anterior is null
-            ? $"Expediente nuevo {anio}; el estudiante no tenía matrícula anterior."
+            ? $"Expediente nuevo {anio} del estudiante; no tenía matrícula anterior."
             : $"Expediente nuevo {anio} a partir de la matrícula {anterior.Anio}"
               + (string.IsNullOrWhiteSpace(anterior.Curso?.Nombre) ? "." : $" ({anterior.Curso!.Nombre}).")
               + (repite ? " Repetición de 8º básico." : string.Empty);
+
+        // Los pasos 2 a 6 se abren con lo que ya está registrado del estudiante
+        // (madre, padre, apoderados, contactos, retiros, salud y PIE): al entrar
+        // desde su ficha no se vuelve a escribir lo que ya existe en la base.
+        await CompletarDesdeBaseAsync(datos);
 
         TempData[ClaveBorrador] = JsonSerializer.Serialize(datos);
         return RedirectToAction(nameof(Paso), new { id = 1 });

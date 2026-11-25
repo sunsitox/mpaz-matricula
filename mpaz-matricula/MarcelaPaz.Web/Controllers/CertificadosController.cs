@@ -53,17 +53,11 @@ public class CertificadosController : Controller
     /// Historial de certificados emitidos, los más recientes primero.
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:LEER")]
     public async Task<IActionResult> Index()
     {
-        // El historial muestra folio, alumno, curso y propósito de cada
-        // certificado: se reserva a quien puede emitirlos, no a cualquier
-        // sesión de sólo lectura.
-        if (!PuedeEmitir())
-        {
-            return Forbid();
-        }
-
+        // El historial responde a la matriz de la hoja de permisos: lo ven los
+        // perfiles con DOCUMENTOS:LEER. Docentes y Administración TI no lo tienen.
         var emitidos = await _db.CertificadosEmitidos
             .AsNoTracking()
             .OrderByDescending(c => c.Id)
@@ -116,11 +110,12 @@ public class CertificadosController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "GENERAL:LEER")]
+    [Authorize(Policy = PermisoPolicyProvider.Prefijo + "DOCUMENTOS:LEER")]
     public async Task<IActionResult> Emitir(int id, string? proposito = null)
     {
-        // DOCENTE y solo-lectura no emiten: exige crear, editar o validar institucional.
-        if (!PuedeEmitir())
+        // Lo genera quien tiene DOCUMENTOS:CREAR o DOCUMENTOS:EDITAR (Secretaría).
+        // Dirección solo lee, valida y exporta: no emite, pero firma el documento.
+        if (!PuedeGenerar())
         {
             return Forbid();
         }
@@ -170,14 +165,23 @@ public class CertificadosController : Controller
             ? EmisionCertificado.PropositoGenerico
             : proposito.Trim()[..Math.Min(200, proposito.Trim().Length)];
 
-        // Decisión 17 (paso 20): sin director presente firma el subrogante,
-        // que es el funcionario que emite; en el documento el cargo impreso
-        // es «Director». Ambos quedan persistidos en la emisión.
+        // La emisión la hace Secretaría, pero el documento lo firma Dirección:
+        // se busca al funcionario activo con rol DIRECCION vigente. Queda
+        // registrado quién emite (EmitidoPor) y quién firma (FirmanteNombre).
         var nombreFirmante = await _db.Funcionarios
             .AsNoTracking()
-            .Where(f => f.Id == funcionarioId.Value)
+            .Where(f => f.Activo
+                && f.Roles.Any(r => r.Hasta == null && r.Rol != null && r.Rol.Codigo == "DIRECCION"))
+            .OrderBy(f => f.Id)
             .Select(f => f.Nombre)
-            .FirstOrDefaultAsync() ?? "La Dirección";
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(nombreFirmante))
+        {
+            nombreFirmante = string.IsNullOrWhiteSpace(_institucion.FirmanteNombre)
+                ? "La Dirección"
+                : _institucion.FirmanteNombre.Trim();
+        }
 
         var emitido = new CertificadoEmitido
         {
@@ -341,10 +345,12 @@ public class CertificadosController : Controller
     }
 
     /// <summary>
-    /// El certificado de alumno regular se reserva a Dirección: ningún otro
-    /// perfil emite ni consulta el historial de emisiones.
+    /// Genera el certificado quien puede crear o editar documentos
+    /// institucionales (Secretaría). Dirección no emite: solo lee, valida y
+    /// exporta, y su nombre es el que queda como firmante del documento.
     /// </summary>
-    private bool PuedeEmitir() => User.IsInRole("DIRECCION");
+    private bool PuedeGenerar() =>
+        User.HasClaim("permiso", "DOCUMENTOS:CREAR") || User.HasClaim("permiso", "DOCUMENTOS:EDITAR");
 
     /// <summary>
     /// Lee el escudo desde wwwroot (el mismo PNG con lema de la ficha);

@@ -6,7 +6,7 @@
 <h2 class="wizard__titulo-paso">Paso 2 · Datos de contacto: madre y padre</h2>
 <p class="wizard__ayuda">
     Madre y padre son dos bloques aparte, desplegables.
-    Por ahora puede avanzar sin completar nada; los campos obligatorios se definirán con el colegio.
+    Complete al menos uno de los dos con nombre, RUN, teléfono y la respuesta sobre restricciones.
 </p>
 
 <form asp-controller="Ficha" asp-action="Guardar" asp-route-id="2" method="post">
@@ -117,7 +117,7 @@
 
     <!-- Restricción (SI/NO): la pregunta se aplica a la madre, tal como está en la ficha -->
     <fieldset class="wizard__restriccion">
-        <legend class="acceso__etiqueta">Restricción (SI/NO)</legend>
+        <legend class="acceso__etiqueta">Restricción de la madre (SI/NO)</legend>
         <p class="wizard__restriccion-pregunta">
             ¿Existe alguna restricción judicial o familiar que prohíba a la madre
             vincularse con el o la estudiante?
@@ -125,7 +125,7 @@
         <div class="wizard__radios">
             <label class="acceso__radio">
                 <input asp-for="Restriccion_Madre" type="radio" value="Si" />
-                <span>Si</span>
+                <span>Sí</span>
             </label>
             <label class="acceso__radio">
                 <input asp-for="Restriccion_Madre" type="radio" value="No" />
@@ -168,7 +168,7 @@
         <div class="wizard__radios">
             <label class="acceso__radio">
                 <input asp-for="Restriccion_Padre" type="radio" value="Si" />
-                <span>Si</span>
+                <span>Sí</span>
             </label>
             <label class="acceso__radio">
                 <input asp-for="Restriccion_Padre" type="radio" value="No" />

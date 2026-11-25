@@ -3,7 +3,7 @@
     // Sin layout cuando el paso se pide como parcial (cambio sin recargar).
     Layout = ViewData["Parcial"] is true ? null : "_WizardLayout";
 }
-<h2 class="wizard__titulo-paso">Paso 1 · Datos del apoderado</h2>
+<h2 class="wizard__titulo-paso">Paso 1 · Datos del estudiante</h2>
 <p class="wizard__ayuda">
     Primero el curso al que postula, luego la identificación y el domicilio.
     Los campos marcados con * son obligatorios. El estudiante puede identificarse con RUN o con IPE/IPA.
@@ -57,7 +57,7 @@
 
     <details class="wizard__desplegable">
         <summary class="wizard__desplegable-resumen">
-            Identificación del apoderado
+            Identificación del estudiante
             <span class="wizard__desplegable-flecha" aria-hidden="true">▾</span>
         </summary>
         <div class="wizard__desplegable-cuerpo">

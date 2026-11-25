@@ -49,6 +49,37 @@
         "autorización de uso de imagen (SI/NO)",
         "autorización de convivencia escolar (SI/NO)",
     };
+
+    // Claves de control del borrador: no son datos de la ficha y no se revisan.
+    Func<string, bool> esInterna = clave =>
+        clave is "modo" or "modo: detalle" or "base: precargada" or "salud: registros revisados" or "folio"
+        || clave.StartsWith("corrección:", StringComparison.Ordinal);
+
+    // Etiquetas legibles para las claves cuyo nombre interno no se lee en pantalla.
+    var etiquetas = new Dictionary<string, string>
+    {
+        ["curso: nivel"] = "Curso",
+        ["curso: letra"] = "Letra del curso",
+        ["año escolar"] = "Año escolar",
+        ["tipo identificador"] = "Tipo de documento",
+        ["cédula de identidad"] = "RUN o IPE/IPA",
+        ["restricción madre (SI/NO)"] = "Restricción de la madre",
+        ["restricción padre (SI/NO)"] = "Restricción del padre",
+        ["salida solo al finalizar jornada (SI/NO)"] = "Sale solo al finalizar la jornada",
+        ["salida al baño (SI/NO)"] = "Salida al baño",
+        ["situación médica (SI/NO)"] = "Tiene situación médica",
+        ["PIE: participa (SI/NO/PENDIENTE)"] = "Participa del PIE",
+        ["PIE: diagnosticado (SI/NO)"] = "Diagnóstico PIE",
+        ["PIE: apoyos o diagnóstico"] = "Apoyos o diagnóstico PIE",
+        ["autorización de paracetamol (SI/NO)"] = "Autoriza paracetamol",
+        ["autorización de uso de imagen (SI/NO)"] = "Autoriza uso de imagen",
+        ["autorización de convivencia escolar (SI/NO)"] = "Autoriza Convivencia Escolar",
+    };
+
+    Func<string, string> etiqueta = clave =>
+        etiquetas.TryGetValue(clave, out var texto)
+            ? texto
+            : System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave);
 }
 <h2 class="wizard__titulo-paso">Paso 8 · Revisar y confirmar</h2>
 <p class="wizard__ayuda">
@@ -73,11 +104,13 @@
     {
         <div class="wizard__revision">
             <dl class="wizard__resumen">
-                @foreach (var (clave, valor) in datos.OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
+                @foreach (var (clave, valor) in datos
+                    .Where(p => !esInterna(p.Key))
+                    .OrderBy(p => { var i = Array.IndexOf(orden, p.Key); return i < 0 ? orden.Length : i; }))
                 {
                     <div class="wizard__resumen-item">
-                        <dt>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(clave)</dt>
-                        <dd>@valor</dd>
+                        <dt>@etiqueta(clave)</dt>
+                        <dd>@(string.Equals(valor, "Si", StringComparison.OrdinalIgnoreCase) ? "Sí" : valor)</dd>
                     </div>
                 }
             </dl>

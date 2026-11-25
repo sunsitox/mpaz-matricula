@@ -52,25 +52,20 @@
                data-ux-cargando>
                 Descargar formulario
             </a>
-            @if (puedeMatricula)
+            @if (puedeMatricula && Model.PuedeAbrirMatricula)
             {
-                <a class="admin__boton"
-                   asp-controller="Ficha" asp-action="Buscar" asp-route-rut="@Model.Rut">Abrir en matrícula</a>
+                @* Abre el asistente con los datos del estudiante ya cargados: no se
+                   vuelve a escribir lo que ya está en su ficha. *@
+                <form method="post" asp-controller="Ficha" asp-action="Renovar" asp-route-id="@Model.Id"
+                      data-ux-envio="Abriendo la matrícula del año…">
+                    <button type="submit" class="admin__boton">Abrir matrícula @Model.Anio</button>
+                </form>
             }
             @if (Model.PuedeEmitirCertificado)
             {
                 <form method="post" asp-controller="Certificados" asp-action="Emitir" asp-route-id="@Model.Id"
                       target="_blank" data-ux-envio="Emitiendo el certificado…">
                     <button type="submit" class="admin__boton">Certificado alumno regular</button>
-                </form>
-            }
-            @if (Model.PuedeRenovarAnio)
-            {
-                <form method="post" asp-controller="Ficha" asp-action="Renovar" asp-route-id="@Model.Id"
-                      data-ux-envio="Abriendo la matrícula del año…">
-                    <button type="submit" class="admin__boton admin__boton--primario">
-                        Iniciar matrícula @Model.Anio
-                    </button>
                 </form>
             }
         </div>

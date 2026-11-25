@@ -37,7 +37,9 @@ el repositorio (`docker/db-init/04-datos-gestion-expediente.sql` y
 | **Ver/registrar observaciones de situación familiar** | `SITUACION_FAMILIAR:LEER` / `CREAR` / `EDITAR` |
 | **Fichas médicas del personal** (`/personal/fichas-medicas`) | roles `UTP` o `DIRECCION` (por nombre de rol) |
 | Registrar una dosis | `MEDICACION:CREAR` (además, `Medicacion:Habilitada=true`) |
-| Certificado: emitir y ver historial | `GENERAL:LEER` + crear, editar o validar |
+| Certificado: generar | `DOCUMENTOS:CREAR` o `DOCUMENTOS:EDITAR` (Secretaría) |
+| Certificado: ver historial | `DOCUMENTOS:LEER` |
+| Certificado: firma impresa | no depende del permiso: firma el funcionario con rol `DIRECCION` vigente, aunque lo genere Secretaría |
 | Validación pública de certificado por folio | sin sesión (página pública) |
 | Reportes en pantalla | `GENERAL:LEER` |
 | Reportes en CSV | `GENERAL:EXPORTAR` o `DOCUMENTOS:EXPORTAR` |

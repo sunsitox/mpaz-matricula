@@ -22,9 +22,9 @@
         <div class="acceso__campo">
             <label class="acceso__etiqueta" for="tipo">Tipo de documento</label>
             <select class="acceso__input" id="tipo" name="tipo">
-                <option value="RUN" selected="@(Model.Tipo == "RUN")">RUN (cédula nacional)</option>
-                <option value="IPE" selected="@(Model.Tipo == "IPE")">IPE</option>
-                <option value="IPA" selected="@(Model.Tipo == "IPA")">IPA</option>
+                <option value="RUN" selected="@(Model.Tipo == "RUN" ? "selected" : null)">RUN (cédula nacional)</option>
+                <option value="IPE" selected="@(Model.Tipo == "IPE" ? "selected" : null)">IPE</option>
+                <option value="IPA" selected="@(Model.Tipo == "IPA" ? "selected" : null)">IPA</option>
             </select>
         </div>
         <div class="acceso__campo">
@@ -91,12 +91,15 @@
             <h2 class="admin__titulo-seccion">@Model.NombreCompleto</h2>
             <p class="admin__ayuda">
                 Está en el registro de estudiantes, pero no tiene matrícula anterior.
-                Corresponde una matrícula nueva.
+                Corresponde una matrícula nueva que se abre con sus datos ya completados.
             </p>
             @if (puedeCrear)
             {
-                <form method="post" asp-controller="Ficha" asp-action="Nueva">
-                    <button type="submit" class="admin__boton admin__boton--primario">Iniciar matrícula nueva</button>
+                <form method="post" asp-controller="Ficha" asp-action="Renovar">
+                    <input type="hidden" name="id" value="@Model.EstudianteId" />
+                    <button type="submit" class="admin__boton admin__boton--primario">
+                        Abrir matrícula con sus datos
+                    </button>
                 </form>
             }
             else

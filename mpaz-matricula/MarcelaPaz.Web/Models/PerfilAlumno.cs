@@ -162,7 +162,7 @@ public class PerfilAlumno
     public bool PuedeCorregirFicha { get; set; }
 
     /// <summary>El año consultado no tiene matrícula y la sesión puede crearla (MAT-01).</summary>
-    public bool PuedeRenovarAnio { get; set; }
+    public bool PuedeAbrirMatricula { get; set; }
 
     public bool PuedeVerMedicacion { get; set; }
 
