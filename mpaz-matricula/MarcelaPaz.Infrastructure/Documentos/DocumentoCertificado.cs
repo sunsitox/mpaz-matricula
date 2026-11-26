@@ -9,7 +9,7 @@ namespace MarcelaPaz.Infrastructure.Documentos;
 /// con RBD y reconocimiento oficial, nombre y RUN del alumno, curso y año,
 /// folio, lugar y fecha, firmante y su cargo. Se omite el resto de los datos
 /// del alumno (fecha de nacimiento, contacto) por minimización de datos
-/// (Ley 21.719): el RUN ya identifica sin ambigüedad.
+/// (Ley 19.628 vigente; Ley 21.719 desde el 15-10-2027): el RUN ya identifica sin ambigüedad.
 /// </summary>
 public sealed class DocumentoCertificado
 {

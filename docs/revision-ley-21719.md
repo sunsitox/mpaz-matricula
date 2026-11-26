@@ -1,8 +1,9 @@
 # Revisión de protección de datos · Ley 21.719
 
-**20-11-2026 · Revisión interna, sin cambios de código en esta entrega.**
-La Ley 21.719 (nueva ley de protección de la vida privada y de datos
-personales) rige desde el **01-12-2026**. El usuario lo mencionó como
+**Actualizado 26-11-2026 · Revisión interna.** La Ley 21.719 (nueva ley de
+protección de la vida privada y de datos personales) rige desde el
+**15-10-2027**, conforme a la Ley 21.855 (promulgada 19-11-2026, publicada
+en Diario Oficial el 23-11-2026). Hasta esa fecha sigue vigente la Ley 19.628. El usuario lo mencionó como
 “leyes 21.000 / seguridad y protección de datos”. Este documento deja
 constancia de cómo está hoy el Portal de Matrícula MPAZ frente a esa
 ley y qué falta para cumplirla. No sustituye asesoría legal.
@@ -43,7 +44,7 @@ ley y qué falta para cumplirla. No sustituye asesoría legal.
 6. **Evaluación de impacto de datos sensibles.** Salud, PIE y judicial
    son datos sensibles reforzados; la ley puede exigir una evaluación
    previa documentada. No existe aún.
-7. **Seguridad técnica a verificar antes del 01-12-2026:** respaldo
+7. **Seguridad técnica a verificar antes del 15-10-2027:** respaldo
    probado con restauración (existe respaldo Neon, falta prueba de
    restauración documentada), control de sesiones y cierre por
    inactividad, y revisión de contraseñas/SSO.

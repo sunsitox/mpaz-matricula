@@ -75,7 +75,8 @@ public static class FichaImpresion
     /// <summary>Textos de las autorizaciones mientras Dirección aprueba los definitivos.</summary>
     public const string TextoParacetamol =
         "Autorizo que se administre paracetamol a mi hijo/a en el establecimiento, únicamente con "
-        + "indicación médica y conforme al protocolo TENS aprobado. Esta respuesta no constituye una orden médica "
+        + "indicación médica y conforme al protocolo TENS aprobado, con indicación y supervigilancia médica "
+        + "(Código Sanitario). Esta respuesta no constituye una orden médica "
         + "ni habilita su administración sin esos requisitos.";
 
     public const string TextoImagen =

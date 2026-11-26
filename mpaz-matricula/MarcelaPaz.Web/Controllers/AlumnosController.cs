@@ -1563,6 +1563,9 @@ public class AlumnosController : Controller
     /// <summary>
     /// MAT-05: registra una dosis administrada por un TENS. El trigger valida
     /// rol TENS activo, orden VIGENTE validada y autorización otorgada vigente.
+    /// Base legal: Código Sanitario (DFL 725) arts. 112-113 y Decreto 90 —
+    /// el TENS solo administra con indicación médica y bajo supervisión; el
+    /// registro es ficha clínica (Ley 20.584 arts. 12-13, Decreto 41).
     /// </summary>
     [HttpPost]
     [Authorize(Policy = PermisoPolicyProvider.Prefijo + "MEDICACION:CREAR")]

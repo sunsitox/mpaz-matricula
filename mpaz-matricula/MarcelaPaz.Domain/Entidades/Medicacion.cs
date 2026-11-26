@@ -3,6 +3,9 @@ namespace MarcelaPaz.Domain.Entidades;
 /// <summary>
 /// Orden médica vigente para un medicamento (tabla <c>prescripcion</c>, MAT-05).
 /// Una autorización MEDICACION por medicamento; el trigger valida vigencia.
+/// Base legal: Código Sanitario (DFL 725) arts. 112-113 y Decreto 90
+/// (profesiones auxiliares): el TENS actúa con indicación y supervigilancia
+/// médica, sin prescribir ni diagnosticar.
 /// </summary>
 public class Prescripcion
 {
@@ -34,7 +37,10 @@ public class Prescripcion
 
 /// <summary>
 /// Dosis efectivamente administrada por un TENS (tabla
-/// <c>administracion_medicamento</c>, solo-inserción, MAT-05).
+/// <c>administracion_medicamento</c>, solo-inserción, MAT-05). Es un registro
+/// de ficha clínica: Ley 20.584 arts. 12-13 y Decreto 41 (datos sensibles,
+/// conservación de al menos 15 años, acceso solo de quien participa en la
+/// atención).
 /// </summary>
 public class AdministracionMedicamento
 {

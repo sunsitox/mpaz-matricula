@@ -916,13 +916,14 @@
 
 <section class="admin__tarjeta" data-ux-grupo="salud" role="tabpanel" id="panel-medicacion" aria-labelledby="pestana-salud" tabindex="0">
     <h2 class="admin__titulo-seccion">Medicación (TENS)</h2>
+    <p class="admin__ayuda">Base legal: Código Sanitario (DFL 725) arts. 112-113 — indicación y supervigilancia médica; Decreto 90 (profesiones auxiliares). Solo un TENS activo registra dosis, y solo con orden médica vigente validada y autorización otorgada.</p>
     @if (!Model.PuedeVerMedicacion)
     {
         <p class="admin__ayuda">Su rol no incluye la consulta de órdenes médicas ni dosis.</p>
     }
     else if (Model.Prescripciones.Count == 0)
     {
-        <p class="admin__ayuda">Sin prescripciones registradas. Uso en producción exige protocolo TENS aprobado.</p>
+        <p class="admin__ayuda">Sin prescripciones registradas. Registrar dosis exige protocolo TENS aprobado por el colegio.</p>
     }
     else
     {
@@ -970,7 +971,7 @@
                 </div>
                 <button type="submit" class="admin__boton admin__boton--primario">Registrar dosis</button>
             </form>
-            <p class="admin__ayuda">Solo TENS activo. Exige orden vigente validada y autorización otorgada.</p>
+            <p class="admin__ayuda">Solo TENS activo (Código Sanitario arts. 112-113; Decreto 90). Exige orden vigente validada y autorización otorgada.</p>
         }
     }
 </section>
