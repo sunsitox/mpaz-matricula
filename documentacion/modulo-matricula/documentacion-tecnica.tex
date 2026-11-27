@@ -23,11 +23,13 @@
 \geometry{margin=2.5cm}
 
 % Paleta institucional
+% Paleta institucional, la misma del portal (wwwroot/css): azul #0F2537,
+% ámbar #F59E0B, gris #5C6470 y borde #E2E5EA.
 \definecolor{mpazAzul}{HTML}{0F2537}
-\definecolor{mpazDorado}{HTML}{D97706}
+\definecolor{mpazDorado}{HTML}{F59E0B}
 \definecolor{mpazFondo}{HTML}{F8FAFC}
-\definecolor{mpazBorde}{HTML}{E2E0F0}
-\definecolor{mpazGris}{HTML}{64748B}
+\definecolor{mpazBorde}{HTML}{E2E5EA}
+\definecolor{mpazGris}{HTML}{5C6470}
 
 \hypersetup{colorlinks=true,linkcolor=mpazAzul,urlcolor=mpazAzul,citecolor=mpazAzul,
   pdftitle={Portal de Matrícula MPAZ 2027 — Documentación técnica},
@@ -71,9 +73,20 @@
 % archivo). \diagrama{archivo}{ancho relativo a \textwidth}{título}
 \graphicspath{{diagramas/}}
 \newcommand{\diagrama}[3]{%
-  \begin{figure}[htbp]
+  \begin{figure}[!htbp]
     \centering
     \includegraphics[width=#2\textwidth]{#1.png}
+    \caption{#3}
+  \end{figure}}
+
+% Diagrama ancho: se gira en la página para que los rótulos de las secuencias
+% y de los modelos se lean sin lupa (gana un 40 % de tamaño frente al ancho
+% de texto).
+\newcommand{\diagramaAncho}[3]{%
+  \begin{figure}[!htbp]
+    \centering
+    \rotatebox{90}{\includegraphics[width=0.8\textheight]{diagramas/#1.png}}
+    \par\vspace{0.6em}
     \caption{#3}
   \end{figure}}
 
