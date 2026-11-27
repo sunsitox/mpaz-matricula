@@ -44,4 +44,4 @@ importacion/
 
 # Herramientas locales de la documentación: mermaid-cli con su node_modules
 # (cientos de MB). Se recrean con npm; al repositorio van sólo los documentos.
-documentacion/documentacion-tecnica/_herramientas/
+documentacion/modulo-matricula/_herramientas/

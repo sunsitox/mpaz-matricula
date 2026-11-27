@@ -16,7 +16,7 @@ Lista de entregables acordados. **Estado revisado el 16-11-2026.**
     - [ ] Paso a paso con capturas de las pantallas reales.
     - [ ] Sección de errores frecuentes y cómo resolverlos.
 - [ ] **Documentación técnica**
-    - [x] Arquitectura de la solución (capas, proyectos, responsabilidades) — `documentacion/documentacion-tecnica/documentacion-tecnica.md`: vistas 4+1 en Mermaid (escenarios, lógica, procesos, desarrollo y física) más modelo de datos, estados, seguridad y operación, con los diagramas renderizados en `.svg` y `.png` (27-11-2026).
+    - [x] Arquitectura de la solución (capas, proyectos, responsabilidades) — `documentacion/modulo-matricula/documentacion-tecnica.md`: vistas 4+1 en Mermaid (escenarios, lógica, procesos, desarrollo y física) más modelo de datos, estados, seguridad y operación, con los diagramas renderizados en `.svg` y `.png` (27-11-2026).
     - [ ] Base de datos: esquema, restricciones e índices relevantes — **Parcial:** `docs/diagrama-relacional.md` y el DDL comentado.
     - [ ] Permisos por rol y controles de seguridad aplicados — **Parcial:** propuesta en `database/modulos/matricula/pasos/03-permisos-iniciales.sql` y `docs/auditorias/01-auditoria-seguridad.md`.
     - [ ] Despliegue y configuración (entornos, respaldo, restauración) — **Parcial:** `docs/deployment.md` y `docs/migracion-servidor-runbook.md`, sin restauración probada.

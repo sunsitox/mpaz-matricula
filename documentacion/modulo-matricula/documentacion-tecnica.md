@@ -850,7 +850,7 @@ presentaciones). Los bloques de este documento son la fuente. Para volver a
 renderizarlos:
 
 ```bash
-cd documentacion/documentacion-tecnica
+cd documentacion/modulo-matricula
 python extraer_diagramas.py          # escribe diagramas/fuentes/*.mmd
 
 HERR=_herramientas

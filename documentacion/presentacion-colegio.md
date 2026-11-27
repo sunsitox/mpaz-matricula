@@ -198,7 +198,7 @@ funcionarios que faltan.
 
 ## 11. Anexos
 
-- `documentacion/documentacion-tecnica/documentacion-tecnica.md` — arquitectura
+- `documentacion/modulo-matricula/documentacion-tecnica.md` — arquitectura
   completa con diagramas.
 - `mpaz-matricula/pruebas-visuales/evidencias/grabar-flujo/flujo-mpaz.webm` —
   video del recorrido.
