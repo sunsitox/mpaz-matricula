@@ -104,3 +104,8 @@ personal* es por nombre de rol (UTP y Dirección), no por permiso de área.
 6. **Administración TI no puede ver alumnos**, por diseño.
 7. En la base del **colegio** la matriz aún no está cargada: queda pendiente
    según `docs/decisiones-pendientes-colegio.md`.
+8. **Confirmado por el colegio el 26-11-2026:** la matrícula la crea y formaliza
+   **Secretaría**; sobre el área `General` la matriz vigente ya coincide con lo
+   confirmado (Secretaría L C E X · Dirección L V X · Inspectoría L E · PIE L ·
+   UTP L X · Convivencia L · TENS L · Docente L), sin cambios de código. La
+   autorización de paracetamol se responde en la ficha de matrícula.

@@ -45,17 +45,17 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
   - SECRETARIA hoy: `GENERAL/FAMILIA/RETIRO/AUTORIZACIONES/DOCUMENTOS/SALUD/JUDICIAL:LEER/CREAR/EDITAR` + `EXPORTAR`. Johan no la menciona: queda sin confirmar quién crea/mantiene.
   - TENS/DOCENTE/ADMIN_TI: Johan no los menciona; se mantienen como están hasta la matriz final.
   - "admin" que edita junto a INSPECTORIA está ambiguo: hoy `ADMIN_TI` solo tiene `ADMIN:ADMINISTRAR/LEER` + `AUDITORIA:LEER`, sin acceso al expediente. Falta definir si es ADMIN_TI o Secretaría/encargado de matrícula.
-  **Sin modificar `rol_permiso` ni crear roles UTP/CONVIVENCIA hasta la confirmación final.**
-- [ ] [Colegio] [BLOQUEADO] Plazos de conservación de originales y datos, y eliminación segura (con el sostenedor)
-- [ ] [Colegio] [BLOQUEADO] Documentos que el colegio pide hoy y cuáles son obligatorios por ley
+  **Sin modificar `rol_permiso` ni crear roles UTP/CONVIVENCIA hasta la confirmación final.** — **Actualizado 26-11-2026:** la matriz del área de matrícula quedó confirmada y es la ya cargada (ver "quién formaliza"); la escritura de UTP y Convivencia en notas de retiro y situación familiar pertenece a otras áreas y se mantiene. Falta sólo cargar la matriz en la base del colegio.
+- [x] [Colegio] Conservación de datos — **Confirmado 26-11-2026:** por ley los datos no se pueden borrar; se conservan. No se planifica eliminación ni plazos de descarte.
+- [x] [Colegio] Documentos exigidos — **Retirado del alcance 26-11-2026:** se siguen definiendo; cada dato se formalizará como documento puntual. No hay lista que bloquee.
 - [ ] [Colegio] [BLOQUEADO] Formato único de ficha para matrícula nueva y renovación, con anexos opcionales
-- [ ] [Colegio] [BLOQUEADO] Certificado de alumno regular: definir quién lo emite y qué debe llevar (firma, folio) — **Implementado en código:** `CertificadosController` lo emite desde los datos confirmados, conserva historial y expone validación pública por folio; falta la validación institucional del formato.
-- [x] [Colegio] Quién captura los datos — **Confirmado por Johan 17-11-2026:** formalmente alguien del colegio va preguntando al apoderado y registra; antes el apoderado lo escribía a mano. La captura formal no la hace el apoderado directamente en el portal. Queda pendiente separar esto de quién *formaliza* (crea/confirma la matrícula en el sistema) y del registro público propuesto (ver decisiones pendientes).
+- [x] [Colegio] Certificado de alumno regular: **formato aprobado 26-11-2026** (ya revisado). Secretaría emite y Dirección firma. Único punto abierto: el dato identificatorio del colegio en el membrete debe verse más. — **Implementado en código y validado por el colegio:** `CertificadosController` lo emite desde los datos confirmados, conserva historial y expone validación pública por folio.
+- [x] [Colegio] Quién captura los datos — **Confirmado por Johan 17-11-2026:** formalmente alguien del colegio va preguntando al apoderado y registra; antes el apoderado lo escribía a mano. La captura formal no la hace el apoderado directamente en el portal. Quién formaliza quedó confirmado el 26-11-2026: **Secretaría**. Sigue abierto el registro público propuesto (ver decisiones pendientes).
 - [ ] [Colegio] [BLOQUEADO] Si se actualiza un dato después de firmada la ficha: ¿se vuelve a firmar siempre o solo en cambios importantes?
-- [ ] [Colegio] [BLOQUEADO] Responsable por proceso y alcance de información visible por perfil — **Pendiente de precisar (Johan 18-11-2026):** (1) si PIE y CONVIVENCIA ven todo el expediente o solo lo necesario para su función (salud/judicial incluidos o no); (2) si UTP/DIRECCIÓN/INSPECTORIA ven también antecedentes médicos y judiciales al "ver todo"; (3) quiénes crean y formalizan matrículas y qué significa "admin" (¿ADMIN_TI o Secretaría/encargado?).
-- [ ] [Colegio] [BLOQUEADO] Decisión: quién formaliza matrículas — **Pendiente y separada de la captura.** Johan confirmó quién captura (funcionario del colegio que entrevista al apoderado) y quiénes NO generan/editan (UTP, DIRECCIÓN, PIE, CONVIVENCIA), pero no dijo quién SÍ crea, edita y confirma la matrícula en el sistema (¿SECRETARIA? ¿INSPECTORIA? ¿"admin" = ADMIN_TI o encargado?). No se toca `rol_permiso` ni flujos de creación/confirmación hasta definirlo.
+- [ ] [Colegio] [BLOQUEADO] Alcance de la información visible por perfil — **Pendiente de precisar:** (1) si PIE y CONVIVENCIA ven todo el expediente o solo lo necesario para su función (salud/judicial incluidos o no); (2) si UTP/DIRECCIÓN/INSPECTORÍA ven también antecedentes médicos y judiciales al "ver todo". El punto de quién crea y formaliza quedó cerrado el 26-11-2026 (**Secretaría**); la matriz del área de matrícula ya coincide con lo confirmado.
+- [x] [Colegio] Decisión: quién formaliza matrículas — **Confirmado 26-11-2026: SECRETARÍA** crea y maneja casi todo lo de la matrícula (leer, crear, editar, exportar). Dirección lee, valida y exporta; Inspectoría lee y edita; PIE lee; UTP lee y exporta; Convivencia, TENS y Docente leen. Coincide con la matriz `GENERAL` ya cargada: no hay cambio de código, sólo cargarla en la base del colegio.
 - [ ] [Colegio] [BLOQUEADO] Decisión: alcance del registro público — **Pendiente y separado de la captura actual. Nuevo requisito de Johan 17-11-2026:** "debería haber una pestaña pública que sea activada o desactivada por el encargado TI para registrar a los alumnos". Sin definir: si es preinscripción del apoderado que luego un funcionario revisa y formaliza, o captura asistida; qué crea el envío (¿matrícula BORRADOR, solicitud pendiente, otro estado?); validaciones, anti-spam/abuso, auditoría y protección de datos; quién la revisa y con qué permisos. La sec. 12 mantiene "Acceso público o login de apoderados" fuera de alcance hasta aprobarlo. **No se habilita acceso público, no se cambia el login ni se toca `Program.cs`/autorización hasta aprobarlo.**
-- [ ] [Colegio] [BLOQUEADO] Confirmar si existe otra versión de la ficha con autorización de paracetamol (la ficha entregada no la trae)
+- [x] [Colegio] Autorización de paracetamol — **Confirmado 26-11-2026:** está en la ficha de matrícula; el apoderado marca ahí si autoriza paracetamol. No es un documento aparte ni falta otra versión de la ficha. Ya implementado en el paso 6 del asistente (`AutorizaParacetamol`, Sí/No) y en el bloque impreso de la ficha.
 
 ## 1. Coordinación del equipo (reunión del martes)
 
@@ -69,7 +69,7 @@ Las correcciones anteriores están verificadas en compilación Release, rutas lo
 
 - [x] [José] Quitar el login de apoderados y el portal de apoderados, conservando ese trabajo en una rama — evidencia: rama `feature/login-apoderado`; `main` solo contiene `CuentaController` para funcionarios.
 - [x] [José] Dejar un solo login, para funcionarios — evidencia: `MarcelaPaz.Web/Controllers/CuentaController.cs`, vista `Views/Cuenta/Login.cshtml` y HTTP 200 en `/Cuenta/Login`.
-- [x] [José] Alinear entidades y migraciones al DDL (curso y año en `matricula_anual`; familia en `estudiante_persona`; sin `autoriza_paracetamol`) — **Parcial:** `MatriculaDbContext` mapea `matricula_anual` y `estudiante_persona`, pero `FichaForm`, `Paso6`, `FichaController` y `FichaImpresion` todavía incluyen autorización de paracetamol. Solo existe una migración para Identity; las tablas `public` dependen del DDL.
+- [x] [José] Alinear entidades y migraciones al DDL (curso y año en `matricula_anual`; familia en `estudiante_persona`) — **Resuelto:** `MatriculaDbContext` mapea `matricula_anual` y `estudiante_persona`; las tablas `public` dependen del DDL. La autorización de paracetamol **se conserva a propósito** en `FichaForm`, `Paso6`, `FichaController` y `FichaImpresion`: el colegio confirmó el 26-11-2026 que vive en la ficha de matrícula y la responde el apoderado (paso 6, Sí/No).
 - [x] [José] Verificar si PostgreSQL y el runtime de la app están instalados en el servidor; instalar lo que falte — **Comprobado:** `aspnetcore-runtime-10.0 10.0.14-0ubuntu1~24.04.1` y `postgresql-16 16.15-0ubuntu0.24.04.1` desde los repositorios de Ubuntu 24.04; sin SDK ni Docker.
 - [x] [José] Cargar el DDL en PostgreSQL y correr una prueba de humo — **Comprobado:** DDL y esquema `auth` aplicados sobre `mpaz_matricula`; `/Cuenta/Login` responde 200 y se crearon 7 cuentas de Identity.
 - [x] [José] Crear el rol de base de datos de la app, sin permiso de borrar ni modificar las tablas solo-inserción — **Comprobado:** rol `mpaz_app` con `database/04-privilegios-aplicacion.sql`; `has_table_privilege` confirma lectura de `estudiante`, sin UPDATE en `registros_acceso` y UPDATE sobre `auth."AspNetUsers"`.
@@ -353,9 +353,11 @@ No son tareas: no se marcan ni se construyen.
 
 ## 16. Revisión actualizada y lista vigente (17-11-2026)
 
+> **Actualización 26-11-2026:** esta sección conserva el estado al 17-11-2026 como registro histórico. Lo que el colegio confirmó después (quién formaliza la matrícula, paracetamol, formato del certificado, documentos obligatorios y conservación de datos) está aplicado en §0, en `docs/decisiones-pendientes-colegio.md` y en `docs/ficha-pendientes-portal-mpaz.md`, y ya no se repite como pendiente aquí.
+
 ### Estado real hoy
 
-El portal local compila en Release sin errores ni advertencias y las 137 pruebas pasan. `/Alertas` filtra por año (activo o seleccionado) y por área (autorizaciones/medicación); el panel de inicio sólo cuenta alertas de las áreas permitidas, por año, y oculta el indicador si no tiene ninguna. Quedan cerrados los cinco hallazgos de auditoría y los dos mínimos de datos, más la guarda de privilegios de auditoría.
+El portal local compila en Release sin errores ni advertencias y las 137 pruebas pasan (al 26-11-2026 la suite es de 213 pruebas, todas en verde). `/Alertas` filtra por año (activo o seleccionado) y por área (autorizaciones/medicación); el panel de inicio sólo cuenta alertas de las áreas permitidas, por año, y oculta el indicador si no tiene ninguna. Quedan cerrados los cinco hallazgos de auditoría y los dos mínimos de datos, más la guarda de privilegios de auditoría.
 
 > **Superadmin solo en prueba (17-11-2026):** rol `SUPERADMIN` (66 permisos: todas las áreas × todas las acciones) y funcionario `superadmin.test@mpaz.cl` existen **únicamente en la base local de prueba** (`mpaz_restore_local`), nunca en Neon ni en producción. No están en los pasos del DDL: es siembra puntual de desarrollo. Si la base de prueba se re-restaura desde Neon, el superadmin desaparece y hay que volver a sembrarlos con el procedimiento de esta revisión.
 
@@ -373,12 +375,12 @@ El portal local compila en Release sin errores ni advertencias y las 137 pruebas
 
 - [ ] Aplicar en el servidor: `12-alertas-vencimiento.sql`, `13-alertas-revision.sql`, migración `AgregarSso`, guarda de `04-privilegios-aplicacion.sql`, fuentes PDF (`fontconfig`/`fonts-dejavu-core`) y el release actual.
 - [ ] Respaldos programados y copia externa; rotación de credenciales visibles; dominio propio con Cloudflare Access.
-- [ ] Decisiones del colegio: textos legales de autorizaciones, matriz de permisos por rol, protocolo de medicación TENS (MAT-05), paracetamol, certificado de alumno regular, conservación de datos y Ley 21.719.
+- [ ] Decisiones del colegio que siguen abiertas (**actualizado 26-11-2026**): textos legales de las autorizaciones de imagen y convivencia, protocolo escrito de medicación TENS (MAT-05), situación familiar con o sin adjuntos, campos de las 7 secciones de la ficha médica del personal, Ley 21.719 (aviso de privacidad y derechos) y el dato identificatorio del colegio en el membrete del certificado. **Ya cerrados el 26-11-2026 y por eso fuera de esta lista:** quién formaliza la matrícula (Secretaría), autorización de paracetamol (va en la ficha, la responde el apoderado), formato del certificado de alumno regular (aprobado), documentos obligatorios (se definen caso a caso) y conservación de datos (por ley se conservan). **La matriz de permisos ya está confirmada**; falta sólo cargarla en la base del colegio.
 - [ ] Coordinación del equipo: formato ministerial y quién lo sube, identificador común con Asistencia/Notas/Apoyo (MAT-15), enlace desde la página del colegio y consumo del SSO por otros módulos.
 
 ### Orden sugerido
 
-1. Instalación de Docker para construir y probar la imagen.
+1. Construir y probar la imagen Docker del servicio `app` (Docker ya está instalado y verificado desde el 23-11-2026).
 2. Aceptación funcional final: pasos 2-5 del wizard (bloques B y C) y validación final del formulario.
 3. Con autorización: despliegue al servidor, credenciales y Cloudflare Access.
 
@@ -475,8 +477,41 @@ Los 302 corresponden a la política de permisos (redirección a Sin permiso); en
 ## 19. Medicación TENS: corrección, habilitación y despliegue — 25-11-2026
 
 - Formulario de dosis corregido (`MarcelaPaz.Web/Views/Alumnos/Detalle.cshtml`, commit `679554d`): solo se muestra cuando hay al menos una prescripción `VIGENTE`; antes bastaba con que existiera cualquiera y el selector quedaba vacío.
-- Flag de medicación puesto en `true` por orden expresa (`Medicacion:Habilitada=true` en `appsettings.json`, `docker-compose.yml` y `deploy/mpaz-matriculas.env.example`; en el servidor, `/etc/mpaz-matriculas/mpaz-matriculas.env`). Desde ahora TENS ve el panel de medicación y puede registrar dosis, siempre con orden VIGENTE validada + autorización otorgada (lo exige el trigger, no solo la pantalla).
+- Flag de medicación puesto en `true` por orden expresa (`Medicacion:Habilitada=true` en `appsettings.json`, `docker-compose.yml` y `deploy/mpaz-matriculas.env.example`; en el servidor, `_servidor/privado/entorno.json`, que es lo que manda por sobre el `appsettings`). Desde ahora TENS ve el panel de medicación y puede registrar dosis, siempre con orden VIGENTE validada + autorización otorgada (lo exige el trigger, no solo la pantalla).
 - Desplegado en el servidor con `_servidor/actualizar.sh`: publicación `20261125T061732Z`, portal en línea (HTTP 302) con el commit `679554d`, Docker verificado.
 - Revisión funcional TENS: build Release 0 errores, 213/213 pruebas.
 - Pendiente del colegio (sigue bloqueado): protocolo escrito (las 12 preguntas están en `docs/protocolo-medicacion-preguntas-TENS-direccion.docx`), pantalla de ingreso/validación de prescripciones y prueba de aceptación con una orden válida.
 
+---
+
+## 20. Tablas con filtro sin recarga — 25-11-2026
+
+- Nuevo `MarcelaPaz.Web/wwwroot/js/tablas.js` (cargado en `_AdminLayout`): al filtrar, ordenar o paginar solo se reemplaza la región de resultados, sin recargar la página; actualiza URL (`replaceState`), título y anuncia "tabla actualizada" al lector de pantalla. Ante cualquier error navega como antes y sin JS todo sigue igual.
+- Tablas cubiertas: Estudiantes (filtros + orden + paginación + tamaño + limpiar), Alertas (año), Reporte de matrículas y Faltantes (año) y Fichas del personal (búsqueda + funcionario + limpiar). Los enlaces que salen de la tabla (ficha, CSV, otros reportes) y los formularios POST no se tocan.
+- Ajuste en `ux.js`: el envío automático al cambiar un filtro (`data-ux-enviar-al-cambiar`) pasó a delegado en `document`, para que siga funcionando en los filtros reemplazados.
+- Commit `4bf86eb` (9 archivos), pusheado a `origin/main`; desplegado en el servidor con `_servidor/actualizar.sh`: publicación `20261125T063936Z`, portal en línea (HTTP 302), Docker verificado.
+- Verificación: `node --check` en ambos JS, build Release 0 errores, 213/213 pruebas. Falta probarlo a mano en el portal (filtrar en Estudiantes, paginar, cambiar de año en Reportes).
+
+
+---
+
+## 21. Auditoría de la emisión de certificados — 26-11-2026
+
+- **Hallazgo (hoja 08 del plan, caso CER-07):** la emisión de un certificado no dejaba rastro en
+  `registros_acceso`. `CertificadosController` auditaba con la acción `EMITIR`, pero
+  el `CHECK` de `registros_acceso.accion` solo admitía
+  `LEER/BUSCAR/DESCARGAR/EXPORTAR/REEMPLAZAR/DENEGADO`. El `INSERT` fallaba,
+  `AuditoriaAcceso` capturaba la excepción y la dejaba solo en el log, así que la
+  pantalla funcionaba y el certificado se guardaba, pero sin registro de acceso.
+- **Corrección:** `EMITIR` se agregó al `CHECK` en el DDL (`pasos/01-ddl-institucional.sql`,
+  `docker/db-init/01-ddl-institucional.sql` e `instalacion/01-estructura-bd.sql`) y se
+  creó el paso `28-accion-emitir-en-registros-acceso.sql`, re-ejecutable, para las bases
+  ya instaladas.
+- **Verificado** en instancia local aislada: emitir el certificado de un alumno con
+  matrícula firmada deja una fila
+  `accion=EMITIR, area=DOCUMENTOS, recurso=certificado_emitido, recurso_id=1,
+  estudiante_id=5, funcionario_id=1` con el folio en `detalle`, y el log no registra
+  errores de auditoría.
+- **Pendiente de despliegue:** aplicar el paso 28 en la base del colegio y en Neon
+  (la tabla existe y la restricción hay que reemplazarla). No se ejecutó en esos
+  entornos.

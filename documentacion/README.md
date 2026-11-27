@@ -1,7 +1,19 @@
 # Documentación — Portal de Matrícula MPAZ 2027
 
-Dos documentos, cada uno en su carpeta y dividido en segmentos para revisar
+Tres documentos, cada uno en su carpeta y dividido en segmentos para revisar
 de a poco sin abrir archivos largos:
+
+## `documentacion-tecnica/` — Arquitectura 4+1 (27-11-2026)
+
+- `documentacion-tecnica.md`: vistas de escenarios, lógica, procesos, desarrollo
+y física, más modelo de datos, estados, seguridad, protección de datos
+(Ley 21.719) y operación. Todos los diagramas están escritos en Mermaid dentro
+del propio documento.
+- `diagramas/`: los 15 diagramas renderizados en `.svg` (para PDF) y `.png`
+(para presentaciones); las fuentes Mermaid quedan en `diagramas/fuentes/`.
+- `extraer_diagramas.py`: extrae los bloques del documento a `diagramas/fuentes/`.
+- `_herramientas/`: `mermaid-cli` instalado sólo para esta carpeta. No se
+versiona: está en `.gitignore` y se recrea con `npm install`.
 
 ## `modulo-matricula/` — Documentación técnica (completa al 18-11-2026)
 

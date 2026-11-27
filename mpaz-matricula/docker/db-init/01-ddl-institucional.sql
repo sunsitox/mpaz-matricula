@@ -782,7 +782,8 @@ CREATE TABLE registros_acceso (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     funcionario_id  INTEGER REFERENCES funcionario(id),
     accion          VARCHAR(12) NOT NULL CHECK (accion IN
-                        ('LEER', 'BUSCAR', 'DESCARGAR', 'EXPORTAR', 'REEMPLAZAR', 'DENEGADO')),
+                        ('LEER', 'BUSCAR', 'DESCARGAR', 'EXPORTAR', 'REEMPLAZAR', 'DENEGADO',
+                         'EMITIR')),
     area            VARCHAR(30),
     recurso         VARCHAR(63),
     recurso_id      BIGINT,

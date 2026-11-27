@@ -41,3 +41,7 @@ datos-alumnos/
 # Carpeta de importación (Ley 21.719): no se versiona nada de ella. Las
 # fuentes reales, los scripts y las salidas quedan sólo en el equipo local.
 importacion/
+
+# Herramientas locales de la documentación: mermaid-cli con su node_modules
+# (cientos de MB). Se recrean con npm; al repositorio van sólo los documentos.
+documentacion/documentacion-tecnica/_herramientas/

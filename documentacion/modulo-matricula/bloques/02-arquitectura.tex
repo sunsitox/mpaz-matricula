@@ -1,52 +1,36 @@
 \section{Arquitectura del código}
 
-Solución \codigo{MarcelaPaz.Matriculas.slnx} (.NET 10) con cuatro proyectos:
+La arquitectura de la solución tiene una sola fuente de verdad:
+
+\begin{center}
+\path{documentacion/documentacion-tecnica/documentacion-tecnica.md}
+\end{center}
+
+Ese documento está escrito en Markdown con diagramas Mermaid y cubre las
+vistas 4+1 del sistema. Este bloque no repite su contenido: remite a él para
+que no existan dos descripciones que se contradigan.
+
+\subsection{Qué encontrar en ese documento}
 
 \begin{itemize}[leftmargin=*,itemsep=0.25em]
-\item \textbf{MarcelaPaz.Web}: controladores, vistas Razor, servicios de
-  aplicación, seguridad y recursos estáticos (\codigo{wwwroot}).
-\item \textbf{MarcelaPaz.Domain}: entidades, enumeraciones, excepciones e
-  identificadores (RUN/IPE/IPA, niveles de curso).
-\item \textbf{MarcelaPaz.Infrastructure}: persistencia EF Core/Npgsql,
-  Identity, documentos PDF y configuración de conexión.
-\item \textbf{MarcelaPaz.Tests}: pruebas automatizadas xUnit.
+\item \textbf{Escenarios}: actores y grupos de casos de uso.
+\item \textbf{Vista lógica}: capas, proyectos, controladores y servicios de
+  aplicación.
+\item \textbf{Vista de procesos}: inicio de sesión y permisos, matrícula de
+  punta a punta, emisión de certificados y registro de dosis.
+\item \textbf{Vista de desarrollo}: proyectos, dependencias NuGet y estrategia
+  de pruebas.
+\item \textbf{Vista física}: producción, ambiente local, respaldo y operación.
+\item \textbf{Complementos}: modelo de datos, estados, seguridad y despliegue.
 \end{itemize}
 
-La capa Web no conoce el proveedor de datos: \codigo{Program.cs} entrega la
-cadena de conexión a \codigo{AddPersistencia(...)} de Infrastructure. La
-cadena se resuelve por precedencia de ASP.NET Core: \codigo{appsettings.json},
-\codigo{appsettings.\{Entorno\}.json}, user-secrets, variables de entorno y
-línea de comandos.
+\nota{Los diagramas se generan desde el propio documento. Las versiones
+renderizadas están en \path{documentacion/documentacion-tecnica/diagramas/}
+(\codigo{.svg} para PDF y \codigo{.png} para presentaciones), y las fuentes
+Mermaid en \path{diagramas/fuentes/}.}
 
-\subsection{Controladores}
+\subsection{Cómo se mantiene}
 
-\begin{longtable}{@{}p{0.28\textwidth}p{0.64\textwidth}@{}}
-\toprule
-\textbf{Controlador} & \textbf{Responsabilidad}\\
-\midrule
-\codigo{Ficha} & Wizard de 8 pasos, cierre, firma, corrección, anulación, renovación\\
-\codigo{Alumnos} & Consulta del expediente por pestañas, validación documental\\
-\codigo{Funcionarios} & Administración de cuentas y roles (solo ADMIN\_TI)\\
-\codigo{Cuenta} & Login de funcionarios y cambio de contraseña\\
-\codigo{Autorizacion} & Emisor SSO OpenIddict (\codigo{/connect/authorize})\\
-\codigo{Certificados} & Emisión e historial de certificados de alumno regular\\
-\codigo{Reportes} & Reportes de matrículas y faltantes, exportación CSV\\
-\codigo{Alertas} & Listado de autorizaciones y órdenes vencidas/por vencer\\
-\codigo{Configuracion} & Año escolar activo y parámetros\\
-\codigo{Home} & Panel de inicio con indicadores por año y área\\
-\bottomrule
-\end{longtable}
-
-\subsection{Servicios de aplicación}
-
-En \codigo{MarcelaPaz.Web/Servicios}: \codigo{RegistroFicha} (cierre, firma,
-confirmación, anulación, corrección), \codigo{Autorizaciones} (estados y
-revocación), \codigo{ExpedienteDocumentos} (carga y descarga),
-\codigo{PanelIndicadores} y \codigo{AlertasProgramadas} (revisión cada
-15 minutos), \codigo{AnioEscolar}, \codigo{CatalogoDocumentos},
-\codigo{DatosInstitucion} y \codigo{RegistroWebService}.
-
-En \codigo{MarcelaPaz.Web/Seguridad}: \codigo{AutorizacionPorPermiso}
-(políticas \codigo{AREA:ACCION}), \codigo{AuditoriaAcceso},
-\codigo{FuncionarioClaimsPrincipalFactory}, \codigo{EmisorSso},
-\codigo{CuentasFuncionario} y \codigo{VigilanteSesion}.
+Si cambia la arquitectura, se edita \codigo{documentacion-tecnica.md} y se
+regeneran los diagramas con \codigo{extraer\_diagramas.py}. Este bloque no se
+actualiza: solo cambia si cambia la ubicación del documento.
