@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    actor F as Funcionario
+    participant N as Navegador
+    participant RL as Rate limiter<br/>(20 POST / 5 min por IP)
+    participant C as CuentaController
+    participant ID as Identity<br/>(lockout 5 / 15 min)
+    participant CP as ClaimsPrincipalFactory
+    participant DB as PostgreSQL
+    participant MW as Middleware de autorización
+    participant VS as VigilanteSesion<br/>(caché 60 s)
+    participant AU as registros_acceso
+
+    F->>N: correo y clave
+    N->>RL: POST /Cuenta/Login
+    RL-->>N: 302 /Cuenta/Login?limite=1 (si se agotó)
+    RL->>C: petición permitida
+    C->>ID: PasswordSignInAsync
+    ID-->>C: fallo (bloqueo a los 5 intentos)
+    ID->>CP: usuario válido → construir claims
+    CP->>DB: funcionario, roles vigentes, rol_permiso
+    DB-->>CP: permisos AREA:ACCION
+    CP-->>C: claims + funcionario_id + debe_cambiar_contrasena
+    C-->>N: cookie mpaz.matricula (8 h, sin renovación deslizante)
+    N->>MW: GET /Alumnos
+    MW->>MW: ¿claim permiso GENERAL:LEER?
+    MW->>VS: ¿sigue vigente la sesión?
+    VS->>DB: activo y permisos actuales (caché 60 s)
+    DB-->>VS: permisos de hoy
+    alt permiso ausente o rol cerrado
+        MW->>AU: DENEGADO con motivo
+        MW-->>N: 302 /Cuenta/SinPermiso
+    else permiso vigente
+        MW-->>N: 200 con la página
+    end

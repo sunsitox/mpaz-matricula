@@ -1,0 +1,45 @@
+erDiagram
+    ESTUDIANTE ||--o{ ESTUDIANTE_PERSONA : "vinculo"
+    PERSONA ||--o{ ESTUDIANTE_PERSONA : "madre, padre o apoderado"
+    ESTUDIANTE ||--o{ CONTACTO_EMERGENCIA : "declara"
+    ESTUDIANTE ||--o{ RETIRO_AUTORIZADO : "autoriza"
+    ESTUDIANTE ||--o{ DOCUMENTO : "adjunta"
+    DOCUMENTO ||--o{ REQUISITO_DOCUMENTAL : "respalda"
+    MATRICULA_ANUAL ||--o{ REQUISITO_DOCUMENTAL : "exige"
+    ESTUDIANTE ||--o{ ANTECEDENTE_SALUD : "salud"
+    ESTUDIANTE ||--o{ SITUACION_MEDICA : "situacion"
+    ESTUDIANTE ||--o{ ANTECEDENTE_APOYO : "PIE"
+    ESTUDIANTE ||--o{ RESTRICCION_FAMILIAR : "judicial"
+
+    ESTUDIANTE {
+        int id PK
+        varchar identificador UK
+    }
+    PERSONA {
+        int id PK
+        varchar tipo_identificador "RUN o IPA"
+        varchar identificador
+        varchar nombres
+        varchar apellidos
+    }
+    ESTUDIANTE_PERSONA {
+        int estudiante_id PK
+        int persona_id PK
+        varchar parentesco "MADRE, PADRE, OTRO"
+        varchar tipo_apoderado "PRINCIPAL, SECUNDARIO"
+        date vigente_desde
+    }
+    DOCUMENTO {
+        int id PK
+        int estudiante_id FK
+        varchar tipo
+        varchar nombre_archivo
+        varchar hash
+    }
+    REQUISITO_DOCUMENTAL {
+        int id PK
+        int matricula_id FK
+        varchar tipo_documento
+        varchar estado "PENDIENTE, RECIBIDO, NO_APLICA"
+        int documento_id FK
+    }

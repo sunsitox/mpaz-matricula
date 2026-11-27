@@ -1,0 +1,15 @@
+flowchart TB
+    REQ["Petición HTTP"] --> FH["ForwardedHeaders<br/>solo proxy local"]
+    FH --> HDR["Cabeceras de seguridad<br/>CSP, X-Frame-Options, nosniff,<br/>Referrer-Policy, Permissions-Policy"]
+    HDR --> HTTPS["HTTPS + HSTS<br/>(solo producción)"]
+    HTTPS --> STAT["Archivos estáticos"]
+    STAT --> RL["Rate limiter de login"]
+    RL --> AUTH["Autenticación por cookie"]
+    AUTH --> CACHE["no-store en respuestas autenticadas"]
+    CACHE --> AUTZ["Autorización por permiso<br/>AREA:ACCION"]
+    AUTZ --> CHG["Cambio de clave obligatorio"]
+    CHG --> AF["Antiforgery global<br/>todo POST exige token"]
+    AF --> CTRL["Controlador"]
+
+    AUTZ -.->|"falta el permiso"| DEN["403 / SinPermiso<br/>+ fila DENEGADO"]
+    AUTH -.->|"sin sesión"| LOGIN["302 /Cuenta/Login"]

@@ -1,0 +1,30 @@
+flowchart TB
+    subgraph Web["MarcelaPaz.Web · presentación"]
+        direction LR
+        MW["Middleware y filtros"] --> CTRL["10 controladores MVC"]
+        CTRL --> SERV["Servicios de aplicación"]
+        CTRL --> SEG["Seguridad y auditoría"]
+        CTRL --> VIEW["Vistas Razor + wwwroot"]
+    end
+
+    subgraph Infra["MarcelaPaz.Infrastructure · infraestructura"]
+        direction LR
+        EF["EF Core + Npgsql"]
+        PDF["PDF y QR"]
+        IDE["Identity"]
+        OID["Emisor SSO"]
+        CON["ConexionViva"]
+    end
+
+    subgraph Dom["MarcelaPaz.Domain · dominio"]
+        direction LR
+        ENT["Entidades y enums"]
+        IDN["RUN, IPE, IPA"]
+        EXC["Reglas y excepciones"]
+    end
+
+    PG[("PostgreSQL<br/>esquema mpaz_matricula")]
+
+    Web --> Infra
+    Infra --> Dom
+    EF --> PG

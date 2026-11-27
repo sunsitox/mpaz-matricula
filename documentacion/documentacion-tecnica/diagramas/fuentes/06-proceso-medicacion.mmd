@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor T as TENS
+    participant AC as AlumnosController
+    participant CF as Configuración
+    participant DB as PostgreSQL
+    participant TR as Triggers
+    participant AU as registros_acceso
+
+    T->>AC: POST /Alumnos/RegistrarDosis
+    AC->>CF: ¿Medicacion:Habilitada?
+    alt flag apagado
+        AC-->>T: aviso de protocolo TENS pendiente
+    else flag encendido
+        AC->>DB: prescripción del estudiante
+        AC->>TR: INSERT administracion_medicamento
+        TR->>TR: rol TENS activo
+        TR->>TR: prescripción VIGENTE y validada
+        TR->>TR: autorización MEDICACION OTORGADA y vigente
+        alt alguna regla falla
+            TR-->>AC: excepción con mensaje claro
+            AC-->>T: "No se pudo registrar: revise orden y autorización"
+        else todo vigente
+            TR-->>AC: fila insertada
+            AC->>AU: CREAR / MEDICACION
+            AC-->>T: "Dosis registrada por TENS"
+        end
+    end
+    Note over DB: administracion_medicamento es solo-inserción:<br/>una corrección es una fila nueva que apunta a la anterior.

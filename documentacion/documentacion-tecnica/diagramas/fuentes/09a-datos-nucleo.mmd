@@ -1,0 +1,46 @@
+erDiagram
+    ESTUDIANTE ||--o{ MATRICULA_ANUAL : "se matricula"
+    CURSO ||--o{ MATRICULA_ANUAL : "recibe"
+    MATRICULA_ANUAL ||--o{ FICHA_VERSION : "versiones"
+    FICHA_VERSION ||--o{ AUTORIZACION : "se firmo en"
+    ESTUDIANTE ||--o{ AUTORIZACION : "otorga"
+    PLANTILLA_AUTORIZACION ||--o{ AUTORIZACION : "texto base"
+    AUTORIZACION ||--|| PRESCRIPCION : "habilita"
+    PRESCRIPCION ||--o{ ADMINISTRACION_MEDICAMENTO : "dosis"
+
+    ESTUDIANTE {
+        int id PK
+        varchar tipo_identificador "RUN o IPE"
+        varchar identificador UK
+        varchar nombre_completo
+        date fecha_nacimiento
+    }
+    MATRICULA_ANUAL {
+        int id PK
+        int estudiante_id FK
+        smallint anio
+        varchar estado "BORRADOR a ANULADA"
+        int curso_id FK
+    }
+    FICHA_VERSION {
+        int id PK
+        int matricula_id FK
+        smallint numero_version
+        varchar folio UK
+        varchar estado "VIGENTE o REEMPLAZADA"
+        jsonb datos_snapshot
+    }
+    AUTORIZACION {
+        int id PK
+        int estudiante_id FK
+        varchar tipo "IMAGEN, CONVIVENCIA, MEDICACION"
+        varchar estado
+        date fecha_firma
+    }
+    PRESCRIPCION {
+        int id PK
+        int autorizacion_id FK
+        varchar medicamento
+        varchar estado "PENDIENTE_VALIDACION a VENCIDA"
+        date vigente_hasta
+    }

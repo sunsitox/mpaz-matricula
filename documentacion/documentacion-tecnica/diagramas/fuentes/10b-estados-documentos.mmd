@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph PRES["Prescripción"]
+        direction LR
+        P1["PENDIENTE_VALIDACION"] -->|"validar orden"| P2["VIGENTE"]
+        P2 -->|"suspender"| P3["SUSPENDIDA"]
+        P2 -->|"pasa la vigencia"| P4["VENCIDA"]
+    end
+
+    subgraph AUT["Autorización"]
+        direction LR
+        A1["PENDIENTE"] -->|"firmar"| A2["OTORGADA"]
+        A1 -->|"rechazar"| A3["RECHAZADA"]
+        A2 -->|"revocar con motivo"| A4["REVOCADA"]
+        A2 -->|"pasa la vigencia"| A5["VENCIDA"]
+        A2 -->|"nueva versión"| A6["REEMPLAZADA"]
+    end
+
+    subgraph FICHA["Ficha de matrícula"]
+        direction LR
+        F1["VIGENTE"] -->|"corregir con motivo"| F2["REEMPLAZADA"]
+    end

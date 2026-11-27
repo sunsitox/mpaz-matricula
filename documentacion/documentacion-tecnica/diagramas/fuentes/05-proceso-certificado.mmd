@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    actor S as Secretaría
+    participant CC as CertificadosController
+    participant DB as PostgreSQL
+    participant AU as registros_acceso
+    actor T as Tercero
+    participant PUB as Validación pública
+
+    S->>CC: POST /Certificados/Emitir/{id}
+    CC->>CC: ¿DOCUMENTOS:CREAR o EDITAR? (Dirección no emite)
+    CC->>DB: matrícula apta del año activo<br/>(FIRMADA, CONFIRMADA o validada)
+    CC->>DB: firmante activo con rol DIRECCION
+    CC->>CC: código aleatorio + hash SHA-256
+    CC->>DB: certificado_emitido con folio CAR-2027-000001
+    CC->>AU: EMITIR / DOCUMENTOS / certificado_emitido
+    CC-->>S: PDF con QR y URL de validación
+    S-->>T: entrega el papel
+    T->>PUB: GET /c/{codigo} o folio + código
+    PUB->>DB: buscar por hash del código
+    alt vigente
+        PUB-->>T: folio, alumno, curso y vigencia
+    else vencido
+        PUB-->>T: folio y hasta cuándo valió
+    else no existe
+        PUB-->>T: sin datos del alumno
+    end

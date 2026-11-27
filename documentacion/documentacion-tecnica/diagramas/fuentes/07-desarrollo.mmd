@@ -1,0 +1,5 @@
+flowchart TB
+    TST["MarcelaPaz.Tests<br/>213 pruebas xUnit"] -.->|"referencia"| WEB
+    WEB["MarcelaPaz.Web<br/>MVC + Razor"] --> INF["MarcelaPaz.Infrastructure<br/>EF Core, Identity, OpenIddict, PDF"]
+    INF --> DOM["MarcelaPaz.Domain<br/>entidades, RUN/IPE/IPA, reglas"]
+    INF --> PKG["Paquetes: Npgsql, QuestPDF,<br/>QRCoder, OpenIddict, Serilog"]

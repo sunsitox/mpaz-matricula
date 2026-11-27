@@ -1,0 +1,9 @@
+flowchart TB
+    DEV["Cambio en el código"] --> BUILD["dotnet build -c Release"]
+    BUILD --> TEST["dotnet test<br/>213 pruebas"]
+    TEST -->|"falla"| DEV
+    TEST -->|"pasa"| REL["Publicación<br/>deploy/build-release.sh"]
+    REL --> SVC["systemd: reiniciar servicio"]
+    SVC --> SMOKE["Verificación<br/>login, panel, un módulo"]
+    SMOKE -->|"error"| ROLL["Volver a la release anterior<br/>(symlink current)"]
+    SMOKE -->|"ok"| OK["Portal en producción"]

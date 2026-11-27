@@ -1,0 +1,11 @@
+stateDiagram-v2
+    direction TB
+    [*] --> BORRADOR
+    BORRADOR --> FICHA_GENERADA : cerrar asistente
+    FICHA_GENERADA --> FIRMADA : subir escaneo firmado
+    FIRMADA --> CONFIRMADA : confirmar con responsable
+    CONFIRMADA --> ANULADA : anular con motivo
+    BORRADOR --> ANULADA : anular con motivo
+    FICHA_GENERADA --> ANULADA : anular con motivo
+    FIRMADA --> ANULADA : anular con motivo
+    ANULADA --> [*]

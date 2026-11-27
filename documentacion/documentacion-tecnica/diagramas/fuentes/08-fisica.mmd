@@ -1,0 +1,17 @@
+flowchart TB
+    subgraph PROD["Producción · matricula.empaz.cl"]
+        direction TB
+        U["Navegador del funcionario"] --> CF["Cloudflare<br/>DNS + túnel mpaz-web"]
+        CF --> APP["Kestrel 127.0.0.1:5100<br/>systemd: mpaz-matriculas.service"]
+        APP --> KEYS[("DataProtection<br/>/var/lib/mpaz-matriculas/keys")]
+        APP --> DOCS[("Expediente documental<br/>/srv/mpaz-data/documentos")]
+        APP -->|"endpoint del servicio web"| NEON[("Neon<br/>esquema mpaz_matricula")]
+        APP -.->|"conexión directa si el endpoint falla"| NEON
+        APP --> WS["Web service<br/>de funcionarios"]
+        APP --> SSO["Clientes SSO<br/>Asistencia, Notas, web"]
+    end
+
+    subgraph LOC["Desarrollo y pruebas"]
+        direction TB
+        DEV["dotnet run<br/>o Docker Compose"] --> PGL[("PostgreSQL 16<br/>base mpaz_pruebas")]
+    end

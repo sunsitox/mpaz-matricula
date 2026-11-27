@@ -1,0 +1,38 @@
+erDiagram
+    FUNCIONARIO ||--o{ FUNCIONARIO_ROL : "tiene"
+    ROL ||--o{ FUNCIONARIO_ROL : "asigna"
+    ROL ||--o{ ROL_PERMISO : "concede"
+    FUNCIONARIO ||--o{ REGISTROS_ACCESO : "deja rastro"
+    FUNCIONARIO ||--o{ HISTORIAL_CAMBIOS : "modifica"
+
+    FUNCIONARIO {
+        int id PK
+        varchar correo UK
+        varchar nombre
+        boolean activo
+        varchar sso_sujeto
+    }
+    ROL {
+        int id PK
+        varchar codigo UK "9 roles"
+        varchar nombre
+    }
+    ROL_PERMISO {
+        int rol_id PK
+        varchar area PK "11 areas"
+        varchar accion PK "6 acciones"
+    }
+    REGISTROS_ACCESO {
+        bigint id PK
+        int funcionario_id FK
+        varchar accion "LEER, EXPORTAR, EMITIR..."
+        varchar area
+        timestamptz ocurrido_en
+    }
+    HISTORIAL_CAMBIOS {
+        bigint id PK
+        varchar tabla
+        bigint registro_id
+        jsonb datos_anteriores
+        jsonb datos_nuevos
+    }

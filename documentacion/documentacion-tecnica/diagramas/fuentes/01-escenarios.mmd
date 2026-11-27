@@ -1,0 +1,44 @@
+flowchart LR
+    subgraph Actores["Actores"]
+        direction TB
+        SEC["Secretaría"]
+        DIR["Dirección"]
+        INS["Inspectoría General"]
+        UTP["UTP"]
+        PIE["Equipo PIE"]
+        CON["Convivencia"]
+        DOC["Docente"]
+        TENS["TENS"]
+        ADM["Administración TI"]
+        APO["Apoderado (presencial)"]
+        PUB["Tercero con un certificado"]
+    end
+
+    subgraph Casos["Grupos de casos de uso"]
+        direction TB
+        G1["Matrícula<br/>crear la ficha en 8 pasos<br/>firmar, confirmar y validar"]
+        G2["Expediente<br/>consultar por áreas<br/>cargar y validar documentos<br/>autorizaciones y retiros"]
+        G3["Documentos oficiales<br/>emitir certificado<br/>alertas y reportes"]
+        G4["Medicación TENS<br/>registrar dosis administrada"]
+        G5["Administración<br/>funcionarios y roles<br/>año escolar"]
+        G6["Acceso<br/>iniciar sesión<br/>cambiar la clave inicial"]
+    end
+
+    SEC --> G1
+    SEC --> G2
+    SEC --> G3
+    SEC --> G6
+    DIR --> G1
+    DIR --> G3
+    DIR --> G6
+    INS --> G2
+    UTP --> G2
+    UTP --> G3
+    PIE --> G2
+    CON --> G2
+    DOC --> G2
+    TENS --> G4
+    ADM --> G5
+    ADM --> G6
+    APO -.->|"entrega los datos"| SEC
+    PUB --> G3

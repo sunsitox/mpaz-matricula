@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor S as Secretaría
+    participant FC as FichaController
+    participant RF as RegistroFicha
+    participant DB as PostgreSQL
+    participant EX as ExpedienteDocumentos
+    participant PDF as QuestPDF
+    actor D as Dirección
+
+    S->>FC: buscar alumno por RUN o IPE
+    FC->>DB: estudiante y matrícula del año activo
+    S->>FC: pasos 1 a 8 (POST por paso)
+    FC->>FC: ValidadorFicha (RUN/IPE, IPA, obligatorios)
+    FC->>RF: guardar borrador
+    RF->>DB: matricula_anual (BORRADOR) + datos por área
+    S->>FC: confirmar cierre del asistente
+    FC->>RF: generar ficha
+    RF->>DB: ficha_version VIGENTE + folio MP-2027-00001
+    RF->>PDF: snapshot JSONB → PDF
+    PDF-->>S: ficha imprimible
+    S->>EX: subir escaneo firmado
+    EX->>DB: documento + ficha_version.fecha_firma
+    S->>RF: confirmar matrícula
+    RF->>DB: estado CONFIRMADA con responsable y fecha
+    D->>FC: validar (Dirección)
+    FC->>DB: validada_por / validada_en
+    Note over S,DB: Corregir crea una ficha_version nueva, la anterior queda REEMPLAZADA
