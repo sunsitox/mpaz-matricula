@@ -11,10 +11,10 @@ Lista de entregables acordados. **Estado revisado el 16-11-2026.**
     - [x] Datos de prueba ficticios, sin estudiantes reales.
     - [x] Recorrido ejecutado de corrido con cursor visible como un usuario — `pruebas-visuales/grabar-flujo.mjs`.
     - [x] Video final en WebM — `pruebas-visuales/evidencias/grabar-flujo/flujo-mpaz.webm`; queda la revisión final antes de entregar.
-- [ ] **Manual de uso**
-    - [ ] Alcance: Secretaría y Dirección (ingreso, matrícula por pasos, correcciones, documentos, autorizaciones, firma y confirmación).
-    - [ ] Paso a paso con capturas de las pantallas reales.
-    - [ ] Sección de errores frecuentes y cómo resolverlos.
+- [x] **Manual de uso** — `documentacion/manual-usuarios/manual-usuarios.pdf` (20 páginas, 27-11-2026).
+    - [x] Alcance: los nueve roles (ingreso, matrícula por pasos, correcciones, documentos, autorizaciones, firma y confirmación, certificados, reportes, alertas y cuentas).
+    - [x] Paso a paso con 17 capturas de las pantallas reales, con nombres y RUN de ejemplo (`capturar-manual.mjs`).
+    - [x] Preguntas frecuentes, glosario y soporte.
 - [ ] **Documentación técnica**
     - [x] Arquitectura de la solución (capas, proyectos, responsabilidades) — `documentacion/modulo-matricula/documentacion-tecnica.md`: vistas 4+1 en Mermaid (escenarios, lógica, procesos, desarrollo y física) más modelo de datos, estados, seguridad y operación, con los diagramas renderizados en `.svg` y `.png` (27-11-2026).
     - [ ] Base de datos: esquema, restricciones e índices relevantes — **Parcial:** `docs/diagrama-relacional.md` y el DDL comentado.

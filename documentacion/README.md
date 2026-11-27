@@ -26,7 +26,7 @@ técnica**; la carpeta conserva el nombre del proyecto.
 - `_herramientas/`: `mermaid-cli` instalado sólo para esta carpeta. No se
   versiona: está en `.gitignore` y se recrea con `npm install`.
 
-## `manual-usuarios/` — Manual de uso (maqueta con TODO)
+## `manual-usuarios/` — Manual de uso (27-11-2026)
 
 - `manual-usuarios.tex`: documento principal (preámbulo + `\input`).
   Compilar con `pdflatex manual-usuarios.tex` (2 pasadas).
@@ -35,7 +35,10 @@ técnica**; la carpeta conserva el nombre del proyecto.
   `04-direccion-inspectoria`, `05-roles-consulta` (PIE/UTP/Convivencia/
   Docente), `06-tens`, `07-admin-ti`,
   `08-certificados-reportes-alertas`, `09-faq-glosario-soporte`.
-  Los textos marcados TODO se completan después con capturas reales.
+- `capturas/`: 19 capturas del portal en funcionamiento, con nombres y RUN de
+  ejemplo (Ley 19.628 y 21.719). Se regeneran con
+  `mpaz-matricula/pruebas-visuales/capturar-manual.mjs` sobre el portal
+  levantado en `http://localhost:5199`.
 
 ## `presentacion-colegio.md`
 

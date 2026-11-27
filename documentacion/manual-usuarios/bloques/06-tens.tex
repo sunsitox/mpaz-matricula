@@ -1,5 +1,32 @@
-\section{TENS}
-\subsection{Ver salud y medicación}
-\todo{Qué información se muestra en el expediente.}
-\subsection{Registrar una administración}
-\todo{Requisitos previos y pasos para registrar una dosis.}
+\section{TENS: medicación}
+
+El rol TENS registra la administración de medicamentos en el colegio. Solo se
+puede registrar una dosis si existe una \textbf{orden médica vigente} para ese
+estudiante y ese medicamento.
+
+\subsection{Ver la información de salud}
+
+\begin{enumerate}[leftmargin=*,itemsep=0.2em]
+\item Entre a \textbf{Estudiantes} y busque al estudiante.
+\item Abra la pestaña \textbf{Salud}: situación médica declarada, alergias,
+  salida al baño y contacto de emergencia.
+\end{enumerate}
+
+\captura{16-tens-estudiantes}{0.95}{Búsqueda del estudiante desde el rol TENS.}
+
+\captura{17-tens-salud}{0.95}{Pestaña de salud: lo declarado por el apoderado en la ficha.}
+
+\subsection{Registrar una dosis}
+
+\begin{enumerate}[leftmargin=*,itemsep=0.2em]
+\item Con la orden médica a la vista, registre la dosis indicando la hora y la
+  cantidad administrada.
+\item El portal deja el registro en la auditoría: no se puede editar ni
+  borrar después.
+\item Si no hay orden vigente, el portal no permite registrar: hay que pedir
+  la receta actualizada.
+\end{enumerate}
+
+\pendiente{Mientras el colegio no apruebe por escrito el protocolo de
+medicación, la habilitación sigue siendo una orden expresa de Dirección y no
+un procedimiento institucional.}

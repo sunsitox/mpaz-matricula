@@ -1,5 +1,6 @@
-% Manual de usuarios — Portal de Matrícula MPAZ 2027 (MAQUETA)
-% Solo estructura: los textos marcados TODO se completan después.
+% Manual de usuarios — Portal de Matrícula MPAZ 2027
+% Las capturas salen del portal real con datos de ejemplo (nombres y RUN
+% sustituidos). Se regeneran con mpaz-matricula/pruebas-visuales/capturar-manual.mjs.
 % Estructura por segmentos: cada grupo de secciones es un archivo en
 % bloques/ e se incluye con \input, para revisar de a un segmento.
 % Compilar: pdflatex manual-usuarios.tex (2 pasadas para el índice).
@@ -15,6 +16,7 @@
 \usepackage{geometry}
 \usepackage{array}
 \usepackage{longtable}
+\usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
@@ -23,15 +25,24 @@
 \usepackage{hyperref}
 \geometry{margin=2.5cm}
 
-% Paleta institucional
+% Paleta institucional, la misma del portal (wwwroot/css).
 \definecolor{mpazAzul}{HTML}{0F2537}
-\definecolor{mpazDorado}{HTML}{D97706}
+\definecolor{mpazDorado}{HTML}{F59E0B}
 \definecolor{mpazFondo}{HTML}{F8FAFC}
-\definecolor{mpazBorde}{HTML}{E2E0F0}
-\definecolor{mpazGris}{HTML}{64748B}
+\definecolor{mpazBorde}{HTML}{E2E5EA}
+\definecolor{mpazGris}{HTML}{5C6470}
+
+% Capturas de pantalla.
+\graphicspath{{capturas/}}
+\newcommand{\captura}[3]{%
+  \begin{figure}[!htbp]
+    \centering
+    \fcolorbox{mpazBorde}{white}{\includegraphics[width=#2\textwidth]{#1.png}}
+    \caption{#3}
+  \end{figure}}
 
 \hypersetup{colorlinks=true,linkcolor=mpazAzul,urlcolor=mpazAzul,citecolor=mpazAzul,
-  pdftitle={Manual de Usuarios — Portal de Matrícula MPAZ 2027 (Maqueta)},
+  pdftitle={Manual de Usuarios — Portal de Matrícula MPAZ 2027},
   pdfauthor={Escuela Escritora Marcela Paz}}
 
 % Encabezado y pie
@@ -56,6 +67,15 @@
 \setlength{\parindent}{0pt}
 \renewcommand{\arraystretch}{1.2}
 
+% Cajas y marcas, iguales que en la documentación técnica.
+\newcommand{\codigo}[1]{\texttt{\color{mpazAzul}#1}}
+\newcommand{\caja}[3]{%
+  \par\noindent\fcolorbox{#1}{mpazFondo}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      \small\textbf{\color{#1}#2}\ #3}}\par}
+\newcommand{\nota}[1]{\caja{mpazAzul}{Nota:}{#1}}
+\newcommand{\pendiente}[1]{\caja{mpazDorado}{Pendiente:}{#1}}
+
 % Marcador de maqueta: reemplazar por el texto final.
 \newcommand{\todo}[1]{%
   \par\noindent\fcolorbox{mpazBorde}{mpazFondo}{%
@@ -79,7 +99,8 @@ Escuela MPAZ\par
 2026\par
 \vspace{1.5em}
 \fcolorbox{mpazDorado}{mpazFondo}{%
-  \parbox{0.62\textwidth}{\centering\small\textbf{Documento en maqueta:} los textos marcados TODO se completan después.}}
+  \parbox{0.62\textwidth}{\centering\small Las pantallas corresponden al portal en
+  funcionamiento; los nombres y los RUN son de ejemplo.}}
 \end{center}
 \newpage
 \tableofcontents

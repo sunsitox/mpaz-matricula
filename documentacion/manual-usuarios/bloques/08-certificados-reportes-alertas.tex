@@ -1,8 +1,52 @@
-\section{Certificados}
-\todo{Cómo emitir y validar un certificado de alumno regular.}
+\section{Certificados de alumno regular}\label{sec:certificados}
+
+\captura{11-certificados}{0.95}{Historial de certificados: folio, alumno, curso, fecha, quién lo emitió y estado.}
+
+\begin{enumerate}[leftmargin=*,itemsep=0.2em]
+\item Abra la ficha del estudiante y pulse \textbf{Certificado alumno
+  regular}. Solo se emite si la matrícula está firmada, confirmada o validada.
+\item Complete los datos que pide el formulario. El portal asigna el folio y
+  el código de verificación.
+\item Descargue el PDF. Cada emisión queda registrada con su nombre y la
+  fecha.
+\end{enumerate}
+
+\subsection{Validar un certificado}
+
+Quien recibe el certificado puede comprobarlo sin cuenta:
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item En \textbf{Validar un certificado}, escriba el folio y el código.
+\item O abra el enlace corto impreso en el documento, con la forma
+  \codigo{/c/\{código\}}.
+\end{itemize}
+
+Si un certificado se anula, la validación deja de reconocerlo.
 
 \section{Reportes}
-\todo{Qué reportes puede descargar cada rol.}
+
+\captura{12-reportes}{0.95}{Reporte de matrículas con los filtros del año y curso.}
+
+Los reportes se descargan en CSV y cada descarga queda auditada:
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item \textbf{Matrículas}: una fila por estudiante y año, con curso, estado y
+  fechas.
+\item \textbf{Faltantes}: los expedientes a los que les falta algún
+  documento.
+\end{itemize}
+
+Para abrirlos en Excel, use la importación de datos y elija la coma como
+separador.
 
 \section{Alertas}
-\todo{Qué alertas existen y cómo revisarlas.}
+
+\captura{10-alertas}{0.95}{Alertas de vencimiento de los próximos 30 días.}
+
+\textbf{Alertas} reúne las autorizaciones y las órdenes médicas vencidas y las
+que vencen dentro de los próximos 30 días. Primero aparece lo vencido y luego
+lo que vence antes.
+
+El portal revisa los vencimientos \textbf{cada 15 minutos} y guarda un resumen
+de cada revisión. Las autorizaciones que pasan su fecha cambian solas a
+vencidas.

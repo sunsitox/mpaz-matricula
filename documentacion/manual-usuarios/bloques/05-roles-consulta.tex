@@ -1,11 +1,36 @@
-\section{PIE}
-\todo{Qué puede consultar en este portal.}
+\section{Roles de consulta}
 
-\section{UTP}
-\todo{Solo consulta: qué puede ver y exportar.}
+UTP, Convivencia, PIE y Docente trabajan en modo consulta. El menú cambia
+según el rol: si una pantalla no aparece, el rol no la incluye.
 
-\section{Convivencia}
-\todo{Qué puede consultar.}
+\captura{18-docente-panel}{0.95}{El rol Docente ve un menú reducido: panel, estudiantes y actividad.}
 
-\section{Docente}
-\todo{Qué puede consultar (datos mínimos).}
+\begin{longtable}{@{}p{0.2\textwidth}p{0.7\textwidth}@{}}
+\toprule
+\textbf{Rol} & \textbf{Qué puede ver}\\
+\midrule
+UTP & Todas las áreas, exportar y la ficha de salud del personal.\\
+CONVIVENCIA & Familia, retiro, autorizaciones y documentos; sin salud, PIE,
+  judicial ni medicación.\\
+EQUIPO\_PIE & General, familia, PIE y documentos.\\
+DOCENTE & Solo identificación, curso y estado del estudiante.\\
+\bottomrule
+\end{longtable}
+
+\subsection{Ficha de salud del personal}
+
+UTP y Dirección mantienen la ficha de salud de los funcionarios, en
+\textbf{Personal · Fichas médicas del personal}. Es información reservada: cada
+consulta y cada cambio quedan en la auditoría.
+
+\captura{15-fichas-medicas}{0.95}{Fichas médicas del personal, reservadas a UTP y Dirección.}
+
+\subsection{Cuando falta un permiso}
+
+Si entra a una pantalla que su rol no incluye, el portal muestra este aviso y
+registra el intento en la auditoría.
+
+\captura{19-sin-permiso}{0.9}{Aviso de permiso insuficiente. El intento queda registrado.}
+
+Para pedir acceso, escriba a Administración TI indicando la pantalla y el
+motivo.
