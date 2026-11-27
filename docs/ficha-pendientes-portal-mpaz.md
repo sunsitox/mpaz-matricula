@@ -135,6 +135,10 @@ recarga (`20261125T063936Z`) y ficha de salud del personal con trigger de audito
 - [ ] El historial de certificados no permite reimprimir ni anular: si se pierde el PDF
       hay que emitir otro. El modelo tiene `AnuladoEn`, falta la acción y su caso.
 - [ ] Decidir el destino de `SUPERADMIN` y `superadmin.test@mpaz.cl` (solo en la base local de prueba).
+- [ ] **Renombrar el proyecto**: hoy se llama «módulo de matrícula» y cubre la gestión
+      completa del alumno. Propuesta: «Portal de Gestión Escolar MPAZ» / `mpaz-gestion-escolar`.
+      Orden de menor a mayor riesgo: (1) documentación e interfaz, (2) carpeta raíz y repo,
+      (3) esquema `mpaz_matricula` de la base en una ventana de mantenimiento.
 
 ---
 

@@ -45,3 +45,11 @@ importacion/
 # Herramientas locales de la documentación: mermaid-cli con su node_modules
 # (cientos de MB). Se recrean con npm; al repositorio van sólo los documentos.
 documentacion/modulo-matricula/_herramientas/
+
+# Artefactos de compilación de LaTeX: se regeneran con pdflatex.
+documentacion/**/*.aux
+documentacion/**/*.log
+documentacion/**/*.out
+documentacion/**/*.toc
+documentacion/**/*.lof
+documentacion/**/*.lot

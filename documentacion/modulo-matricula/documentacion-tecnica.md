@@ -827,6 +827,10 @@ requisitos apuntando a documentos inexistentes.
 
 ## 13. Diagramas y cómo regenerarlos
 
+Los quince diagramas están insertados como figuras en `documentacion-tecnica.pdf`
+(con índice de figuras al inicio del documento). Esta tabla es el catálogo de
+fuentes: el PDF los toma de `diagramas/*.png`.
+
 | Archivo | Qué muestra |
 | --- | --- |
 | `01-escenarios` | Actores y grupos de casos de uso |

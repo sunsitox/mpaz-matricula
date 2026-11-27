@@ -67,6 +67,16 @@
 \newcommand{\nota}[1]{\caja{mpazAzul}{Nota:}{#1}}
 \newcommand{\pendiente}[1]{\caja{mpazDorado}{Pendiente colegio:}{#1}}
 
+% Diagramas: los PNG renderizados viven en diagramas/ (misma carpeta que este
+% archivo). \diagrama{archivo}{ancho relativo a \textwidth}{título}
+\graphicspath{{diagramas/}}
+\newcommand{\diagrama}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2\textwidth]{#1.png}
+    \caption{#3}
+  \end{figure}}
+
 \begin{document}
 \thispagestyle{empty}
 \begin{center}
@@ -86,6 +96,8 @@ Escuela MPAZ\par
 \end{center}
 \newpage
 \tableofcontents
+\newpage
+\listoffigures
 \newpage
 
 \input{bloques/01-descripcion}
