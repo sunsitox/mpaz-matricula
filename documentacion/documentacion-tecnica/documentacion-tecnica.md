@@ -705,9 +705,76 @@ oculten en la vista, es que la consulta no se hace.
 
 ---
 
-## 10. Operación
+## 10. Protección de datos personales
 
-### 10.1 Camino de un cambio hasta producción
+El portal trata datos de menores —incluidos datos sensibles de salud, PIE y
+situación judicial— y datos de salud de funcionarios. Eso lo pone dentro del
+ámbito de la **Ley 21.719**, que reemplaza a la Ley 19.628.
+
+### 10.1 Cuándo rige y por qué importa ahora
+
+| Hito | Fecha |
+| --- | --- |
+| Publicación de la Ley 21.719 | 13-12-2024 |
+| Vigencia original (24 meses) | 01-12-2026 |
+| **Vigencia actual: 15-10-2027** | Fijada por la **Ley 21.855**, promulgada el 19-11-2026 y publicada el 23-11-2026 |
+| Hasta esa fecha | Rige la Ley 19.628 |
+
+La Ley 21.855 cambió la fecha, no las obligaciones: los derechos del titular,
+las bases de licitud, los deberes del responsable y el régimen de multas de la
+Ley 21.719 quedan igual. Por eso la entrega de este año se documenta ya contra
+la ley que va a regir el próximo, y no sólo contra la 19.628.
+
+### 10.2 Qué ya cumple el portal
+
+| Exigencia | Cómo se cumple |
+| --- | --- |
+| Acceso sólo con cuenta de funcionario | `Seguridad:ExigirInicioSesion=true`; no hay registro público |
+| Mínimo necesario por rol y área | Matriz `rol_permiso` (11 áreas × 6 acciones); sin permiso el bloque ni se consulta |
+| Trazabilidad de lecturas y cambios | `registros_acceso` e `historial_cambios`, ambos sólo-inserción |
+| Datos sensibles separados | Salud, PIE, judicial y medicación son áreas propias; los archivos viven fuera de `wwwroot` |
+| Sin cesión a terceros | No hay correo ni analítica de terceros; el único canal externo es el web service con token |
+| Conservación sin borrado | Expediente y auditoría no se eliminan; sólo se poda el resumen técnico de alertas |
+| Documentos reemplazados | Quedan inactivos, no se borran |
+
+### 10.3 Brechas para el 15-10-2027
+
+| # | Qué falta | Quién lo resuelve |
+| --- | --- | --- |
+| 1 | **Aviso de privacidad** visible: qué datos, para qué, por cuánto tiempo y cómo ejercer los derechos | Sostenedor aprueba; el portal lo publica |
+| 2 | **Procedimiento ARSOP** (acceso, rectificación, supresión, oposición, portabilidad) con plazos y canal | Sostenedor define; Secretaría ejecuta |
+| 3 | **Tabla de retención por tipo de dato** (fichas de egresados, licencias del personal) | Sostenedor aprueba |
+| 4 | **Responsable de datos** designado y con canal de contacto | Sostenedor nombra |
+| 5 | **Evaluación de impacto** para salud, PIE y judicial | Responsable de datos |
+| 6 | **Encargados de tratamiento**: contrato o acuerdo de tratamiento con Neon y Cloudflare, y registro de actividades | Coordinación + sostenedor |
+| 7 | **Notificación de brechas** a la Agencia y a los afectados | Responsable de datos |
+| 8 | **Datos de menores**: constancia de la autorización del apoderado en la ficha | Ya existe la firma; falta el texto legal aprobado |
+
+Las siete primeras no son trabajo de código: son decisiones y documentos del
+colegio. La octava depende del texto legal de las autorizaciones, que hoy se
+guarda como «Pendiente de aprobación (Dirección)» con el nombre de quien
+aprueba.
+
+### 10.4 Qué se implementaría en el portal
+
+Cuando el colegio apruebe los puntos 1 a 4, en el portal quedaría:
+
+1. Una página pública de aviso de privacidad (accesible sin sesión), enlazada
+   desde el login y desde el pie de las fichas.
+2. Un formulario de solicitud ARSOP que registre la petición, el plazo y la
+   respuesta, con su fila en `registros_acceso`.
+3. La tabla de retención como parámetro de configuración, no como código.
+4. El registro de actividades de tratamiento como documento derivado de esta
+   misma arquitectura: áreas, finalidades, plazos y encargados.
+
+> Este apartado orienta el diseño; no es asesoría legal. La calificación de
+> cada tratamiento la hace el sostenedor con su abogado.
+
+---
+
+## 11. Operación
+
+### 11.1 Camino de un cambio hasta producción
 
 <!-- diagrama: 12-operacion -->
 ```mermaid
@@ -722,7 +789,7 @@ flowchart TB
     SMOKE -->|"ok"| OK["Portal en producción"]
 ```
 
-### 10.2 Esquema de la base
+### 11.2 Esquema de la base
 
 `aplicar.sh` recorre `database/.../pasos/` en orden numérico y aplica lo que
 falta; `--neon` omite los pasos que crean roles. Las instalaciones nuevas usan
@@ -735,7 +802,7 @@ los tres archivos de `instalacion/`, que ya incluyen el esquema completo.
 | Alertas de vencimiento | `12`, `13` |
 | Ficha de salud del personal | `25`, `26` |
 
-### 10.3 Respaldo y restauración
+### 11.3 Respaldo y restauración
 
 `pg_dump` de la base y `pg_restore` en una base nueva. Se probó en la corrida
 del 26-11-2026: 211 KB, restauración sin errores y conteos idénticos en cinco
@@ -745,7 +812,7 @@ requisitos apuntando a documentos inexistentes.
 
 ---
 
-## 11. Límites conocidos
+## 12. Límites conocidos
 
 | Límite | Consecuencia | Estado |
 | --- | --- | --- |
@@ -754,11 +821,11 @@ requisitos apuntando a documentos inexistentes.
 | Protocolo TENS sin aprobar | La medicación no debería habilitarse en producción | Abierto |
 | Matriz de permisos sin cargar en la base del colegio | Tras el login, las pantallas responden 403 | Abierto |
 | SSO en prototipo | `/connect/authorize` no está probado con clientes reales | Fuera de alcance de esta etapa |
-| Ley 21.719 | Falta aviso de privacidad y derechos de acceso/rectificación | Rige el 15-10-2027 |
+| Ley 21.719 | Falta aviso de privacidad y procedimiento ARSOP; detalle en la sección 10 | Rige el 15-10-2027 |
 
 ---
 
-## 12. Diagramas y cómo regenerarlos
+## 13. Diagramas y cómo regenerarlos
 
 | Archivo | Qué muestra |
 | --- | --- |
