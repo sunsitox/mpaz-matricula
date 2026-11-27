@@ -40,7 +40,8 @@ original, validador y observación.
 Las autorizaciones conservan firma y fecha; la revocación exige motivo y
 bloquea el uso posterior, y las vencidas pasan a \codigo{VENCIDA}. El
 certificado de alumno regular se emite desde los datos confirmados, con
-folio, historial y validación pública por folio. \codigo{/Alertas} lista
+folio y código, historial y validación pública por folio más código
+(\codigo{/c/\{código\}}); la anulación le quita validez. \codigo{/Alertas} lista
 vencidas y las que vencen en 30 días, filtradas por año y por área
 (\codigo{AUTORIZACIONES:LEER} / \codigo{MEDICACION:LEER}); la revisión
 programada corre cada 15 minutos. Los reportes (\codigo{ReportesController})

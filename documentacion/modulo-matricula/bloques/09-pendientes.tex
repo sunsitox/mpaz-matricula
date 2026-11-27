@@ -4,14 +4,14 @@
 
 \begin{itemize}[leftmargin=*,itemsep=0.2em]
 \item Construir y probar la imagen Docker y el arranque completo.
-\item Aceptación final de los pasos 2--5 del wizard y validación final del
-  formulario (bloques B y C, parciales).
-\item Retirar \codigo{autoriza\_paracetamol} de formulario y PDF cuando el
-  colegio lo confirme.
+\item Validación final del formulario contra el papel del colegio; los pasos
+  2--5 se comprobaron por HTTP el 23-11-2026.
+\item Ejecutar los 14 casos pendientes del plan manual: 11 de la hoja 04
+  (medicación TENS) y TRX-11/12/13.
 \item Cargar alumnos reales (script \codigo{limpiar-para-carga-manual.sql}
   listo, sin ejecutar).
-\item Manual de uso con capturas y documento técnico único (este archivo es
-  el avance de lo segundo).
+\item Manual de uso con capturas reales (la maqueta está en
+  \path{documentacion/manual-usuarios/}).
 \end{itemize}
 
 \subsection{Despliegue en el servidor}
@@ -30,6 +30,6 @@ ministerial y quién lo sube, identificador común con Asistencia (MAT-15),
 enlace desde la página del colegio, consumo del SSO por otros módulos y
 alcance del registro público.
 
-\nota{Este documento se rellenó por bloques solo con lo implementado y
-verificado al 17-11-2026. Los ítems pendientes no se documentan como
+\nota{Este documento se revisó contra el código el 27-11-2026: lo descrito
+es lo que la aplicación hace hoy. Los ítems pendientes no se documentan como
 funcionalidad existente.}

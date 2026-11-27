@@ -5,8 +5,10 @@
 Proyecto \codigo{mpaz-matricula/tests} (xUnit): RUN/IPE/IPA y duplicados,
 validaciones del formulario, cierre de ficha y transiciones de estado,
 formatos y firma real de archivos, alertas MAT-17, reportes CSV, anulación,
-niveles de curso y conexión viva. Última corrida registrada: 133/137 casos
-superados y compilación Release con 0 errores y 0 advertencias (17-11-2026).
+niveles de curso y conexión viva. Última corrida registrada: 213 de 213 casos
+superados (27-11-2026), con \codigo{dotnet test} sin fallos ni omitidos; el
+script \codigo{scripts/pruebas-automatizadas.bat} corre además la compilación,
+el JavaScript y el plan manual con su checklist por módulo.
 
 \subsection{Verificaciones ejecutadas}
 
@@ -28,8 +30,9 @@ superados y compilación Release con 0 errores y 0 advertencias (17-11-2026).
 
 \subsection{Estado por requisito (MAT)}
 
-Cerrar el balance: MAT-01 a MAT-04, MAT-06 a MAT-14 y MAT-16 a MAT-18
-implementados y verificados; MAT-05 (medicación TENS) solo en DDL,
-bloqueado por el protocolo; MAT-15 (integración Asistencia/Notas/Apoyo)
-con esquema creado y sin flujo de datos. Ver el detalle por ítem en
+Cerrar el balance: MAT-01 a MAT-05 y MAT-06 a MAT-14 y MAT-16 a MAT-18
+implementados y verificados. MAT-05 (medicación TENS) está implementado
+(prescripción, registro de dosis y triggers) y se habilitó por orden expresa
+del 25-11-2026; falta el protocolo escrito del colegio. MAT-15 (integración
+Asistencia/Notas/Apoyo) tiene esquema creado y sin flujo de datos. Ver el detalle por ítem en
 \codigo{docs/checklist-portal-matricula-modulo-3.md}.

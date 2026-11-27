@@ -1,8 +1,30 @@
 \section{Módulos adicionales y componentes}
 
-Este bloque documenta todo lo demás que existe al \textbf{18-11-2026}. El
+Este bloque documenta todo lo demás que existe al \textbf{27-11-2026}. El
 software no está terminado: la próxima revisión de documentación actualizará
 este y los demás bloques con lo que se implemente después.
+
+\subsection{Lo agregado entre el 18 y el 27 de noviembre}
+
+\begin{itemize}[leftmargin=*,itemsep=0.2em]
+\item \textbf{Ficha de salud del personal} en \codigo{/FichasMedicas}
+  (tablas y auditoría de los pasos 25--26), reservada a UTP y Dirección.
+\item \textbf{Observaciones de situación familiar} (paso 21), separadas del
+  área de salud.
+\item \textbf{Notas de retiro} (pasos 17 y 24): las escriben Secretaría, UTP
+  y Convivencia.
+\item \textbf{Cursos sin letra}: parvularia único (paso 18) y luego
+  pre-kínder y kínder separados (paso 23), con la decisión del colegio.
+\item \textbf{Auditoría legible} para Dirección e Inspectoría (paso 19) y
+  \textbf{firmante persistido} en el certificado (paso 20).
+\item \textbf{Conservación}: solo el resumen técnico de alertas se poda a 24
+  meses (paso 22); expediente y auditoría no se borran.
+\item \textbf{ADMIN\_TI sin acceso a datos de alumnos} (paso 27) y
+  \textbf{\codigo{EMITIR}} admitido en \codigo{registros\_acceso} (paso 28):
+  antes la emisión de certificados no dejaba rastro.
+\item \textbf{Medicación habilitada} (\codigo{Medicacion:Habilitada}) por
+  orden expresa del 25-11-2026, con el protocolo escrito aún pendiente.
+\end{itemize}
 
 \subsection{Módulo Auth: identidad neutral (\codigo{mpaz\_auth})}
 
@@ -104,8 +126,10 @@ Componentes de despliegue: \codigo{mpaz-matricula/deploy/}
 \codigo{mpaz-matriculas.env.example}) y \codigo{scripts/publicar-paquete.sh}
 (release \codigo{linux-x64} con SHA-256). Las carpetas
 \codigo{BackgroundServices/} y \codigo{Endpoints/} de Web existen pero están
-vacías: no hay código que documentar en ellas al 18-11-2026.
+vacías: el único proceso en segundo plano, la revisión de alertas cada 15
+minutos, vive en \codigo{Servicios/AlertasProgramadas.cs} y se registra como
+\codigo{BackgroundService} en \codigo{Program.cs}.
 
-\nota{Corte de esta documentación: 18-11-2026. Todo lo descrito aquí es lo
+\nota{Corte de esta documentación: 27-11-2026. Todo lo descrito aquí es lo
 que existe en el repositorio a esa fecha; lo que se implemente después se
 incorporará en la próxima revisión.}

@@ -2,12 +2,14 @@
 
 \subsection{Autenticación}
 
-Identity con hash de contraseña, bloqueo tras 5 intentos fallidos, cookie
+Identity con hash de contraseña, bloqueo tras 5 intentos fallidos (15 minutos),
+cookie de 8 horas sin renovación deslizante, cookie
 \codigo{HttpOnly}/\codigo{Secure}, cambio forzado de contraseña en el primer
 ingreso y tras restablecimiento, antiforgery global y rate limiter de login
 (20 intentos/5 min por IP, con mensaje único para cuenta, clave y bloqueo).
-El interruptor \codigo{ModoRevision} solo existe en Development; fuera de
-Development siempre se exige sesión y permisos. Las páginas autenticadas
+El interruptor \codigo{Seguridad:ExigirInicioSesion} (propiedad
+\codigo{ModoRevision} en \codigo{AutorizacionPorPermiso}) solo puede apagarse
+en Development: en producción el arranque falla si se intenta. Las páginas autenticadas
 envían \codigo{Cache-Control: no-store, no-cache, must-revalidate}.
 
 \subsection{Autorización y auditoría}

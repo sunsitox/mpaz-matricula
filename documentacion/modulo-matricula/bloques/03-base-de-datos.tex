@@ -39,6 +39,18 @@ el aplicador \codigo{database/aplicar.sh} con los pasos numerados de
 \codigo{12--13} & Vista de alertas de vencimiento y tabla \codigo{alerta\_revision}\\
 \codigo{14} & Roles SECRETARIA/DIRECCION/INSPECTORIA/PIE (Johan 18-11-2026)\\
 \codigo{15} & Roles UTP/CONVIVENCIA y TENS completo\\
+\codigo{16} & Salida al baño con columna propia (MAT-05)\\
+\codigo{17} & Notas de retiro y fichas médicas del personal\\
+\codigo{18} & Curso único de parvularia (pre-kínder y kínder juntos)\\
+\codigo{19} & \codigo{AUDITORIA:LEER} para Dirección e Inspectoría\\
+\codigo{20} & Firmante persistido del certificado de alumno regular\\
+\codigo{21} & Observaciones de situación familiar (decisión 19)\\
+\codigo{22} & Conservación: poda de \codigo{alerta\_revision} a 24 meses\\
+\codigo{23} & Pre-kínder y kínder como cursos separados, sin letra\\
+\codigo{24} & Notas de retiro: escriben UTP y Convivencia\\
+\codigo{25--26} & Ficha de salud del funcionario y su auditoría\\
+\codigo{27} & ADMIN\_TI sin acceso a datos de alumnos\\
+\codigo{28} & Acción \codigo{EMITIR} en \codigo{registros\_acceso}\\
 \bottomrule
 \end{longtable}
 
@@ -65,7 +77,9 @@ el aplicador \codigo{database/aplicar.sh} con los pasos numerados de
 \nota{El rol \codigo{mpaz\_app} no puede UPDATE/DELETE en las tablas de solo
 inserción (\codigo{historial\_cambios}, \codigo{registros\_acceso},
 \codigo{administracion\_medicamento}); el script 04 aborta si conserva esos
-privilegios. El DDL ya no incluye \codigo{autoriza\_paracetamol}.}
+privilegios. La columna \codigo{autoriza\_paracetamol} salió del DDL: el dato
+vive en la ficha como campo \codigo{AutorizaParacetamol} (paso 6 del asistente)
+y en \codigo{datos\_snapshot}; la orden médica real va en la prescripción.}
 
 \subsection{Diagramas de datos}
 

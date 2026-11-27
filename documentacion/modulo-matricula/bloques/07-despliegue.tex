@@ -3,7 +3,8 @@
 \subsection{Desarrollo local}
 
 \codigo{dotnet build MarcelaPaz.Matriculas.slnx -c Release} y
-\codigo{dotnet run} con la app en \codigo{http://localhost:5301}; conexión a
+\codigo{dotnet run} con la app en \codigo{http://localhost:5195} (puerto de
+\codigo{launchSettings.json}; se cambia con \codigo{--urls}); conexión a
 Neon vía \codigo{appsettings.Development.json} completada con user-secrets
 (\codigo{ConnectionStrings:Default}, \codigo{WebService:Token}). Rutas
 verificadas: \codigo{/}, \codigo{/Cuenta/Login}, \codigo{/Alertas} y
